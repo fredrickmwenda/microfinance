@@ -1,0 +1,55 @@
+{
+    "name": "tafaqari/user-manager",
+    "description": "Boiler plate for user management with roles and permissions",
+    "keywords": [
+        "tafaqari",
+        "user-manager"
+    ],
+    "homepage": "https://github.com/tafaqari/user-manager",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Jack Mugi",
+            "email": "mouggey@yahoo.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.2.5",
+        "illuminate/support": "^6.0",
+        "laravel/framework": "^7.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^4.0",
+        "phpunit/phpunit": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tafaqari\\UserManager\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tafaqari\\UserManager\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tafaqari\\UserManager\\UserManagerServiceProvider"
+            ],
+            "aliases": {
+                "UserManager": "Tafaqari\\UserManager\\UserManagerFacade"
+            }
+        }
+    }
+}

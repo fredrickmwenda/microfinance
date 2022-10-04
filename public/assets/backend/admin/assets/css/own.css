@@ -1,0 +1,84 @@
+.data-wizard{
+    display: none;
+}
+
+.data-wizard.active{
+    display: block;
+}
+
+.wizard-steps{
+    -webkit-box-align: center;
+    align-items: center;
+}
+
+.wizard-steps .wizard-step[data-wizard-state="current"] {
+    /* color: #fff; */
+    background-color: #6777ef;
+
+    -webkit-transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, -webkit-box-shadow 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, -webkit-box-shadow 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, -webkit-box-shadow 0.15s ease;
+}
+
+button[data-wizard-type="action-prev"]{
+    display: none;
+}
+
+button[data-wizard-type="action-submit"]{
+    display: none;
+}
+
+
+
+.wizard [data-wizard-type=step-info] {
+    display: none;
+  }
+  .wizard [data-wizard-type=step-info][data-wizard-state=current] {
+    display: block;
+  }
+  .wizard [data-wizard-type=step-content] {
+    display: none;
+  }
+  .wizard [data-wizard-type=step-content][data-wizard-state=current] {
+    display: block;
+  }
+  .wizard [data-wizard-type=action-prev] {
+    display: none;
+  }
+  .wizard [data-wizard-type=action-next] {
+    display: inline-block;
+  }
+  .wizard [data-wizard-type=action-submit] {
+    display: none;
+  }
+  .wizard[data-wizard-state=first] [data-wizard-type=action-prev] {
+    display: none;
+  }
+  .wizard[data-wizard-state=first] [data-wizard-type=action-next] {
+    display: inline-block;
+  }
+  .wizard[data-wizard-state=first] [data-wizard-type=action-submit] {
+    display: none;
+  }
+  .wizard[data-wizard-state=between] [data-wizard-type=action-prev] {
+    display: inline-block;
+  }
+  .wizard[data-wizard-state=between] [data-wizard-type=action-next] {
+    display: inline-block;
+  }
+  .wizard[data-wizard-state=between] [data-wizard-type=action-submit] {
+    display: none;
+  }
+  .wizard[data-wizard-state=last] [data-wizard-type=action-prev] {
+    display: inline-block;
+  }
+  .wizard[data-wizard-state=last] [data-wizard-type=action-next] {
+    display: none;
+  }
+  .wizard[data-wizard-state=last] [data-wizard-type=action-submit] {
+    display: inline-block;
+  }
+  .wizard[data-wizard-clickable=true] .wizard-step {
+    cursor: pointer;
+  }
