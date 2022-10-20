@@ -208,8 +208,8 @@
       </div>
       <div class="card-body">
           <div class="row">
-            <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-              <div class="card card-statistic-1 mb-0">
+            <div class="col-lg-3 col-md-12 col-sm-12">
+              <div class="card card-statistic-1 mb-2">
                 <div class="card-icon bg-warning">
                   <i class="fas fa-hand-holding-usd"></i>
                 </div>
@@ -219,7 +219,7 @@
                   </div>
                   <div class="card-body" id="loan_pending">
                     <span >
-                    <p id="total-amount-loans">{{$total_loans}} Loans</p>
+                    <p id="total-loans">{{$total_loans}} </p>
 
                           <span >
                             <p id="total-amount-loans">{{$total_amount_loans}}</p>
@@ -231,9 +231,9 @@
                 </div>
               </div>
             </div>
-            <div class="col-lg-9 col-md-9 col-sm-9 col-12">
+            <div class="col-lg-9 col-md-12 col-sm-12">
               <div class="row">
-                <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                <div class="col-lg-4 col-md-4 col-sm-4">
                   <div class="card card-statistic-1 mb-0">
                     <div class="card-icon bg-primary">
                       <i class="fas fa-hand-holding-usd"></i>
@@ -246,14 +246,14 @@
                         <span>
                           <p id="total-pending-loans">{{$total_pending_loans}}</p>
                           <span >
-                            <p id="total-amount-pending-loans">{{$total_amount_pending_loans}}</p>
+                            <p id="total-amount-pending-loans" style="text-align: center;">{{$total_amount_pending_loans}}</p>
                           </span>
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                <div class="col-lg-4 col-md-4 col-sm-4 ">
                   <div class="card card-statistic-1 mb-0">
                     <div class="card-icon bg-primary">
                       <i class="fas fa-hand-holding-usd"></i>
@@ -266,14 +266,14 @@
                         <span>
                           <p id="total-approved-loans">{{$total_approved_loans}}</p>
                           <span >
-                            <p id="total-amount-approved-loans">{{$total_amount_approved_loans}}</p>
+                            <p id="total-amount-approved-loans" style="text-align: center;">{{$total_amount_approved_loans}}</p>
                           </span>
                         </span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                <div class="col-lg-4 col-md-4 col-sm-4 ">
                   <div class="card card-statistic-1 mb-0">
                     <div class="card-icon bg-success">
                       <i class="fas fa-hand-holding-usd"></i>
@@ -286,7 +286,7 @@
                         <span>
                           <p id="total-rejected-loans">{{$total_rejected_loans}}</p>
                           <span >
-                            <p id="total-amount-rejected-loans">{{$total_amount_rejected_loans}}</p>
+                            <p id="total-amount-rejected-loans" style="text-align: center;">{{$total_amount_rejected_loans}}</p>
                           </span>
                         </span>
                       </div>
@@ -296,7 +296,7 @@
               </div>
 
               <div class="row mt-2">
-                <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+                <div class="col-lg-4 col-md-4 col-sm-4">
                   <div class="card card-statistic-1 mb-0">
                     <div class="card-icon bg-primary">
                       <i class="fas fa-hand-holding-usd"></i>
@@ -310,7 +310,7 @@
                         <span>
                           <p id="total-disbursed-loans">{{$total_disbursed_loans}}</p>
                           <span >
-                            <p id="total-amount-disbursed-loans">{{$total_amount_disbursed_loans}}</p>
+                            <p id="total-amount-disbursed-loans" style="text-align: center;">{{$total_amount_disbursed_loans}}</p>
                           </span>
                         </span>
 
@@ -321,7 +321,8 @@
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+
+                <div class="col-lg-4 col-md-4 col-sm-4">
                   <div class="card card-statistic-1 mb-0">
                     <div class="card-icon bg-primary">
                       <i class="fas fa-hand-holding-usd"></i>
@@ -330,19 +331,24 @@
                       <div class="card-header">
                         <h4>{{ __('Loans Paid') }}</h4>
                       </div>
-                      <div class="card-body" id="loan_given">
+                      <div class="card-body" id="loan_queue">
+                        <!--have 2 sections one with count and one with amount-->
                         <span>
-                          <p id="total-closed-loans">{{$total_closed_loans}}</p>
+                            <p id="total-closed-loans">{{$total_closed_loans}}</p>
                           <span >
-                            <p id="total-amount-closed-loans">{{$total_amount_closed_loans}}</p>
+                          <p id="total-amount-closed-loans" >{{$total_amount_closed_loans}}</p>
                           </span>
                         </span>
 
+                        <!-- <span class="loader">
+                          <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
+                        </span> -->
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="col-lg-4 col-md-4 col-sm-4 col-12">
+
+                <div class="col-lg-4 col-md-4 col-sm-4">
                   <div class="card card-statistic-1 mb-0">
                     <div class="card-icon bg-success">
                       <i class="fas fa-hand-holding-usd"></i>
@@ -355,7 +361,7 @@
                         <span>
                           <p id="total-overdue-loans">{{$total_overdue_loans}}</p>
                           <span >
-                            <p id="total-amount-overdue-loans">{{$total_amount_overdue_loans}}</p>
+                            <p id="total-amount-overdue-loans" style="text-align: center;">{{$total_amount_overdue_loans}}</p>
                           </span>
                         </span>
                       </div>
@@ -378,15 +384,55 @@
 
 <div class="row">
   <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">
-        <h4>{{ __('Loan Payment & Disbursement') }}</h4>
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="loanPaymentChart"></canvas>
+     <!--two tabs in a card, one for Loans and one for Transactions-->
+     <!--use pills for the tabs-->
+      <div class="card">
+        <div class="card-header">
+          <ul class="nav nav-pills card-header-pills">
+            <li class="nav-item">
+              <a class="nav-link active" href="#loans" data-toggle="tab">{{ __('Loans') }}</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#transactions" data-toggle="tab">{{ __('Transactions') }}</a>
+            </li>
+          </ul>
         </div>
-      </div>
+        <div class="card-body">
+          <div class="tab-content">
+            <div class="tab-pane active" id="loans">
+              <div class="row">
+                <div class="col-md-12">
+                  <!-- <div class="card">
+                    <div class="card-header">
+                      <h4>{{ __('Loans') }}</h4>
+                    </div>
+                    <div class="card-body"> -->
+                      <div class="chart-container">
+                        <canvas id="loansChart" height="280"></canvas>
+                      </div>
+                    <!-- </div>
+                  </div> -->
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane" id="transactions">
+              <div class="row">
+                <div class="col-md-12">
+                  
+                    <!-- <div class="card-header">
+                      <h4>{{ __('Transactions')}}</h4>
+                    </div> -->
+                    
+                      <div class="chart-container">
+                        <canvas id="transactionsChart" height="280"></canvas>
+                      </div>
+                   
+                  <!-- </div> -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
     </div>
   </div>
   <div class="col-md-6">
@@ -396,39 +442,14 @@
       </div>
       <div class="card-body">
         <div class="chart-container">
-          <canvas id="roPerformanceChart"></canvas>
+          <canvas id="roPerformanceChart" height="280"></canvas>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- <div class="row">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">
-        <h4>{{ __('Loan Disburse') }}</h4>
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="loanDisburseChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">
-        <h4>{{ __('Loan Repayment') }}</h4>
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="loanRepaymentChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div> -->
+
 
 <!--3 tables the first one is for the loan payment, the second one is for the overdue loans,  the third one is for the pending loans-->
 <div class="row">
@@ -490,13 +511,6 @@
               </tr>
             </thead>
             <tbody>
-              <!-- <tr>
-                <td colspan="2" class="text-center">
-                  <span class="loader">
-                    <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-                  </span>
-                </td>
-              </tr> -->
             </tbody>
           </table>
         </div>
@@ -648,8 +662,8 @@
 <!--datatables-->
 
 <script src="{{ asset('assets/backend/admin/assets/js/sparkline.js') }}"></script>
-<script src="{{ asset('assets/backend/admin/assets/js/chart.js') }}"></script>
-<script src="{{ asset('assets/backend/admin/assets/js/page/index.js') }}"></script>
+<script src="{{ asset('assets/backend/admin/assets/js/chart.min.js') }}"></script>
+<!-- <script src="{{ asset('assets/backend/admin/assets/js/page/index.js') }}"></script> -->
 
 
 
@@ -659,7 +673,7 @@
     var table = $('#pendingLoanTable'). DataTable({
       processing: true,
       serverSide: true,
-      ajax: "{{ route('loans.pending') }}",
+      ajax: "{{ route('loans.pending.get') }}",
       columns: [
         {data: 'id', name: 'id'},
         {data: 'loan_id', name: 'loan_id'},
@@ -697,7 +711,7 @@
     var table = $('#disbursedLoanTable'). DataTable({
       processing: true,
       serverSide: true,
-      ajax: "{{ route('loans.disbursed') }}",
+      ajax: "{{ route('loans.disbursed.get') }}",
       columns: [
         {data: 'id', name: 'id'},
         {data: 'loan_id', name: 'loan_id'},
@@ -739,7 +753,7 @@
     var table = $('#approvedLoanTable'). DataTable({
       processing: true,
       serverSide: true,
-      ajax: "{{ route('loans.approved') }}",
+      ajax: "{{ route('loans.approved.get') }}",
       columns: [
         {data: 'id', name: 'id'},
         {data: 'loan_id', name: 'loan_id'},
@@ -770,13 +784,326 @@
       ]
     });
 
-
-
-
-    //overdue loans
-
-
   });
+
+
+  // get id of loanchart
+  var loanGraph = $('#loansChart');
+  var transactionGraph = $('#transactionsChart');
+  var performanceGraph = $('#roPerformanceChart');
+
+  var loanData = JSON.parse('<?php echo isset($loanData) ? $loanData : '' ?>');
+
+ 
+
+  
+
+var pendingloanData = JSON.parse('<?php echo isset($pendingLoanData) ? $pendingLoanData : '' ?>');
+var activeloanData = JSON.parse('<?php echo isset($activeLoanData) ? $activeLoanData : '' ?>');
+
+var overdueLoanData = JSON.parse('<?php echo isset($overDueLoanData) ? $overDueLoanData : '' ?>');
+
+
+var transactionData = JSON.parse('<?php echo isset($transactionData) ? $transactionData : '' ?>');
+
+var disbursementData = JSON.parse('<?php echo isset($disbursementData) ? $disbursementData : '' ?>');
+
+var ROPerformanceData = JSON.parse('<?php echo isset($ROPerformanceData) ? $ROPerformanceData : '' ?>');
+
+console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
+
+  // console.log(loanData[0].loans);
+
+
+  var loanCtx = document.getElementById('loansChart').getContext('2d');
+
+  var transactionCtx = document.getElementById('transactionsChart').getContext('2d');
+
+  var performanceCtx = document.getElementById('roPerformanceChart').getContext('2d');
+
+//  Label months in short form
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  //create the chart
+  var loanChart = new Chart(loanCtx, {
+    type: 'line',
+    //append data to the chart by checking the loanData array, if the month is equal to the month in the array, append the data to the chart
+
+
+    data: {
+      // labels: loanData.labels,
+      labels: labels,
+      datasets: [
+      
+        {
+          label: 'Loans',
+          data: loanData,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Active Loans',
+          data: activeloanData,
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        },
+        // {
+        //   // label: 'Disbursed Loans',
+        //   // data: loanData.disbursedLoans,
+        //   backgroundColor: 'rgba(255, 206, 86, 0.2)',
+        //   borderColor: 'rgba(255, 206, 86, 1)',
+        //   borderWidth: 1
+        // },
+        {
+          label: 'Overdue Loans',
+          data: overdueLoanData, 
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        },
+        // add padding 
+      ]
+
+
+    },
+    options: {
+      responsive: true,
+      legend: {
+                display: false
+            },
+      scales: {
+        // yAxes start from 0 to 1000
+        y: {
+          stacked: false,
+          suggestedMin: 0,
+          suggestedMax: 200,
+          title: {
+            display: true,
+            text: 'Number of Loans',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+
+
+
+          ticks: {
+            beginAtZero: true,
+            stepSize: 20,
+          },
+          // gridLines: {
+          //   display: true,
+          //   color: 'rgba(0, 0, 0, 0.1)'
+          // }
+        },
+        x: {
+          title : {
+            display: true,
+            text: 'Months',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+        }
+      }
+    }
+  });
+
+
+  //create the chart
+  var transactionChart = new Chart(transactionCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+        label: 'Transactions',
+        data: transactionData,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1
+      },
+
+      {
+        label: 'Disbursements',
+        data: disbursementData,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+      },
+    ]
+    },
+    options: {
+      responsive: true,
+      legend: {
+                display: false
+            },
+      scales: {
+        // yAxes start from 0 to 1000
+        y: {
+          stacked: false,
+          suggestedMin: 0,
+          // max is 500,000
+          suggestedMax: 100000,
+          title: {
+            display: true,
+            text: 'Total Transactions & Disbursements',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+
+
+
+          ticks: {
+            beginAtZero: true,
+            stepSize: 10000,
+          },
+          // gridLines: {
+          //   display: true,
+          //   color: 'rgba(0, 0, 0, 0.1)'
+          // }
+        },
+        x: {
+          title : {
+            display: true,
+            text: 'Months',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+        }
+      }
+    }
+  });
+
+
+  var performanceChart = new Chart(performanceCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      // // loop through json data in ROPerformanceData and append to the chart
+      
+
+      datasets: [{
+        
+
+        label: 'Performance',
+        
+        data: activeloanData,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      legend: {
+                display: false
+            },
+      scales: {
+        // yAxes start from 0 to 1000
+        y: {
+          stacked: false,
+          suggestedMin: 0,
+          // max is 500,000
+          suggestedMax: 100,
+          title: {
+            display: true,
+            text: 'Users Performance',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+
+
+
+          ticks: {
+            beginAtZero: true,
+            // stepSize: 5,
+          },
+          // gridLines: {
+          //   display: true,
+          //   color: 'rgba(0, 0, 0, 0.1)'
+          // }
+        },
+        x: {
+          title : {
+            display: true,
+            text: 'Months',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+        }
+      }
+    }
+  });
+
+
+  // Loop through ROPerformanceData [users] and append to Performance Chart
+  for (var i = 0; i < ROPerformanceData.length; i++) {
+    performanceChart.data.datasets.push({
+      label: ROPerformanceData[i].name,
+      data: ROPerformanceData[i].performance,
+      backgroundColor: 'rgba(54, 162, 235, 0.2)',
+      borderColor: 'rgba(54, 162, 235, 1)',
+      borderWidth: 1
+    });
+  }
+
+  performanceChart.update();
+
 
 
   //active loans
@@ -857,6 +1184,11 @@
     $(this).addClass("active");
     var start_date = $(this).data('start_date');
     var end_date = $(this).data('end_date');
+
+    console.log(start_date);
+    console.log(end_date);
+
+
     
 
     //get dashboard data according to date range
@@ -876,31 +1208,29 @@
         $("#total-amount-loans").html(data.total_amount_loans);
         //pending loans
         $("#total-pending-loans").html(data.total_pending_loans);
-        $("#total-pending-loans-amount").html(data.total_pending_loans_amount);
+        $("#total-amount-pending-loans").html(data.total_amount_pending_loans);
         //overdue loans
         $("#total-overdue-loans").html(data.total_overdue_loans);
-        $("#total-overdue-loans-amount").html(data.total_overdue_loans_amount);
+        $("#total-amount-overdue-loans").html(data.total_amount_overdue_loans);
         //disbursed loans
         $("#total-disbursed-loans").html(data.total_disbursed_loans);
-        $("#total-disbursed-loans-amount").html(data.total_disbursed_loans_amount);
+        $("#total-amount-disbursed-loans").html(data.total_amount_disbursed_loans);
         //active loans
         $("#total-active-loans").html(data.total_active_loans);
-        $("#total-active-loans-amount").html(data.total_active_loans_amount);
+        $("#total-amount-active-loans").html(data.total_amount_active_loans);
         //completed loans
         $("#total-closed-loans").html(data.total_closed_loans);
-        $("#total-closed-loans-amount").html(data.total_closed_loans_amount);
+        $("#total-amount-closed-loans").html(data.total_amount_closed_loans);
         //rejected loans
         $("#total-rejected-loans").html(data.total_rejected_loans);
-        $("#total-rejected-loans-amount").html(data.total_rejected_loans_amount);
+        $("#total-amount-rejected-loans").html(data.total_amount_rejected_loans);
         //approved loans
         $("#total-approved-loans").html(data.total_approved_loans);
-        $("#total-approved-loans-amount").html(data.total_approved_loans_amount);
+        $("#total-amount-approved-loans").html(data.total_amount_approved_loans);
 
       }
     });
-    // $.get('dashboard-filter/' + start_date + '/' + end_date, function(data) {
-    //     dashboardFilter(data);
-    // });
+
   });
 
 

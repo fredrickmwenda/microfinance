@@ -1,7 +1,7 @@
 @extends('layouts.backend.app')
 
 @section('head')
-@include('layouts.backend.partials.headersection',['title'=>'Customers'])
+@include('layouts.backend.partials.headersection',['title'=>'Active Customers'])
 @endsection
 
 @section('content')
@@ -11,7 +11,6 @@
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-lg-6">
-                  @can('customer.create')
                   <form method="POST" action="{{ route('customer.search') }}">
                     @csrf
                     <div class="input-group mb-2 col-12">
@@ -25,8 +24,7 @@
                           <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
                        </div>
                     </div>
-                  </form>
-                  @endcan
+                 </form>
                 </div>
                 <div class="col-lg-6">
                     <div class="add-new-btn">
@@ -34,17 +32,16 @@
                     </div>
                 </div>
             </div>
-            <div class="table-responsive">
-            <table class="table table-striped" id="customertable-2">
+            <div class="">
+                <table class="table table-responsive table-striped" id="customertable-2">
                   <thead>
                     <tr>
-                      <!-- <th>
+                      <th>
                         <div class="custom-checkbox custom-control">
                           <input type="checkbox" data-checkboxes="mygroup" data-checkbox-role="dad" class="custom-control-input" id="checkbox-all">
                           <label for="checkbox-all" class="custom-control-label">&nbsp;</label>
                         </div>
-                      </th> -->
-                      <th> # </th>
+                      </th>
                       <th>{{ __('Name') }}</th>
                       <th>{{ __('Email') }}</th>
                       <th>{{ __('Phone') }}</th>
@@ -55,51 +52,45 @@
                     </tr>
                   </thead>
                   <tbody>
-                    @foreach($customers as $key => $customer)
+                    @foreach($customers as $row)
                     <tr>
-                      <!-- <td>
+                      <td>
                         <div class="custom-checkbox custom-control">
                           <input type="checkbox" data-checkboxes="mygroup" class="custom-control-input" id="checkbox-1">
                           <label for="checkbox-1" class="custom-control-label">&nbsp;</label>
                         </div>
-                      </td> -->
-                      <td>{{ $key+1 }}</td>
-                      <td>{{ $customer->first_name }}{{ $customer->first_name }}</td>
+                      </td>
+                      <td>{{ $row->first_name }}{{ $row->first_name }}</td>
                       <td>
-                        {{ $customer->email }}
+                        {{ $row->email }}
                       </td>
                       <td>
-                        {{ $customer->phone }}
+                        {{ $row->phone }}
                       </td>
-                      <td>{{ $customer->national_id }}</td>
-                      <td>{{ $customer->guarantor_first_name }}{{ $customer->guarantor_last_name }}</td>
-                      <td>
-                        @if($customer->status == 'active')
-                        <span class="badge badge-success">{{ $customer->status }}</span>
-                        @else
-                        <span class="badge badge-danger">{{ $customer->status }}</span>
-                        @endif
-                      </td>
+                      <td>{{ $row->national_id }}</td>
+                      <td>{{ $row->guarantor_first_name }}{{ $row->guarantor_last_name }}</td>
+                      
+                      @if($row->status == 1)
+                      <td class="text-success">{{ __('Active') }}</td>
+                      @endif
+                      @if($row->status == 0)
+                      <td class="text-danger">{{ __('Inactive') }}</td>
+                      @endif
                       <td>
                         <div class="dropdown d-inline">
                           <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ __('Action') }}
                           </button>
                           <div class="dropdown-menu">
-                            @can('customer.view')
-                            <a class="dropdown-item has-icon" href="{{ route('customer.show', $customer->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
-                            @endcan
-                            @can('customer.edit')
-                            <a class="dropdown-item has-icon" href="{{ route('customer.edit', $customer->id) }}"><i class="fa fa-edit"></i>{{ __('edit') }}</a>
-                            @endcan
-                           @can('customer.delete')
-                            <a class="dropdown-item has-icon delete-confirm" href="javascript:void(0)" data-id={{ $customer->id }}><i class="fa fa-trash"></i>{{ __('Delete') }}</a>
+                            <a class="dropdown-item has-icon" href="{{ route('customer.show', $row->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
+                            <a class="dropdown-item has-icon" href="{{ route('customer.edit', $row->id) }}"><i class="fa fa-edit"></i>{{ __('edit') }}</a>
+  
+                            <a class="dropdown-item has-icon delete-confirm" href="javascript:void(0)" data-id={{ $row->id }}><i class="fa fa-trash"></i>{{ __('Delete') }}</a>
                             <!-- Delete Form -->
-                            <form class="d-none" id="delete_form_{{ $customer->id }}" action="{{ route('customer.destroy', $customer->id) }}" method="POST">
+                            <form class="d-none" id="delete_form_{{ $row->id }}" action="{{ route('customer.destroy', $row->id) }}" method="POST">
                             @csrf
                             @method('DELETE')
                             </form>
-                            @endcan
                           </div>
                         </div>
                       </td>
@@ -118,6 +109,7 @@
 @endsection
 
 @push('js')
+<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
 <script>
     $(document).ready(function() {
         $('#customertable-2').DataTable({

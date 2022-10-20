@@ -20,6 +20,7 @@ return new class extends Migration
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->string('logo')->nullable();
             $table->json('settings')->nullable();
+            $table->string('paybill')->nullable();
             //env variables
             $table->string('env_merchant_id')->nullable();
             $table->string('env_merchant_key')->nullable();

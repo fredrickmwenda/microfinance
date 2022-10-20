@@ -13,8 +13,15 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('payment_methods', function (Blueprint $table) {
+        Schema::create('equity_tokens', function (Blueprint $table) {
             $table->id();
+            $table->string('merchant_code');
+            $table->longText('access_token');
+            $table->longText('refresh_token');
+            $table->string('expires_in');
+            $table->string('issued_at');
+            $table->string('token_type');
+
             $table->timestamps();
         });
     }
@@ -26,6 +33,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('payment_methods');
+        Schema::dropIfExists('equity_tokens');
     }
 };

@@ -10,13 +10,18 @@
 		<div class="card">
 			<div class="card-body">
 				<h4>{{ __('Edit Admin') }}</h4>
-				<form method="post" action="{{ route('admin.admin.update',$user->id) }}" class="basicform">
+				<form method="post" action="{{ route('admin.users.update',$user->id) }}" class="basicform">
                     @csrf
                     @method('PUT')
 					<div class="pt-20">
 						<div class="form-group">
-							<label for="name">{{ __('Name') }}</label>
-							<input type="text" value="{{ $user->name }}" required class="form-control" name="name" placeholder="{{ __('Enter admin name') }}" >
+							<label for="name">{{ __('First Name') }}</label>
+							<input type="text" value="{{ $user->first_name }}" required class="form-control" name="name" placeholder="{{ __('Enter admin name') }}" >
+						</div>
+
+						<div class="form-group">
+							<label for="name">{{ __('Last Name') }}</label>
+							<input type="text" value="{{ $user->last_name }}" required class="form-control" name="last_name" placeholder="{{ __('Enter admin name') }}" >
 						</div>
 						
 						<div class="form-group">
@@ -40,17 +45,22 @@
 						
                         <div class="form-group">
                             <label for="roles">{{ __('Assign Roles') }}</label>
-                                <select required name="roles[]" id="roles" class="form-control select2" multiple>
-                                    @foreach ($roles as $role)
-                                        <option value="{{ $role->name }}" {{ $user->hasRole($role->name) ? 'selected' : '' }}>{{ $role->name }}</option>
-                                    @endforeach
+                                <select required name="role" id="role" class="form-control select2" >
+									<!--get active role for this user-->
+									@foreach($roles as $role)
+									   @if($role->id == $user->role_id)
+										<option value="{{ $role->id }}" selected>{{ $role->name }}</option>
+									   @else
+										<option value="{{ $role->id }}">{{ $role->name }}</option>
+									   @endif
+									@endforeach
                                 </select>
                             </div>
                         <div class="form-group">
                         <label>{{ __('Status') }}</label>
 							<select name="status" class="form-control">
-								<option value="1" @if($user->status==1) selected @endif>{{ __('Active') }}</option>
-								<option value="0"  @if($user->status==0) selected @endif>{{ __('Deactive') }}</option>
+								<option value="active" {{ $user->status == 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+								<option value="inactive" {{ $user->status == 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
 							</select>
                         </div>
 					</div>

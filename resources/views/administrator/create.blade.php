@@ -67,43 +67,30 @@
 								<input type="password" required class="form-control" name="password_confirmation" placeholder="Enter confirm password" >
 							</div>
 						</div>
+                        
+						<div class="form row">
+							<div class="form-group col-md-6">
+								<label >{{ __('Assign Roles') }}</label>
+								<select required name="role_id" id="roles" class="form-control">
+									<option value="">Select Role</option>
+									@foreach ($roles as $role)
+										<option value="{{ $role->id }}">{{ $role->name }}</option>
+									@endforeach
+								</select>
+							</div>
 
-						<!--National id-->
-						<!-- <div class="form-group">
-							<label for="email">{{ __('National Id') }}</label>
-							<input type="number" required class="form-control" name="national_id" placeholder="Enter national id" >
-						</div> -->
-
-						<!-- <div class="form-group">
-							<label for="password">{{ __('Password') }}</label>
-							<input type="password" required class="form-control" name="password" placeholder="Enter password" >
-						</div>
-						<div class="form-group">
-							<label for="password">{{ __('Confirm Password') }}</label>
-							<input type="password" required class="form-control" name="password_confirmation" placeholder="Enter password" >
-						</div> -->
-
-					     <div class="form-group">
-                            <label >{{ __('Assign Roles') }}</label>
-                            <select required name="role_id" id="roles" class="form-control">
-								<option value="">Select Role</option>
-                                @foreach ($roles as $role)
-                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+							<!--users status active or inactive-->
+							<div class="form-group col-md-6">
+								<label for="status">{{ __('Status') }}</label>
+								<select required name="status" id="status" class="form-control">
+									<option value="">Select Status</option>
+									<option value="active">Active</option>
+									<option value="inactive">Inactive</option>
+								</select>
+							</div>
 
 
-						<!-- <div class="form-group">
-							<label for="status">{{ __('Branch') }}</label>
-							<select required name="branch_id" id="branch_id" class="form-control">
-								<option value="">Select Branch</option>
-								@foreach ($branches as $branch)
-									<option value="{{ $branch->id }}">{{ $branch->name }}</option>
-								@endforeach
 
-							</select>
-						</div> -->
 					</div>
 				</div>
 			</div>

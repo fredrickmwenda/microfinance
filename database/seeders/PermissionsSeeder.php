@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class PermissionsSeeder extends Seeder
 {
@@ -17,22 +19,23 @@ class PermissionsSeeder extends Seeder
 
         $permissions = [
             [
-                'group_name' => 'RO',
+                'group_name' => 'RO Dashboard',
                 'permissions' => [
-                    'ro-officer.dashboard',
+                    'agent.dashboard',
                 ]
             ]
         ];
         //get role called ro and assign permissions to it
-        $role = \Spatie\Permission\Models\Role::findByName('RO');
+        $role = Role::findByName('RO');
         // dd($role);
         foreach ($permissions as $key => $permission) {
-
             foreach ($permission['permissions'] as $key => $perm) {
                 // dd($perm, $permission['group_name']);
-                $permission = \Spatie\Permission\Models\Permission::create(['name' => $perm, 'group_name' => $permission['group_name']]);
+                $permission = Permission::create(['name' => $perm, 'group_name' => $permission['group_name']]);
                 $role->givePermissionTo($permission);
                 $permission->assignRole($role);
+                // assign all users with role RO to this permission
+                $role->users()->sync($role->users()->pluck('id')->toArray(), false);
             }
         }
 

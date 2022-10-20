@@ -19,17 +19,7 @@ class UserTableSeeder extends Seeder
     public function run()
     {
        
-        $super = User::create([
-				'role_id' => 1,
-				'name' => 'Admin',
-				'email' => 'admin@admin.com',
-                'branch_id'=> '1',
-                'phone' => '0713723353',
-                'national_id' => '33555213',
-				'password' => Hash::make('rootadmin'),
-				'role' => 'admin',
-			]	
-		);
+
 		
 		// $users = array(
 		// 	array(
@@ -54,6 +44,19 @@ class UserTableSeeder extends Seeder
     	
     	    	
     	$roleSuperAdmin = Role::create(['name' => 'superadmin']);
+
+		$super = User::create([
+			'first_name' => 'Super',
+			'last_name' => 'Admin',
+			'email' => 'admin@admin.com',
+			'branch_id'=> '1',
+			'phone' => '0713723353',
+			'national_id' => '33555213',
+			'password' => Hash::make('123456'),
+			'role_id' => $roleSuperAdmin->id,
+			'status' => 'active',
+			
+		]);
         //create permission
     	$permissions = [
     		[
@@ -63,17 +66,147 @@ class UserTableSeeder extends Seeder
     			]
     		],
     		
-    		[
-    			'group_name' => 'admin',
-    			'permissions' => [
-    				'admin.create',
-    				'admin.edit',
-    				'admin.update',
-    				'admin.delete',
-    				'admin.list',
+            //  Transaction
+			[
+                'group_name' => 'transaction',
+                'permissions' => [
+                    'transaction.index',
+					'transaction.create',
+					'transaction.store',
+					'transaction.show',
+					'transaction.edit',
+					'transaction.update',
+					'transaction.destroy',
+				    'transaction.list',
+					'transactions.module',
+                ]
+			],
 
-    			]
-    		],
+			// loan Management
+			[
+                'group_name' => 'loan_management',
+                'permissions' => [
+                    'loan.management.create',
+                    'loan.management.edit',
+                    'loan.management.index',
+					'loan.management.delete',
+					'loan.management.update',
+					'loan.management.list',
+					'loan.management.show',			
+					'loan.rejected.index',
+					'loan.approved.index',
+					'loan.request.index',
+					'loan.pending.index',
+					'loan.active.index',
+					'loan.closed.index',
+					'loan.overdue.index',	
+					'loan.payment.show',
+					'loan.attachment.show',	
+					'loan.payment.schedule',
+					'loan.approve',
+					'loan.reject',
+					'loan.disburse',		
+                ]
+            ],
+			// Disburse
+			[
+				'group_name' => 'disburse',
+				'permissions' => [
+					'disburse.create',
+					'disburse.index',
+					'disburse.update',
+					'disburse.edit',
+					'disburse.delete',
+					'disburse.list',
+				]
+			],
+           // Branches 
+			[
+				'group_name' => 'branch',
+				'permissions' => [
+					'branch.edit',
+					'branch.create',
+					'branch.index',
+					'branch.delete',
+					'branch.list',
+					'branch.update',	
+				]
+			],
+            // Payment Gateway
+			
+			[
+				'group_name' => 'paymentgateway',
+				'permissions' => [
+					'payment.gateway.edit',
+					'payment.gateway.index',
+					'payment.gateway.store',
+					'payment.gateway.delete',
+					'payment.gateway.create',
+					'payment.gateway.update',
+					'payment.gateway.list',
+				]
+			],
+
+
+			// customer
+
+			[
+				'group_name' => 'customer',
+				'permissions' => [
+					'customer.create',
+					'customer.edit',
+					'customer.update',
+					'customer.delete',
+					'customer.list',
+					'customer.index',
+					'customer.active',
+					'customer.inactive',
+				
+				]
+			],
+
+			// Reports
+			[
+				'group_name' => 'report',
+				'permissions' => [
+					'report.index',
+					'report.show',
+					'report.list',
+					'report.customer',
+					'report.loan',
+					'report.disburse',
+					'report.transaction',
+					'report.performance',
+				]
+			],
+
+			[
+				'group_name' => 'administrator',
+				'permissions' => [
+					'administrator.module'
+				]
+			],
+
+            
+			// Users
+			[
+				'group_name' => 'users',
+				'permissions' => [
+					'user.create',
+					'user.index',
+					'user.delete',
+					'user.edit',
+					'user.update',
+					'user.verified',
+					'user.show',
+					'user.banned',
+					'user.unverified',
+					'user.list',
+					
+				]
+			],
+
+			// Roles
     		[
     			'group_name' => 'role',
     			'permissions' => [
@@ -85,93 +218,24 @@ class UserTableSeeder extends Seeder
 
     			]
     		],
-            [
-                'group_name' => 'page',
-                'permissions' => [
-                    'page.create',
-                    'page.edit',
-                    'page.delete',
-                    'page.index',
 
-                ]
-			],
-			[
-                'group_name' => 'transaction',
-                'permissions' => [
-                    'transaction',
-                ]
-			],
+			// Support
+
 			[
                 'group_name' => 'support',
                 'permissions' => [
                     'support.index',
                     'support.delete',
                     'support.create',
+					'support.edit',
+					'support.update',
                 ]
 			],
-			
-			[
-                'group_name' => 'country',
-                'permissions' => [
-                    'country.create',
-                    'country.edit',
-                    'country.index',
-                    'country.delete',
 
-                ]
-			],
-			[
-                'group_name' => 'loan_management',
-                'permissions' => [
-                    'loan.management.create',
-                    'loan.management.edit',
-                    'loan.management.index',
-					'loan.management.delete',
-					'loan.rejected.index',
-					'loan.approved.index',
-					'loan.request.view',
-					'loan.management.returnlist',
-					'loan.request.list'
-									
-					
-                ]
-            ],
-            [
-				'group_name' => 'Blog',
-				'permissions' => [
-					'blog.create',
-					'blog.edit',
-					'blog.update',
-					'blog.delete',
-					'blog.list',
 
-				]
-			],
+			// Settings
 			[
-				'group_name' => 'Withdraw',
-				'permissions' => [
-					'withdraw.create',
-					'withdraw.index',
-					'withdraw.update',
-					'withdraw.edit',
-					'withdraw.request.index',
-					'withdraw.request.approved',
-					'withdraw.request.rejected',
-					'withdraw.method.create',
-				]
-			],
-			[
-				'group_name' => 'News',
-				'permissions' => [
-					'news.create',
-					'news.edit',
-					'news.index',
-					'news.delete',
-				]
-			],
-			
-			[
-				'group_name' => 'Settings',
+				'group_name' => 'settings',
 				'permissions' => [
 					'system.settings',
 					'seo.settings',
@@ -180,158 +244,10 @@ class UserTableSeeder extends Seeder
 					'phone.settings',
 				]
 			],
+	
 
-			[
-				'group_name' => 'Bank_deposit',
-				'permissions' => [
-					'bank.deposit.create',
-					'bank.deposit.index',
-					'bank.deposit.edit',
-					'bank.deposit.delete',
-					'bank.deposit.approved',
-					'bank.deposit.view'
-				]
-			],
-			[
-				'group_name' => 'branch',
-				'permissions' => [
-					'branch.edit',
-					'branch.create',
-					'branch.index',
-					'branch.delete',
-				]
-			],
-			[
-				'group_name' => 'currency',
-				'permissions' => [
-					'currency.create',
-					'currency.edit',
-					'currency.index',
-					'currency.delete',
-				]
-			],
-			[
-				'group_name' => 'users',
-				'permissions' => [
-					'user.create',
-					'user.index',
-					'user.delete',
-					'user.edit',
-					'user.verified',
-					'user.show',
-					'user.banned',
-					'user.unverified'
-				]
-			],
-			[
-				'group_name' => 'howitworks',
-				'permissions' => [
-					'howitworks.create',
-					'howitworks.edit',
-					'howitworks.index',
-					'howitworks.delete',
-				]
-			],
-			[
-				'group_name' => 'investors',
-				'permissions' => [
-					'investors.create',
-					'investors.edit',
-					'investors.index',
-					'investors.delete',
-				]
-			],
-			[
-				'group_name' => 'service',
-				'permissions' => [
-					'service.create',
-					'service.index',
-					'service.edit',
-					'service.delete',
-				]
-			],
-			[
-				'group_name' => 'feedbacks',
-				'permissions' => [
-					'feedbacks.edit',
-					'feedbacks.index',
-					'feedbacks.create',
-					'feedbacks.delete',
-				]
-			],
-			[
-				'group_name' => 'fixeddeposit',
-				'permissions' => [
-					'fixeddeposit.edit',
-					'fixeddeposit.index',
-					'fixeddeposit.create',
-					'fixeddeposit.delete',
-					'fixeddeposit.failed.index',
-					'fixeddeposit.complete.index',
-					'fixeddeposit.history.index',
-				]
-			],
-			[
-				'group_name' => 'otherbank',
-				'permissions' => [
-					'otherbank.edit',
-					'otherbank.create',
-					'otherbank.index',
-					'otherbank.delete',
-				]
-			],
-			[
-				'group_name' => 'language',
-				'permissions' => [
-					'language.index',
-					'language.edit',
-					'language.create',
-					'language.delete',
-				]
-			],
-			[
-				'group_name' => 'deposit',
-				'permissions' => [
-					'deposit.index',
-					'deposit.create',
-					'deposit.complete',
-				]
-			],
-			[
-				'group_name' => 'autopaymentgateway',
-				'permissions' => [
-					'deposit.automatic.gateway.edit',
-					'deposit.automatic.gateway.index',
-					'deposit.automatic.gateway.store',
-					'deposit.automatic.gateway.delete'
-				]
-			],
-			[
-				'group_name' => 'manualpaymentgateway',
-				'permissions' => [
-					'deposit.manual.gateway.create',
-					'deposit.manual.gateway.edit',
-					'deposit.manual.gateway.index',
-					'deposit.manual.gateway.delete'
-				]
-			],
-			[
-				'group_name' => 'payment_gateway',
-				'permissions' => [
-					'payment_gateway.create',
-					'payment_gateway.edit',
-					'payment_gateway.index',
-					'payment_gateway.delete'
-				]
-			],
-			[
-				'group_name' => 'option',
-				'permissions' => [
-					'option',
-					'counter',
-					'title'
-				]
-			],
+
+
 
     	];
 

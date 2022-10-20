@@ -12,18 +12,19 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 use Spatie\Permission\Models\Role;
+use Termwind\Components\Dd;
 
 class AdminController extends Controller
 {
     //
     public function index()
     {
-        if (Auth()->user()->can('admin.list')) {
-            //get all users
-            $users =User::all();
-
-            return view('admin.admin.index', compact('users'));
-        }
+     
+        $users =User::all();
+        $roles = Role::all();
+        $branches = branch::all();    
+        return view('administrator.index', compact('users', 'roles', 'branches'));
+        
     }
     //create new user
     public function create()
@@ -31,12 +32,12 @@ class AdminController extends Controller
         //
         $roles = Role::all();
         $branches = branch::where('status', 'active')->get();
-        return view('admin.admin.create', compact('roles', 'branches'));
+        return view('administrator.create', compact('roles', 'branches'));
     }
     //store new user
     public function store(Request $request)
     {
-        //
+
         $this->validate($request, [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -46,7 +47,7 @@ class AdminController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'role_id' => 'required|integer|exists:roles,id',
             'branch_id' => 'required|integer|exists:branches,id',
-            // 'is_active' => 'required|integer|max:1',
+            'status' => 'required|in:active,inactive',
         ]);
         if(!LoanHelper::checkPhoneNumber($request->phone)){
             Session::flash('error', 'Phone number is not valid');
@@ -59,22 +60,18 @@ class AdminController extends Controller
         $user->first_name = $request->first_name;
         $user->last_name = $request->last_name;
         $user->email = $request->email;
-        //phone
         $user->phone = $request->phone;
         $user->national_id = $request->national_id;
         $user->password = Hash::make($request->password);
         $user->role_id = $request->role_id;
-        $user->role = "user";
         $user->branch_id = $request->branch_id;
-        $user->email_verified = "no";
+        $user->status = $request->status;
         
         $user->save();
         //get thre role of the user
         $role = Role::find($request->role_id);
         $user->assignRole($role->name);
-        Session::flash('message', 'User created successfully!');
-        return redirect('/admin/users');
-        // return redirect()->route('admin.admin.index');
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully');
     }
 
     public function show($id)
@@ -92,9 +89,14 @@ class AdminController extends Controller
      */
     public function edit($id)
     {
-        //
-        $user = ModelsUser::find($id);
-        return view('admin.edit', compact('user'));
+        if (Auth()->user()->can( 'user.edit')) {
+            $user = User::find($id);
+            $roles = Role::all();
+            return view('administrator.edit', compact('user', 'roles'));
+        }
+        // $user = ModelsUser::find($id);
+        // $roles = Role::all();
+        // return view('administrator.edit', compact('user'));
     }
     /**
      * Update the specified resource in storage.
@@ -122,15 +124,14 @@ class AdminController extends Controller
             $user->password = Hash::make($request->password);
         }
         $user->save();
-        Session::flash('message', 'User updated successfully!');
-        return redirect()->route('admin.index');
+        return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
     }
 
 //admin profile
     public function profile()
     {
         $user_profile = Auth::user();
-        return view('admin.admin.profile', compact('user_profile'));
+        return view('administrator.profile', compact('user_profile'));
     }
 
     public function update_profile(Request $request)
@@ -180,33 +181,9 @@ class AdminController extends Controller
             $user->avatar = $name;
         }
 
-       // check if the user has a prprofile_pictureofile image
-        // if ($request->hasFile('profile_picture')) {
-  
-        //     $fileNameWithExt = $request->file('profile_picture')->getClientOriginalName();
-        //     $filename = pathinfo($fileNameWithExt, PATHINFO_FILENAME);
-        //     $extension = $request->file('profile_picture')->getClientOriginalExtension();
-        //     $fileNameToStore = $filename . '_' . time() . '.' . $extension;
-       
-        //     $path = $request->file('profile_picture')->storeAs('public/assets/profile_picture', $fileNameToStore);
-
-            
-        //     // \Storage::delete('public/assets/profile_picture/' . Auth::user()->avatar);
-           
-        //     $user->avatar = $fileNameToStore;
-
-           
-
-
-        // } 
-        // else {
-        //     $fileNameToStore = 'noimage.jpg';
-        // }
-        // $user->avatar = $fileNameToStore;
 
         $user->save();
-        Session::flash('message', 'User updated successfully!');
-        return redirect()->route('profile');
+        return redirect()->route('profile')->with('success', 'Profile updated successfully!');
     }
 
     /**
@@ -220,8 +197,7 @@ class AdminController extends Controller
         //
         $user = ModelsUser::find($id);
         $user->delete();
-        Session::flash('message', 'User deleted successfully!');
-        return redirect()->route('admin.index');
+        return redirect()->route('admin.users.index')->with('success', 'User deleted successfully!');
     }
 
 
@@ -266,8 +242,7 @@ class AdminController extends Controller
         //
         $user = ModelsUser::withTrashed()->find($id);
         $user->restore();
-        Session::flash('message', 'User restored successfully!');
-        return redirect()->route('admin.index');
+        return redirect()->route('admin.users.index')->with('success', 'User restored successfully!');
     }
     /**
      * Permanently delete the specified resource from storage.
@@ -279,8 +254,7 @@ class AdminController extends Controller
         //
         $user = ModelsUser::withTrashed()->find($id);
         $user->forceDelete();
-        Session::flash('message', 'User deleted permanently!');
-        return redirect()->route('admin.index');
+        return redirect()->route('admin.users.index')->with('success', 'User permanently deleted successfully!');
     }
 
     public function sendPasswordResetLink(Request $request)
@@ -290,12 +264,10 @@ class AdminController extends Controller
         ]);
         $user = ModelsUser::where('email', $request->email)->first();
         if (!$user) {
-            Session::flash('message', 'We can\'t find a user with that e-mail address.');
-            return redirect()->route('admin.index');
+            return redirect()->route('admin.users.index')->with('error', 'User not found!');
         }
         $this->dispatch(new SendPasswordResetEmail($user));
-        Session::flash('message', 'We have e-mailed your password reset link!');
-        return redirect()->route('admin.index');
+        return redirect()->route('admin.users.index')->with('success', 'We have e-mailed you a password reset link!');
     }
 
     public function passwordReset(Request $request)
@@ -306,13 +278,11 @@ class AdminController extends Controller
         ]);
         $user = ModelsUser::where('email', $request->email)->first();
         if (!$user) {
-            Session::flash('message', 'We can\'t find a user with that e-mail address.');
-            return redirect()->route('admin.index');
+            return redirect()->route('admin.users.index')->with('error', 'We can\'t find a user with that e-mail address.');
         }
         $user->password = Hash::make($request->password);
         $user->save();
-        Session::flash('message', 'Password changed successfully!');
-        return redirect()->route('admin.index');
+        return redirect()->route('admin.index')->with('success', 'Password changed successfully!');
     }
 
     public function changePassword(Request $request)

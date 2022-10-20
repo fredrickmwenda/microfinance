@@ -12,13 +12,19 @@ class Disburse extends Model
 
     public function loan()
     {
-        return $this->belongsTo(Loan::class);
+        return $this->belongsTo(Loan::class, 'loan_id');
     }
 
     //money is disbursed by an admin user
     public function disburser()
     {
         return $this->belongsTo(User::class, 'disbursed_by');
+    }
+
+    //money is disbursed to a client
+    public function disbursedTo()
+    {
+        return $this->belongsTo(Client::class, 'disbursed_to');
     }
 
 }

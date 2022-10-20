@@ -26,8 +26,8 @@ class LoanController extends Controller
      */
     public function index()
     {
-        //get loan paginated
-        $loans = Loan::with('customer', 'loan_attachments', 'approver', 'creator')->paginate(10);
+        //get loan paginated and order by id in ascending order
+        $loans = Loan::with('customer', 'loan_attachments', 'approver', 'creator')->orderBy('id', 'asc')->paginate(10);
         return view('loan.index', compact('loans'));
         //
     }
@@ -39,9 +39,9 @@ class LoanController extends Controller
      */
     public function create()
     {
-        //get customers with no loans, or have loan_payment_status as paid and those also loan_status is not pending
+        //get customers with no loans, or have payment_status as paid and those also status is not pending
         $customers = customer::whereDoesntHave('loans', function ($query) {
-            $query->where('loan_payment_status', '!=', 'paid')->orWhere('loan_status', '!=', 'pending');
+            $query->where('payment_status', '!=', 'paid')->orWhere('status', '!=', 'pending');
         })->get();
  
 
@@ -85,7 +85,7 @@ class LoanController extends Controller
         if ($customer->loans->count() > 0) {
           
             $loan = $customer->loans->last();
-            if ($loan->loan_payment_status != 'paid') {
+            if ($loan->payment_status != 'paid') {
                 return redirect()->back()->with('error', 'Customer has a loan not yet paid');
             }
         }
@@ -96,29 +96,30 @@ class LoanController extends Controller
             $total_amount = $request->loan_amount + $interest;
             $data = [
                 'loan_id' => $loan_id,
-                'loan_amount' => $request->loan_amount,
-                'loan_interest' =>  $interest,
+                'amount' => $request->loan_amount,
+                'interest' =>  $interest,
                 'total_payable' => $total_amount,
-                'loan_duration' => $request->duration,
-                'loan_payment_type' => $request->loan_payment_type,
+                'duration' => $request->duration,
+                'payment_type' => $request->loan_payment_type,
                 'customer_id' => $request->customer_id,
                 'created_by' => Auth::user()->id,
-                'loan_status' => 'pending',
-                'late_payment_fee' => $request->late_fee,
+                'status' => 'pending',
+                // 'late_payment_fee' => $request->late_fee,
                 'loan_purpose' => $request->loan_purpose,
                 'remaining_balance' => $total_amount,
                 'processing_fee' => $request->processing_fee,
             ];
             Loan::create($data);
 
-            if($request->hasFile('attachments')){
+            if($request->has('loan_attachments')){
                 $loan = Loan::latest()->first();
-                foreach($request->loan_attachments as $attachment){
+                foreach($request->loan_attachments as $attachment)
+                { 
                     $attachment_name = $attachment->getClientOriginalName();
                     $attachment->storeAs('public/loan_attachments', $attachment_name);
                     //store the loan id and the attachment name in the loan_attachments table
                     $loan->loan_attachments()->create([
-                        'loan_id' => $loan->id,
+                        'loan_id' => $loan->loan_id,
                         'attachment_name' => $attachment_name,
                     ]); 
                 }
@@ -135,19 +136,18 @@ class LoanController extends Controller
 
             $data = [
                 'loan_id' => $loan_id,
-                'loan_amount' => $request->loan_amount,
-                'loan_interest' => $interest,
+                'amount' => $request->loan_amount,
+                'interest' => $interest,
                 'total_payable' => $total_amount,
-                'loan_duration' => $request->duration,
-                'loan_payment_type' => $request->loan_payment_type,
+                'duration' => $request->duration,
+                'payment_type' => $request->loan_payment_type,
                 'customer_id' => $request->customer_id,
                 'created_by' => Auth::user()->id,
-                'loan_first_payment_date' => $request->loan_first_payment_date,
-                'loan_installment_payment' => $installment,
-                #number of installments 
+                'first_payment_date' => $request->loan_first_payment_date,
+                'installment_payment' => $installment,
                 'number_of_installments' => $request->installments,
-                'loan_status' => 'pending',
-                'late_payment_fee' => $request->late_fee,
+                'status' => 'pending',
+                // 'late_payment_fee' => $request->late_fee,
                 'loan_purpose' => $request->loan_purpose,
                 'remaining_balance' => $total_amount,
                 'processing_fee' => $request->processing_fee,
@@ -260,9 +260,9 @@ class LoanController extends Controller
 
         $loan->update([
             'loan_amount' => $request->loan_amount,
-            'loan_interest' => $loan_interest,
-            'loan_duration' => $request->loan_duration,
-            'loan_status' => $request->loan_status,
+            'interest' => $loan_interest,
+            'duration' => $request->loan_duration,
+            'status' => $request->loan_status,
             'loan_purpose' => $request->loan_purpose,
             'processing_fee' => $request->processing_fee,
         ]);
@@ -378,13 +378,9 @@ class LoanController extends Controller
     public function approve(Request $request, $id) {
         $loan = Loan::find($id);
         if ($loan) {
-            $loan->loan_status = 'approved';
+            $loan->status = 'approved';
             $loan->approved_by = Auth::user()->id;
             $loan->approved_at = Carbon::now();
-            // $loan->loan_start_date = Carbon::now();
-            //get the loan duration
-            // $loan_duration = $loan->duration;
-            // $loan->loan_end_date = Carbon::now()->addDays($loan_duration);
             $loan->save();
             //send email using Job Queue to customer
             $customer = customer::find($loan->customer_id);
@@ -407,7 +403,7 @@ class LoanController extends Controller
     public function reject(Request $request, $id) {
         $loan = Loan::find($id);
         if ($loan) {
-            $loan->loan_status = 'rejected';
+            $loan->status = 'rejected';
             $loan->rejected_by = Auth::user()->id;
             $loan->rejected_at = Carbon::now();
             $loan->rejected_reason = $request->rejection_reason;
@@ -428,11 +424,49 @@ class LoanController extends Controller
         }
     }
 
-    // .route('loan.show', $row->id).
+
+    // pending loans page
+    public function pendingLoansPage() {
+     
+        $loans = Loan::where('status', 'pending')->get();
+        return view('loan.pending', compact('loans'));
+    }
+
+    // approved loans page
+    public function approvedLoansPage() {
+        $loans = Loan::where('status', 'approved')->paginate(10);
+        return view('loan.approved', compact('loans'));
+    }
+
+    // rejected loans page
+    public function rejectedLoansPage() {
+        $loans = Loan::where('status', 'rejected')->get();
+        return view('loan.rejected', compact('loans'));
+    }
+
+    //completed loans page
+    public function closedLoansPage() {
+        $loans = Loan::where('status', 'closed')->get();
+        return view('loan.closed', compact('loans'));
+    }
+
+    //active loans page
+    public function activeLoansPage() {
+        
+        $loans = Loan::where('status', 'active')->get();
+        return view('loan.active', compact('loans'));
+    }
+
+    //overdue loans page
+    public function overdueLoansPage() {
+        $loans = Loan::where('status', 'overdue')->get();
+        return view('loan.overdue', compact('loans'));
+    }
+
     public function getPendingLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::with('customer', 'creator')->where('loan_status', 'pending')->latest()->get();
+            $data = Loan::with('customer', 'creator')->where('status', 'pending')->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     // ->editColumn('customer', function($row){
@@ -456,7 +490,7 @@ class LoanController extends Controller
     public function getApprovedLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::with('customer', 'creator', 'approver')->where('loan_status', 'approved', )->latest()->get();
+            $data = Loan::with('customer', 'creator', 'approver')->where('status', 'approved', )->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -474,7 +508,7 @@ class LoanController extends Controller
     public function getRejectedLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::where('loan_status', 'rejected')->latest()->get();
+            $data = Loan::where('status', 'rejected')->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -492,7 +526,7 @@ class LoanController extends Controller
     public function getClosedLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::where('loan_status', 'closed')->latest()->get();
+            $data = Loan::where('status', 'closed')->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -510,7 +544,7 @@ class LoanController extends Controller
     public function getDisbursedLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::with('customer', 'creator', 'approver')->where('loan_status', 'disbursed')->latest()->get();
+            $data = Loan::with('customer', 'creator', 'approver')->where('status', 'disbursed')->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -528,7 +562,7 @@ class LoanController extends Controller
     public function getOverdueLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::where('loan_status', 'overdue')->latest()->get();
+            $data = Loan::where('status', 'overdue')->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -547,7 +581,7 @@ class LoanController extends Controller
     public function getActiveLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::where('loan_status', 'active')->latest()->get();
+            $data = Loan::where('status', 'active')->latest()->get();
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -563,23 +597,16 @@ class LoanController extends Controller
     }
 
 
-    // public function getLoan(Request $request){
-    //     if ($request->ajax()) {
-    //         //get 
-    //         $data = Loan::latest()->get();
-    //         return Datatables::of($data)
-    //                 ->addIndexColumn()
-    //                 ->addColumn('action', function($row){
-    //                     $btn = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm">View</a>';
-    //                     $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-    //                     $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
-    //                     return $btn;
-    //                 })
-    //                 ->rawColumns(['action'])
-    //                 ->make(true);
-    //     }
-  
-    // }
+    
+
+
+
+
+
+
+
+
+
 
     /**
      * Remove the specified resource from storage.
@@ -587,9 +614,10 @@ class LoanController extends Controller
      * @param  \App\Models\Loan  $loan
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Loan $loan)
+    public function destroy($id)
     {
-        //
+        Loan::where('loan_id', $id)->delete();
+        return redirect()->route('loan.index')->with('success', 'Loan deleted successfully');
     }
 
 

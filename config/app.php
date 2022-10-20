@@ -125,6 +125,22 @@ return [
 
     'cipher' => 'AES-256-CBC',
 
+
+    //Equity Bank API Load from .env file
+    'equity_api_key' => env('EQUITY_API_KEY'),
+    //merchantID is the username
+    'equity_api_username' => env('EQUITY_MERCHANT_ID'),
+    //consumerSecret is the password
+    'equity_api_password' => env('EQUITY_CONSUMER_SECRET'),
+    'equity_api_callback_url' => env('EQUITY_API_CALLBACK_URL'),
+    // phone
+    'equity_api_phone' => env('EQUITY_API_PHONE'),
+    // base endpoint
+    'equity_api_base_endpoint' => env('EQUITY_API_BASE_URL'),
+    //account number
+    'equity_api_account_number' => env('EQUITY_ACCOUNT_NUMBER'),
+    
+
     /*
     |--------------------------------------------------------------------------
     | Maintenance Mode Driver

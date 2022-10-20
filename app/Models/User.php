@@ -10,6 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use DB;
 use Illuminate\Support\Facades\DB as FacadesDB;
+use Spatie\Permission\Models\Role;
 
 class User extends Authenticatable
 {
@@ -42,6 +43,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
 
     //a user belongs to a branch except for the admin
     public function branch()

@@ -33,7 +33,7 @@
                 </form>
               </div>
               <div class="col-6 mt-2">
-                  <!-- let action tar -->
+                 
                  <form action="">
                     <div class="input-group form-row mt-3">
 
@@ -55,11 +55,7 @@
             @isset($start_date)
             <strong>{{ date('d-m-Y', strtotime($start_date)) }} {{ __('Date To') }} {{ date('d-m-Y', strtotime($end_date)) }} {{ __('Date Report') }}</strong>
             <br>
-            <!-- @endisset
-            @isset($trx_id)
-            <strong>{{ __('Search By') }} {{ $trx_id }}</strong>
-            <br>
-            @endisset -->
+            @endisset
             <div class="table-responsive">
                 <table class="table table-striped" id="disburse_list">
                   <thead>
@@ -121,7 +117,10 @@
 <script>
     $(document).ready(function() {
         $('#disburse_list').DataTable({
-            responsive: true
+            responsive: true,
+            "order": [[ 0, "desc" ]],
+
+
         });
     });
 </script>

@@ -23,7 +23,7 @@ class customerFactory extends Factory
             'phone' => fake()->phoneNumber(),
             'national_id' => fake()->ssn(),
             'address' => fake()->address(),
-            'created_by' => fake()->numberBetween(1, 30),
+            'created_by' => fake()->numberBetween(1, 3),
             // 'state' => fake()->state(),
             // 'zip' => fake()->postcode(),
             // 'country' => fake()->country(),

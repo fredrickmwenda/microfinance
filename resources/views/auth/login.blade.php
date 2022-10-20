@@ -102,7 +102,7 @@
                                 <div id="auth-bg" class="d-flex align-items-center justify-content-center">
                                     <div class="px-5">
                                         <p class="mb-1 font-weight-light">WELCOME TO</p>
-                                        <h2 class="font-weight-bold">Livo Bank</h2>
+                                        <h2 class="font-weight-bold">Mweguni Credit</h2>
 
                                         <div class="divider"></div>
 

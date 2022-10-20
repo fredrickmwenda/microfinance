@@ -12,7 +12,7 @@
 		</div>
 		<br>
 		<div class="card-action-filter">
-			<form method="post" id="basicform" action="{{ route('admin.users.delete'') }}">
+			<form method="post" id="basicform" action="#">
 				@csrf
 				<div class="row">
 					<div class="col-lg-6">
@@ -27,7 +27,7 @@
 									</select>
 								</div>
                             </div>
-                            @can('admin.edit')
+                            @can('user.edit')
 							<div class="single-filter">
 								<button type="submit" class="btn btn-primary btn-lg ml-2">{{ __('Apply') }}</button>
                             </div>
@@ -35,16 +35,16 @@
 						</div>
 					</div>
 					<div class="col-lg-6">
-						@can('admin.create')
+						@can('user.create')
 						<div class="add-new-btn">
-							<a href="{{ route('admin.admin.create') }}" class="btn btn-primary float-right">{{ __('Add New') }}</a>
+							<a href="{{ route('admin.users.create') }}" class="btn btn-primary float-right">{{ __('Add New') }}</a>
 						</div>
 						@endcan
 					</div>
 				</div>
 			</div>
 			<div class="table-responsive custom-table">
-				<table class="table">
+				<table class="table" id="users-table">
 					<thead>
 						<tr>
 							<th>
@@ -56,9 +56,10 @@
                             <th>{{ __('Name') }}</th>
                             <th>{{ __('Email') }}</th>
                             <th>{{ __('Phone') }}</th>
-                            <th>{{ __('Status') }}</th>
-                            
+							<th> {{ __('Branch') }}</th>
+                            <th>{{ __('Status') }}</th>                          
                             <th>{{ __('Role') }}</th>
+							<th> {{ __('Action') }}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -71,12 +72,12 @@
 								</div>
 							</td>
 							<td>
-                                {{ $row->name }}
-                                @can('admin.edit')
+                                {{ $row->first_name }} {{ $row->last_name }}
+                                <!-- @can('user.edit')
 								<div class="hover">
-									<a href="{{ route('admin.admin.edit',$row->id) }}">{{ __('Edit') }}</a>									
+									<a href="{{ route('admin.users.edit',$row->id) }}">{{ __('Edit') }}</a>									
                                 </div>
-                                @endcan
+                                @endcan -->
                             </td>
                             <td>
                                {{ $row->email }}                               
@@ -85,16 +86,44 @@
                             <td>
                                {{ $row->phone }}                               
 							</td>
+
+							<td>
+								@php
+									$branch = App\Models\Branch::where('id',$row->branch_id)->first();
+								@endphp
+								{{ $branch->name }}
+
+							</td>
 							
                             <td>
-                            @if($row->status==1)
+                            @if($row->status== "active")
                             <span class="badge badge-success">{{ __('Active') }}</span>
                             @else
                             <span class="badge badge-danger">{{ __('Deactive') }}</span>
                             @endif
                             </td>
 							<td>
-								@foreach($row->roles as $r) <span class="badge badge-primary">{{ $r->name }}</span> @endforeach
+								@php
+								$roles = $roles->where('id',$row->role_id)->first();
+								$role = $roles->name;
+								@endphp
+								<span class="badge badge-primary">{{ $role }}</span>
+							</td>
+
+							<td>
+							    <div class="dropdown d-inline">
+									<button type="button" class="btn btn-outline-primary dropdown-toggle" data-toggle="dropdown">
+										{{ __('Action') }}
+									</button>
+									<div class="dropdown-menu">
+										@can('user.edit')
+										<a class="dropdown-item has-icon" href="{{ route('admin.users.edit',$row->id) }}"><i class="fa fa-edit"></i>{{ __('Edit') }}</a>
+										@endcan
+										@can('user.delete')
+										<a class="dropdown-item has-icon" href="{{ route('admin.users.delete',$row->id) }}"><i class="fa fa-trash"></i>{{ __('Delete') }}</a>
+										@endcan
+									</div>
+								</div>
 							</td>
 						</tr>
 						@endforeach
@@ -105,3 +134,15 @@
 	</div>
 </div>
 @endsection
+
+@push('js')
+<!-- make the table a  datatable -->
+<script>
+	$(document).ready(function() {
+		$('#users-table').DataTable({
+			"order": [[ 0, "desc" ]]
+		});
+	});
+</script>
+
+@endpush

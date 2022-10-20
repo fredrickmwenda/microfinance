@@ -24,3 +24,6 @@ Route::any('/mpesa/b2c/timeout', [App\Http\Controllers\DisburseController::class
 Route::any('/mpesa/b2c/result', [App\Http\Controllers\DisburseController::class, 'transactionStatusQueryURL'])->name('mpesa.b2c.result');
 // enrollment_callback', [App\Http\Controllers\HomeController::class, 'enroll_callback'])->name('homeController');
 
+//jenga webhook
+Route::any('/jenga/webhook', [App\Http\Controllers\TransactionController::class, 'webhook'])->name('jenga.webhook');
+

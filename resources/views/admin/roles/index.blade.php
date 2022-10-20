@@ -70,9 +70,11 @@
 							</th>
 							<td>
 								{{ $page->name }}
+								@can('role.edit')
 								<div class="hover">
 									<a href="{{ route('admin.role.edit',$page->id) }}">{{ __('Edit') }}</a>
 								</div>
+								@endcan
 							</td>
 							<td>
 								@foreach ($page->permissions as $perm)

@@ -23,9 +23,10 @@
               <div class="alert alert-danger">{{ Session::get('message') }}</div>
             @endif
             <div class="table-responsive">
-                <table class="table table-striped" id="table-2">
+                <table class="table table-striped" id="loantable-2">
                   <thead>
                     <tr>
+                      <th>{{ __('ID') }}</th>
                       
                       <th>{{ __('Loan ID') }}</th>
                       <th>{{ __('Customer Name') }}</th>
@@ -40,20 +41,21 @@
                   <tbody>
                     @foreach($loans as $loan)
                     <tr>
+                      <td> {{ $loan->id }} </td>
                       <td>{{ $loan->loan_id }}</td>
                       <td>
                         {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
                       </td>
-                      <td>{{ $loan->loan_amount }}</td>
-                      <td>{{ $loan->loan_interest }}</td>
-                      <td>{{ $loan->loan_duration }}</td>
+                      <td>{{ $loan->amount }}</td>
+                      <td>{{ $loan->interest }}</td>
+                      <td>{{ $loan->duration }}</td>
                       <td>
-                        @if($loan->loan_status == "pending")
-                        <span class="badge badge-warning">{{ $loan->loan_status }}</span>
-                        @elseif($loan->loan_status == "approved")
-                        <span class="badge badge-success">{{ $loan->loan_status }}</span>
-                        @elseif($loan->loan_status == "rejected")
-                        <span class="badge badge-danger">{{ $loan->loan_status }}</span>
+                        @if($loan->status == "pending")
+                        <span class="badge badge-warning">{{ $loan->status }}</span>
+                        @elseif($loan->status == "approved")
+                        <span class="badge badge-success">{{ $loan->status }}</span>
+                        @elseif($loan->status == "rejected")
+                        <span class="badge badge-danger">{{ $loan->status }}</span>
                         @endif
                       </td>
                       <!--get the user who created the loan using created_by column-->
@@ -94,4 +96,15 @@
 
 @push('js')
 <script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
+@push('js')
+<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        $('#loantable-2').DataTable({
+            responsive: true,
+            "order": [[ 0, "desc" ]],
+        });
+    });
+</script>
+@endpush
 @endpush

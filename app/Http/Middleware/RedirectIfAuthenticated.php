@@ -27,7 +27,7 @@ class RedirectIfAuthenticated
                 
                 if ($role == 1) {
                     return redirect()->route('admin.dashboard');
-                } elseif ($role == 6 || $role == 7) {
+                } elseif ($role == 2 || $role == 7) {
                     return redirect()->route('agent.dashboard');
                 }
                 // return redirect(RouteServiceProvider::HOME);

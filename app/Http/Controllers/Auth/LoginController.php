@@ -48,7 +48,7 @@ class LoginController extends Controller
 
         if ($role == 1 ||  $role == 4) {
             return route('admin.dashboard');
-        } elseif ($role == 6 ) {
+        } elseif ($role == 2 || $role == 7) {
             return route('agent.dashboard');
         }
         // }else{

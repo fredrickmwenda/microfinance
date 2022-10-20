@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 #mail
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TransactionMail;
+use App\Helpers\LoanHelper;
 
 class CustomerController extends Controller
 {
@@ -27,6 +28,31 @@ class CustomerController extends Controller
         // $branches = branch::where('status', 'active')->get();
         
         return view('customer.index', compact('customers'));
+    }
+
+    //active customers
+
+    public function active()
+    {
+        //customers paginated to 20
+        $customers = customer::where('status', 1)->paginate(20);
+        //branches that are active
+        // $branches = branch::where('status', 'active')->get();
+
+        
+        return view('customer.active', compact('customers'));
+    }
+
+    //inactive customers
+
+    public function inactive()
+    {
+        //customers paginated to 20
+        $customers = customer::with('branch')->where('status', 0)->paginate(20);
+        //branches that are active
+        // $branches = branch::where('status', 'active')->get();
+        
+        return view('customer.inactive', compact('customers'));
     }
 
     /**
@@ -85,7 +111,7 @@ class CustomerController extends Controller
 
         $request->merge([
             'created_by' => auth()->user()->id,
-            'status' => 1,
+            'status' => 'active',
         ]);
 
 
@@ -171,6 +197,8 @@ class CustomerController extends Controller
             'next_of_kin_relationship'        => 'required',
         ]);
 
+
+
         $customer->update($request->all());
         return redirect()->route('customer.index')->with('success', 'Customer Updated Successfully');
     }
@@ -207,18 +235,10 @@ class CustomerController extends Controller
             if(env('QUEUE_MAIL') == 'on'){
                 dispatch(new SendEmailJob($data));
             }else{
-                Mail::to($user_mail)->send(new TransactionMail($data));
+                Mail::to($customer_email)->send(new TransactionMail($data));
             }
         } else {
             return redirect()->back()->with('error', 'Customer does not have an email address');
-        }
- 
-
-        // Send Mail
-        if(env('QUEUE_MAIL') == 'on'){
-            dispatch(new SendEmailJob($data));
-        }else{
-            Mail::to($user_mail)->send(new TransactionMail($data));
         }
 
 

@@ -1,7 +1,7 @@
 @extends('layouts.backend.app')
 
 @section('head')
-@include('layouts.backend.partials.headersection',['title'=>'Pending Loans List'])
+@include('layouts.backend.partials.headersection',['title'=>'OverDue Loans List'])
 @endsection
 
 @section('content')
@@ -11,7 +11,7 @@
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-lg-6">
-                  <h4>{{ __('Pending Loans') }}</h4>
+                  <h4>{{ __('OverDue Loans List') }}</h4>
                 </div>
                 <div class="col-lg-6">
                     <div class="add-new-btn">
@@ -84,7 +84,7 @@
                     @endforeach
                   </tbody>
                 </table>
-               
+              
             </div>
         </div>
       </div>
@@ -94,7 +94,8 @@
 
 @push('js')
 <script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
-
+@push('js')
+<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
 <script>
     $(document).ready(function() {
         $('#loanPendingTable-2').DataTable({
@@ -103,4 +104,5 @@
         });
     });
 </script>
+@endpush
 @endpush
