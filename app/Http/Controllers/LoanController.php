@@ -241,13 +241,15 @@ class LoanController extends Controller
         if($request->has('loan_attachments')){
             //loop through the files
             foreach($request->loan_attachments as $attachment){
-                if(LoanAttachment::where('loan_id', $loan->loan_id)->first() != null){
-                    //delete the file from the storage
-                    $loan_attachment_name = LoanAttachment::where('loan_id', $loan->id)->first()->attachment_name;
-                   
-                    Storage::delete('public/loan_attachments/'.$loan_attachment_name);
-                }
-           
+                if(count(LoanAttachment::where('loan_id', $id)->get()) > 0){
+                    $loan_attachments = LoanAttachment::where('loan_id', $id)->get();
+                    foreach($loan_attachments as $attach){
+                        //delete the file from the storage
+                        Storage::delete('public/loan_attachments/'.$attach->attachment_name);
+                        //delete the file from the database
+                        LoanAttachment::where('loan_id', $loan->loan_id)->delete();
+                    }    
+                }         
                 $attachment->storeAs('public/loan_attachments', $attachment->getClientOriginalName());
                 //store the loan id and the attachment name in the loan_attachments table
                 LoanAttachment::create([
@@ -259,7 +261,7 @@ class LoanController extends Controller
         // dd($request->all());
 
         $loan->update([
-            'loan_amount' => $request->loan_amount,
+            'amount' => $request->loan_amount,
             'interest' => $loan_interest,
             'duration' => $request->loan_duration,
             'status' => $request->loan_status,
@@ -393,9 +395,9 @@ class LoanController extends Controller
             // }
             // $loan->notify(new LoanApproved($loan));
             
-            return redirect()->route('loans.index')->with('success', 'Loan approved successfully');
+            return redirect()->route('loan.index')->with('success', 'Loan approved successfully');
         } else {
-            return redirect()->route('loans.index')->with('error', 'Loan not found');
+            return redirect()->route('loan.index')->with('error', 'Loan not found');
         }
     }
 
@@ -465,8 +467,11 @@ class LoanController extends Controller
 
     public function getPendingLoans(Request $request){
         if ($request->ajax()) {
-            //get 
-            $data = Loan::with('customer', 'creator')->where('status', 'pending')->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator')->where('status', 'pending')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator')->where('status', 'pending')->where('created_by', Auth::user()->id)->latest()->get();
+            }
             return Datatables::of($data)
                     ->addIndexColumn()
                     // ->editColumn('customer', function($row){
@@ -489,8 +494,12 @@ class LoanController extends Controller
 
     public function getApprovedLoans(Request $request){
         if ($request->ajax()) {
-            //get 
-            $data = Loan::with('customer', 'creator', 'approver')->where('status', 'approved', )->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'approved')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'approved')->where('created_by', Auth::user()->id)->latest()->get();
+            } 
+           
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -508,7 +517,11 @@ class LoanController extends Controller
     public function getRejectedLoans(Request $request){
         if ($request->ajax()) {
             //get 
-            $data = Loan::where('status', 'rejected')->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'rejected')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'rejected')->where('created_by', Auth::user()->id)->latest()->get();
+            }
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -525,8 +538,11 @@ class LoanController extends Controller
 
     public function getClosedLoans(Request $request){
         if ($request->ajax()) {
-            //get 
-            $data = Loan::where('status', 'closed')->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'closed')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'closed')->where('created_by', Auth::user()->id)->latest()->get();
+            }
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -543,8 +559,11 @@ class LoanController extends Controller
 
     public function getDisbursedLoans(Request $request){
         if ($request->ajax()) {
-            //get 
-            $data = Loan::with('customer', 'creator', 'approver')->where('status', 'disbursed')->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'disbursed')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'disbursed')->where('created_by', Auth::user()->id)->latest()->get();
+            }
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -561,8 +580,11 @@ class LoanController extends Controller
     //get overdue loans
     public function getOverdueLoans(Request $request){
         if ($request->ajax()) {
-            //get 
-            $data = Loan::where('status', 'overdue')->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'overdue')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'overdue')->where('created_by', Auth::user()->id)->latest()->get();
+            }
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
@@ -580,8 +602,11 @@ class LoanController extends Controller
     //get active loans
     public function getActiveLoans(Request $request){
         if ($request->ajax()) {
-            //get 
-            $data = Loan::where('status', 'active')->latest()->get();
+            if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'active')->latest()->get();
+            }else if (Auth::user()->role_id == 2) {
+                $data = Loan::with('customer', 'creator', 'approver')->where('status', 'active')->where('created_by', Auth::user()->id)->latest()->get();
+            }
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){

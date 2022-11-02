@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TransactionMail;
 use App\Helpers\LoanHelper;
+use Termwind\Components\Dd;
 
 class CustomerController extends Controller
 {
@@ -20,10 +21,20 @@ class CustomerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //customers paginated to 20
-        $customers = customer::paginate(20);
+
+        // dd($request->all());
+
+        //use selected type to search the input called src
+        $customers = customer::select('*')->when($request->type, function ($query) use ($request) {
+            if ($request->type == 'phone') {
+                return $query->where('phone', 'like', '%' . $request->src . '%');
+            } elseif ($request->type == 'national_id') {           
+                return $query->where('national_id', 'like', '%' . $request->src . '%');
+            } elseif ($request->type == 'email') {
+                return $query->where('email', 'like', '%' . $request->src . '%');
+            }})->paginate(20);
         //branches that are active
         // $branches = branch::where('status', 'active')->get();
         

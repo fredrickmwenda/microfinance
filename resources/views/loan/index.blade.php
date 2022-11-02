@@ -56,6 +56,8 @@
                         <span class="badge badge-success">{{ $loan->status }}</span>
                         @elseif($loan->status == "rejected")
                         <span class="badge badge-danger">{{ $loan->status }}</span>
+                        @else
+                        <span class="badge badge-info">{{ $loan->status }}</span>
                         @endif
                       </td>
                       <!--get the user who created the loan using created_by column-->

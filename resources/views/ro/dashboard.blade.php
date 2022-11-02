@@ -337,74 +337,32 @@
   <div class="col-md-6">
     <div class="card">
       <div class="card-header">
-        <h4>{{ __('Loan Payment') }}</h4>
+        <h4>{{ __('Loans') }}</h4>
       </div>
       <div class="card-body">
         <div class="chart-container">
-          <canvas id="loanPaymentChart"></canvas>
+        <canvas id="loansChart" height="280"></canvas>
         </div>
       </div>
     </div>
   </div>
+
   <div class="col-md-6">
     <div class="card">
       <div class="card-header">
-        <h4>{{ __('Loan Disburse and Repayment') }}</h4>
+        <h4>{{ __('RO Performance') }}</h4>
       </div>
       <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped" id="loanDisburseRepaymentTable">
-            <thead>
-              <tr>
-                <th>{{ __('Loan Product') }}</th>
-                <th>{{ __('Disburse') }}</th>
-                <th>{{ __('Repayment') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colspan="3" class="text-center">
-                  <span class="loader">
-                    <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="chart-container">
+          <canvas id="roPerformanceChart" height="280"></canvas>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- <div class="row">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">
-        <h4>{{ __('Loan Disburse') }}</h4>
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="loanDisburseChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header">
-        <h4>{{ __('Loan Repayment') }}</h4>
-      </div>
-      <div class="card-body">
-        <div class="chart-container">
-          <canvas id="loanRepaymentChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-</div> -->
 
-<!--3 tables the first one is for the loan payment, the second one is for the overdue loans,  the third one is for the pending loans-->
+
 <div class="row">
   <div class="col-12">
     <div class="card">
@@ -416,7 +374,6 @@
           <table class="table table-striped" id="overdueLoanTable">
             <thead>
               <tr>
-                <th > {{ __('ID') }}</th>
                 <th> {{ __('Loan ID') }} </th>
                 <th> {{ __('Customer Name') }} </th>
                 <th>{{ __('Loan Amount') }}</th>
@@ -453,24 +410,80 @@
           <table class="table table-striped" id="pendingLoanTable">
             <thead>
               <tr>
-              <th > {{ __('ID') }}</th>
+                <th> {{ __('ID') }} </th>
                 <th> {{ __('Loan ID') }} </th>
                 <th> {{ __('Customer Name') }} </th>                
                 <th>{{ __('Loan Amount') }}</th>
                 <th>{{ __('Total Amount') }}</th>
+                <th> {{ __('Loan Duration') }} </th>
                 <th>{{ __('RO officer') }}</th>
-                <th>{{ __('Due Date') }}</th>
                 <th>{{ __('Loan Status') }}</th>
+                <th>{{ __('Actions') }}</th>
               </tr>
             </thead>
             <tbody>
-              <!-- <tr>
-                <td colspan="2" class="text-center">
-                  <span class="loader">
-                    <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-                  </span>
-                </td>
-              </tr> -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h4>{{ __('Approved Loans') }}</h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped" id="approvedLoanTable">
+            <thead>
+              <tr>
+                <th> {{ __('ID') }} </th>
+                <th> {{ __('Loan ID') }} </th>
+                <th> {{ __('Customer Name') }} </th>                
+                <th>{{ __('Loan Amount') }}</th>
+                <th>{{ __('Total Amount') }}</th>
+                <th> {{ __('Loan Duration') }} </th>
+                <th>{{ __('RO officer') }}</th>
+                <th> {{ __('Approved Date') }} </th>
+                <th> {{ __('Approved By') }} </th>
+                <th>{{ __('Loan Status') }}</th>
+                <th>{{ __('Actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h4>{{ __('Disbursed Loans') }}</h4>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-striped" id="disbursedLoanTable">
+            <thead>
+              <tr>
+                <th> {{ __('ID') }} </th>
+                <th> {{ __('Loan ID') }} </th>
+                <th> {{ __('Customer Name') }} </th>                
+                <th>{{ __('Loan Amount') }}</th>
+                <th>{{ __('Total Amount') }}</th>
+                <th> {{ __('Loan Duration') }} </th>
+                <th>{{ __('RO officer') }}</th>
+                <th> {{ __('Disbursed Date') }} </th>
+                <th> {{ __('Due Date') }} </th>
+                <th>{{ __('Loan Status') }}</th>
+                <th>{{ __('Actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
             </tbody>
           </table>
         </div>
@@ -489,11 +502,12 @@
           <table class="table table-striped" id="activeLoanTable">
             <thead>
               <tr>
-              <th > {{ __('ID') }}</th>
                 <th> {{ __('Loan ID') }} </th>
                 <th> {{ __('Customer Name') }} </th>
                 <th>{{ __('Loan Amount') }}</th>
                 <th>{{ __('Total Amount') }}</th>
+                <th> {{ __('Remaining Amount') }} </th>
+                <th> {{ __('Loan Duration') }} </th>
                 <th>{{ __('RO officer') }}</th>
                 <th>{{ __('Due Date') }}</th>
                 <th>{{ __('Loan Status') }}</th>
@@ -524,11 +538,12 @@
           <table class="table table-striped" id="completeLoanTable">
             <thead>
               <tr>
-              <th > {{ __('ID') }}</th>
+
                 <th> {{ __('Loan ID') }} </th>
                 <th> {{ __('Customer Name') }} </th>
                 <th>{{ __('Loan Amount') }}</th>
                 <th>{{ __('Total Amount') }}</th>
+                <th> {{ __('Loan Duration') }} </th>
                 <th>{{ __('RO officer') }}</th>
                 <th>{{ __('Due Date') }}</th>
                 <th>{{ __('Loan Status') }}</th>
@@ -558,8 +573,8 @@
 <!--datatables-->
 
 <script src="{{ asset('assets/backend/admin/assets/js/sparkline.js') }}"></script>
-<script src="{{ asset('assets/backend/admin/assets/js/chart.js') }}"></script>
-<script src="{{ asset('assets/backend/admin/assets/js/page/index.js') }}"></script>
+<script src="{{ asset('assets/backend/admin/assets/js/chart.min.js') }}"></script>
+<!-- <script src="{{ asset('assets/backend/admin/assets/js/page/index.js') }}"></script> -->
 
 
 
@@ -569,17 +584,58 @@
     var table = $('#pendingLoanTable'). DataTable({
       processing: true,
       serverSide: true,
-      ajax: "{{ route('loans.pending') }}",
+      ajax: "{{ route('loans.pending.get') }}",
       columns: [
         {data: 'id', name: 'id'},
+        {data: 'loan_id', name: 'loan_id'},
         //from customer_id in loans table, get customer first name and last name
-        {data: 'customer_id', name: 'customer_id'},
-        {data: 'loan_amount', name: 'loan_amount'},
-        {data: 'total_amount', name: 'total_amount'},
-        //ro officer is the name of the user who created the loan
-        {data: 'created_by', name: 'ro_officer'},
-        {data: 'due_date', name: 'due_date'},
-        {data: 'loan_status', name: 'loan_status'},
+       //return the first name and last name as a string
+        {data: 'customer', name: 'customer', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        {data: 'amount', name: 'loan_amount'},
+        {data: 'total_payable', name: 'total_payable'},
+        {data: 'duration', name: 'duration'},
+        {data: 'creator', name: 'creator', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        {data: 'status', name: 'loan_status'},
+        {
+          data: 'action', 
+          name: 'action', 
+          orderable: true, 
+          searchable: true
+        },
+
+      ]
+    });
+
+
+  });
+
+  $(function(){
+    var table = $('#disbursedLoanTable'). DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: "{{ route('loans.disbursed.get') }}",
+      columns: [
+        {data: 'id', name: 'id'},
+        {data: 'loan_id', name: 'loan_id'},
+        //from customer_id in loans table, get customer first name and last name
+       //return the first name and last name as a string
+        {data: 'customer', name: 'customer', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        {data: 'amount', name: 'loan_amount'},
+        {data: 'total_payable', name: 'total_loan'},
+        {data: 'duration', name: 'loan_duration'},
+        {data: 'creator', name: 'creator', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        //loan end date set it in carbon
+        {data: 'start_date', name: 'loan_start_date'},
+        {data: 'end_date', name: 'loan_end_date'},
+        {data: 'status', name: 'loan_status'},
         {
           data: 'action', 
           name: 'action', 
@@ -598,21 +654,32 @@
 
   });
 
+
   $(function(){
-      var table2 = $('#overdueLoanTable'). DataTable({
+    var table = $('#approvedLoanTable'). DataTable({
       processing: true,
       serverSide: true,
-      ajax: "{{ route('loans.overdue') }}",
+      ajax: "{{ route('loans.approved.get') }}",
       columns: [
         {data: 'id', name: 'id'},
+        {data: 'loan_id', name: 'loan_id'},
         //from customer_id in loans table, get customer first name and last name
-        {data: 'customer_id', name: 'customer_id'},
-        {data: 'loan_amount', name: 'loan_amount'},
-        {data: 'total_amount', name: 'total_amount'},
-        //ro officer is the name of the user who created the loan
-        {data: 'created_by', name: 'ro_officer'},
-        {data: 'due_date', name: 'due_date'},
-        {data: 'loan_status', name: 'loan_status'},
+       //return the first name and last name as a string
+        {data: 'customer', name: 'customer', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        {data: 'amount', name: 'amount'},
+        {data: 'total_payable', name: 'total_payable'},
+        {data: 'duration', name: 'duration'},
+        {data: 'creator', name: 'creator', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        //loan end date set it in carbon
+        {data: 'approved_at', name: 'approved_at'},
+        {data: 'approver', name: 'approver', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        {data: 'status', name: 'status'},
         {
           data: 'action', 
           name: 'action', 
@@ -625,45 +692,236 @@
 
   });
 
-  //active loans
-  $(function(){
-      var table3 = $('#activeLoanTable'). DataTable({
-      processing: true,
-      serverSide: true,
-      ajax: "{{ route('loans.active') }}",
-      columns: [
-        {data: 'id', name: 'id'},
-        //from customer_id in loans table, get customer first name and last name
-        {data: 'customer_id', name: 'customer_id'},
-        {data: 'loan_amount', name: 'loan_amount'},
-        {data: 'total_amount', name: 'total_amount'},
-        //ro officer is the name of the user who created the loan
-        {data: 'created_by', name: 'ro_officer'},
-        {data: 'due_date', name: 'due_date'},
-        {data: 'loan_status', name: 'loan_status'},
+
+  // get id of loanchart
+  var loanGraph = $('#loansChart');
+
+  var performanceGraph = $('#roPerformanceChart');
+
+  var loanData = JSON.parse('<?php echo isset($loanData) ? $loanData : '' ?>');
+
+ 
+
+  
+
+
+var activeloanData = JSON.parse('<?php echo isset($activeLoanData) ? $activeLoanData : '' ?>');
+
+var overdueLoanData = JSON.parse('<?php echo isset($overDueLoanData) ? $overDueLoanData : '' ?>');
+
+var ROPerformanceData = JSON.parse('<?php echo isset($ROPerformanceData) ? $ROPerformanceData : '' ?>');
+
+console.log(loanData, activeloanData,  overdueLoanData, ROPerformanceData);
+
+  // console.log(loanData[0].loans);
+
+
+  var loanCtx = document.getElementById('loansChart').getContext('2d');
+
+
+  var performanceCtx = document.getElementById('roPerformanceChart').getContext('2d');
+
+//  Label months in short form
+  const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  //create the chart
+  var loanChart = new Chart(loanCtx, {
+    type: 'line',
+    //append data to the chart by checking the loanData array, if the month is equal to the month in the array, append the data to the chart
+
+
+    data: {
+      // labels: loanData.labels,
+      labels: labels,
+      datasets: [
+      
         {
-          data: 'action', 
-          name: 'action', 
-          orderable: true, 
-          searchable: true
+          label: 'Loans',
+          data: loanData,
+          backgroundColor: 'rgba(75, 192, 192, 0.2)',
+          borderColor: 'rgba(75, 192, 192, 1)',
+          borderWidth: 1
         },
-
+        {
+          label: 'Active Loans',
+          data: activeloanData,
+          backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          borderColor: 'rgba(54, 162, 235, 1)',
+          borderWidth: 1
+        },
+        {
+          label: 'Overdue Loans',
+          data: overdueLoanData, 
+          backgroundColor: 'rgba(255, 99, 132, 0.2)',
+          borderColor: 'rgba(255, 99, 132, 1)',
+          borderWidth: 1
+        },
+        // add padding 
       ]
-    });
 
+
+    },
+    options: {
+      responsive: true,
+      legend: {
+                display: false
+            },
+      scales: {
+        // yAxes start from 0 to 1000
+        y: {
+          stacked: false,
+          suggestedMin: 0,
+          suggestedMax: 200,
+          title: {
+            display: true,
+            text: 'Number of Loans',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+
+
+
+          ticks: {
+            beginAtZero: true,
+            stepSize: 20,
+          },
+          // gridLines: {
+          //   display: true,
+          //   color: 'rgba(0, 0, 0, 0.1)'
+          // }
+        },
+        x: {
+          title : {
+            display: true,
+            text: 'Months',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+        }
+      }
+    }
   });
+
+
+  //create the chart
+
+
+
+  var performanceChart = new Chart(performanceCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      // // loop through json data in ROPerformanceData and append to the chart
+      
+
+      datasets: [{
+        label: 'Performance',      
+        data: ROPerformanceData,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      legend: {
+                display: false
+            },
+      scales: {
+        // yAxes start from 0 to 1000
+        y: {
+          stacked: false,
+          suggestedMin: 0,
+          // max is 500,000
+          suggestedMax: 100,
+          title: {
+            display: true,
+            text: 'Users Performance',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+
+
+
+          ticks: {
+            beginAtZero: true,
+            // stepSize: 5,
+          },
+          // gridLines: {
+          //   display: true,
+          //   color: 'rgba(0, 0, 0, 0.1)'
+          // }
+        },
+        x: {
+          title : {
+            display: true,
+            text: 'Months',
+            // color: 'black',
+            font: {
+              size: 14,
+              weight: 'bold',
+              color: 'black'
+            },
+            align: 'center',
+            padding: {
+              top: 10,
+              bottom: 10
+            }
+          },
+        }
+      }
+    }
+  });
+
+
+
+
+
+
 
   $(".date-btn").on("click", function() {
     $(".date-btn").removeClass("active");
     $(this).addClass("active");
     var start_date = $(this).data('start_date');
     var end_date = $(this).data('end_date');
+
+    console.log(start_date);
+    console.log(end_date);
+
+
     
 
     //get dashboard data according to date range
     $.ajax({
       //pass the start and end date as parameters to the route
-      url: "{{ route('dashboard.data', ['start_date' => ':start_date', 'end_date' => ':end_date']) }}".replace(':start_date', start_date).replace(':end_date', end_date),
+      url: "{{ route('ro.dashboard.data', ['start_date' => ':start_date', 'end_date' => ':end_date']) }}".replace(':start_date', start_date).replace(':end_date', end_date),
         
       type: "GET",
       success: function(data) {
@@ -677,31 +935,29 @@
         $("#total-amount-loans").html(data.total_amount_loans);
         //pending loans
         $("#total-pending-loans").html(data.total_pending_loans);
-        $("#total-pending-loans-amount").html(data.total_pending_loans_amount);
+        $("#total-amount-pending-loans").html(data.total_amount_pending_loans);
         //overdue loans
         $("#total-overdue-loans").html(data.total_overdue_loans);
-        $("#total-overdue-loans-amount").html(data.total_overdue_loans_amount);
+        $("#total-amount-overdue-loans").html(data.total_amount_overdue_loans);
         //disbursed loans
         $("#total-disbursed-loans").html(data.total_disbursed_loans);
-        $("#total-disbursed-loans-amount").html(data.total_disbursed_loans_amount);
+        $("#total-amount-disbursed-loans").html(data.total_amount_disbursed_loans);
         //active loans
         $("#total-active-loans").html(data.total_active_loans);
-        $("#total-active-loans-amount").html(data.total_active_loans_amount);
+        $("#total-amount-active-loans").html(data.total_amount_active_loans);
         //completed loans
         $("#total-closed-loans").html(data.total_closed_loans);
-        $("#total-closed-loans-amount").html(data.total_closed_loans_amount);
+        $("#total-amount-closed-loans").html(data.total_amount_closed_loans);
         //rejected loans
         $("#total-rejected-loans").html(data.total_rejected_loans);
-        $("#total-rejected-loans-amount").html(data.total_rejected_loans_amount);
+        $("#total-amount-rejected-loans").html(data.total_amount_rejected_loans);
         //approved loans
         $("#total-approved-loans").html(data.total_approved_loans);
-        $("#total-approved-loans-amount").html(data.total_approved_loans_amount);
+        $("#total-amount-approved-loans").html(data.total_amount_approved_loans);
 
       }
     });
-    // $.get('dashboard-filter/' + start_date + '/' + end_date, function(data) {
-    //     dashboardFilter(data);
-    // });
+
   });
 
 

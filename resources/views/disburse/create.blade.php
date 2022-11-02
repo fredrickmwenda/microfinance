@@ -19,14 +19,14 @@
                   </ul>
               </div>
             @endif
-            <form method="POST" action="" class="basicform_with_reset">
+            <form method="POST" action="{{ route('admin.disburse.store') }}" class="basicform_with_reset">
               @csrf
               <div class="card-body">
                 <div class="form-row">
                   <div class="form-group col-md-6">
                     <label>{{ __('Customer Name') }}</label>
                     <!--select2-->
-                    <select class="form-control select2" name="customer_details_id" id="customer_details_id">
+                    <select class="form-control select2" name="customer_id" id="customer_details_id">
                       <option value="">{{ __('Select Customer') }}</option>
                       @foreach ($customer as $customer)
                         <option value="{{ $customer->id }}">{{ $customer->first_name }} {{ $customer->last_name }}</option>
@@ -38,7 +38,7 @@
                     <div class="form-group">
                         <!--customer phone number-->
                         <label>{{ __('Customer Phone Number') }}</label>
-                        <input type="text" class="form-control" name="phone" placeholder="Customer Phone Number" required readonly>
+                        <input type="text" class="form-control" name="customer_phone" placeholder="Customer Phone Number" required readonly>
                     </div>
                   </div>
                 </div>
@@ -46,7 +46,7 @@
                     <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
                             <label>{{ __('Loan Amount') }}</label>
-                            <input type="text" class="form-control" name="loan_amounted" placeholder="Loan Amount" required readonly>
+                            <input type="text" class="form-control" name="loan_amount" placeholder="Loan Amount" required readonly>
                         </div>
                     </div>
                     <div class="col-lg-6 col-md-6 col-sm-12">
@@ -90,7 +90,7 @@
 
                 <div class="form-group">
                   <label for="description">{{ __('Description') }}</label>
-                  <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                  <textarea class="form-control" id="description" name="description" rows="3" ></textarea>
                 </div>
 
                 <div id="visa" style="display: none;">
@@ -184,9 +184,9 @@
             dataType:'json',
             // admin.loan.getCustomerDetails
             success: function(data) {
-              $('input[name="loan_amounted"]').val(data.data.loan_amount);
-              $('input[name="loan_interested"]').val(data. data.loan_interest);
-              $('input[name="phone"]').val(data.data.customer.phone);
+              $('input[name="loan_amount"]').val(data.data.amount);
+              $('input[name="loan_interested"]').val(data. data.interest);
+              $('input[name="customer_phone"]').val(data.data.customer.phone);
               $('input[name="loan_id"]').val(data.data.loan_id);
             }
           });

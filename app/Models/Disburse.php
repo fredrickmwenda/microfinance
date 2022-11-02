@@ -24,7 +24,7 @@ class Disburse extends Model
     //money is disbursed to a client
     public function disbursedTo()
     {
-        return $this->belongsTo(Client::class, 'disbursed_to');
+        return $this->belongsTo(customer::class, 'disbursed_to');
     }
 
 }

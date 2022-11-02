@@ -63,46 +63,6 @@
 </div>
 <div class="row">
 
-  <!-- <div class="col-lg-4 col-md-4 col-sm-12">
-    <div class="card card-statistic-2">
-      <div class="card-chart">
-        <canvas id="deposit_transactions" height="80"></canvas>
-      </div>
-      <div class="card-icon shadow-primary bg-primary">
-        <i class="fas fa-dollar-sign"></i>
-      </div>
-      <div class="card-wrap">
-        <div class="card-header">
-          <h4>{{ __('Deposit Transactions') }} - {{ date('Y') }}</h4>
-        </div>
-        <div class="card-body" id="deposit_sum">
-          <span class="loader">
-            <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-          </span>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-4 col-md-4 col-sm-12">
-    <div class="card card-statistic-2">
-      <div class="card-chart">
-        <canvas id="all_transactions" height="80"></canvas>
-      </div>
-      <div class="card-icon shadow-primary bg-primary">
-        <i class="fas fa-shopping-bag"></i>
-      </div>
-      <div class="card-wrap">
-        <div class="card-header">
-          <h4>{{ __('All Transactions') }} - {{ date('Y') }}</h4>
-        </div>
-        <div class="card-body" id="all_transaction_count">
-          <span class="loader">
-            <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-          </span>
-        </div>
-      </div>
-    </div>
-  </div> -->
   <div class="col-12">
     <div class="section">
       <!-- <h2 class="section-title m-0 mb-3">{{ __('Users & Customers') }}</h2> -->
@@ -164,9 +124,6 @@
                         <span>
                         <p id ="total-expenditure">{{$expenditure}}</p>
                         </span>
-                        <!-- <span class="loader">
-                          <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-                        </span> -->
                       </div>
                     </div>
                   </div>
@@ -682,13 +639,13 @@
         {data: 'customer', name: 'customer', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
-        {data: 'loan_amount', name: 'loan_amount'},
+        {data: 'amount', name: 'loan_amount'},
         {data: 'total_payable', name: 'total_loan'},
-        {data: 'loan_duration', name: 'loan_duration'},
+        {data: 'duration', name: 'loan_duration'},
         {data: 'creator', name: 'creator', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
-        {data: 'loan_status', name: 'loan_status'},
+        {data: 'status', name: 'loan_status'},
         {
           data: 'action', 
           name: 'action', 
@@ -720,16 +677,16 @@
         {data: 'customer', name: 'customer', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
-        {data: 'loan_amount', name: 'loan_amount'},
+        {data: 'amount', name: 'loan_amount'},
         {data: 'total_payable', name: 'total_loan'},
-        {data: 'loan_duration', name: 'loan_duration'},
+        {data: 'duration', name: 'loan_duration'},
         {data: 'creator', name: 'creator', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
         //loan end date set it in carbon
-        {data: 'loan_start_date', name: 'loan_start_date'},
-        {data: 'loan_end_date', name: 'loan_end_date'},
-        {data: 'loan_status', name: 'loan_status'},
+        {data: 'start_date', name: 'loan_start_date'},
+        {data: 'end_date', name: 'loan_end_date'},
+        {data: 'status', name: 'loan_status'},
         {
           data: 'action', 
           name: 'action', 
@@ -762,9 +719,9 @@
         {data: 'customer', name: 'customer', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
-        {data: 'loan_amount', name: 'loan_amount'},
+        {data: 'amount', name: 'loan_amount'},
         {data: 'total_payable', name: 'total_loan'},
-        {data: 'loan_duration', name: 'loan_duration'},
+        {data: 'duration', name: 'loan_duration'},
         {data: 'creator', name: 'creator', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
@@ -773,7 +730,7 @@
         {data: 'approver', name: 'approver', render: function(data, type, row){
           return data.first_name + ' ' + data.last_name;
         }},
-        {data: 'loan_status', name: 'loan_status'},
+        {data: 'status', name: 'loan_status'},
         {
           data: 'action', 
           name: 'action', 
@@ -810,7 +767,7 @@ var disbursementData = JSON.parse('<?php echo isset($disbursementData) ? $disbur
 
 var ROPerformanceData = JSON.parse('<?php echo isset($ROPerformanceData) ? $ROPerformanceData : '' ?>');
 
-console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
+console.log(loanData, activeloanData, pendingloanData, overdueLoanData, transactionData, disbursementData, ROPerformanceData);
 
   // console.log(loanData[0].loans);
 
@@ -827,9 +784,6 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
   //create the chart
   var loanChart = new Chart(loanCtx, {
     type: 'line',
-    //append data to the chart by checking the loanData array, if the month is equal to the month in the array, append the data to the chart
-
-
     data: {
       // labels: loanData.labels,
       labels: labels,
@@ -837,6 +791,7 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
       
         {
           label: 'Loans',
+          //if a month has no loan, set the value to 0
           data: loanData,
           backgroundColor: 'rgba(75, 192, 192, 0.2)',
           borderColor: 'rgba(75, 192, 192, 1)',
@@ -849,13 +804,6 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
           borderColor: 'rgba(54, 162, 235, 1)',
           borderWidth: 1
         },
-        // {
-        //   // label: 'Disbursed Loans',
-        //   // data: loanData.disbursedLoans,
-        //   backgroundColor: 'rgba(255, 206, 86, 0.2)',
-        //   borderColor: 'rgba(255, 206, 86, 1)',
-        //   borderWidth: 1
-        // },
         {
           label: 'Overdue Loans',
           data: overdueLoanData, 
@@ -870,19 +818,18 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
     },
     options: {
       responsive: true,
-      legend: {
-                display: false
-            },
+      // set bar thickness
+
+
       scales: {
-        // yAxes start from 0 to 1000
         y: {
-          stacked: false,
-          suggestedMin: 0,
-          suggestedMax: 200,
+          
+          // suggestedMin: 0,
+          min: 0,
+          max: 200,
           title: {
             display: true,
             text: 'Number of Loans',
-            // color: 'black',
             font: {
               size: 14,
               weight: 'bold',
@@ -893,24 +840,18 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
               top: 10,
               bottom: 10
             }
-          },
-
-
-
+          },        
           ticks: {
-            beginAtZero: true,
+
             stepSize: 20,
           },
-          // gridLines: {
-          //   display: true,
-          //   color: 'rgba(0, 0, 0, 0.1)'
-          // }
+          
         },
         x: {
+          beginAtZero: true,
           title : {
             display: true,
             text: 'Months',
-            // color: 'black',
             font: {
               size: 14,
               weight: 'bold',
@@ -920,8 +861,10 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
             padding: {
               top: 10,
               bottom: 10
-            }
+            },
+
           },
+          
         }
       }
     }
@@ -953,13 +896,11 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
     },
     options: {
       responsive: true,
-      legend: {
-                display: false
-            },
       scales: {
         // yAxes start from 0 to 1000
         y: {
-          stacked: false,
+          beginAtZero: true,
+          // stacked: false,
           suggestedMin: 0,
           // max is 500,000
           suggestedMax: 100000,
@@ -978,12 +919,14 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
               bottom: 10
             }
           },
+          
 
 
 
           ticks: {
-            beginAtZero: true,
+            // beginAtZero: true,
             stepSize: 10000,
+            // min : 0,
           },
           // gridLines: {
           //   display: true,
@@ -1006,25 +949,49 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
               bottom: 10
             }
           },
+          beginAtZero: true,
         }
       }
     }
   });
 
 
+    //function that iterates through ROPerformanceData json and appends to the chart
+// store the usernames from ROPerformanceData in an array
+var usernames = [];
+for (var i = 0; i < ROPerformanceData.length; i++) {
+  usernames.push(ROPerformanceData[i].usernames);
+}
+
+// store the performance from ROPerformanceData in an array, with usernames as the key
+var performance = [];
+for (var i = 0; i < ROPerformanceData.length; i++) {
+  performance.push(ROPerformanceData[i].performance);
+  // //set the key to the username
+  // var key = ROPerformanceData[i].usernames;
+  // //set the value to the performance
+  // var value = ROPerformanceData[i].performance;
+
+  // //push the key and value to the performance array
+  // performance.push({[key]: newValue});
+  
+}
+
+ console.log(usernames, performance);
+
+
+
+
   var performanceChart = new Chart(performanceCtx, {
-    type: 'line',
+    type: 'bar',
     data: {
-      labels: labels,
+      labels: usernames,
       // // loop through json data in ROPerformanceData and append to the chart
       
 
       datasets: [{
-        
-
         label: 'Performance',
-        
-        data: activeloanData,
+        data: performance,
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1
@@ -1038,9 +1005,9 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
       scales: {
         // yAxes start from 0 to 1000
         y: {
-          stacked: false,
+          // stacked: false,
+          beginAtZero: true,
           suggestedMin: 0,
-          // max is 500,000
           suggestedMax: 100,
           title: {
             display: true,
@@ -1060,10 +1027,7 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
 
 
 
-          ticks: {
-            beginAtZero: true,
-            // stepSize: 5,
-          },
+ 
           // gridLines: {
           //   display: true,
           //   color: 'rgba(0, 0, 0, 0.1)'
@@ -1072,7 +1036,7 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
         x: {
           title : {
             display: true,
-            text: 'Months',
+            text: 'Users',
             // color: 'black',
             font: {
               size: 14,
@@ -1085,97 +1049,79 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData);
               bottom: 10
             }
           },
+          // beginAtZero: true,
         }
       }
     }
   });
 
+  // {"test":{"Oct":"21.30"},"test2":{"Oct":"20.83"}}", the ROPerformanceData is in the format of json
+  //it is grouped by username and then it has the month and the performance percentage
+  //the data is in the format of json
+
+  // for (var i = 0; i < ROPerformanceData.length; i++){
+  //   var username = ROPerformanceData[i].username;
+  //   var performancePerc = ROPerformanceData[i].performancePerc;
+  //   var month = ROPerformanceData[i].month;
+  //   performanceChart.data.push(
+  //     {
+  //       label: username,
+  //     }
+  //   );
+    
+
+  //   //update
+  //   //append
+  //   performanceChart.data.datasets.push(
+  //     {
+  //       // label: username,
+  //       data: performancePerc,
+  //       month: month,
+  //       backgroundColor: 'rgba(255, 99, 132, 0.2)',
+  //       borderColor: 'rgba(255, 99, 132, 1)',
+  //       borderWidth: 1
+  //     }
+  //   );
+    
+  // }
+
+  performanceChart.update();
+
+  
+  
+  //   //loop through ROPerformanceData json
+  //   for (var i = 0; i < ROPerformanceData.length; i++) {
+  //     //get performancePerc  and username from ROPerformanceData json
+  //     var performancePerc = ROPerformanceData[i].performancePerc;
+  //     var username = ROPerformanceData[i].ro_username;
+
+  //     //append performancePerc to the chart
+  //     performanceChart.data.datasets[0].data.push(performancePerc);
+  //     //append username to the chart
+  //     performanceChart.data.datasets[0].label.push(username);
+      
+  //   }
+  //   performanceChart.update();
+  // }
+  // performanceChart.data.datasets[0].data.push(ROPerformanceData[i].performancePerc);
+
 
   // Loop through ROPerformanceData [users] and append to Performance Chart
-  for (var i = 0; i < ROPerformanceData.length; i++) {
-    performanceChart.data.datasets.push({
-      label: ROPerformanceData[i].name,
-      data: ROPerformanceData[i].performance,
-      backgroundColor: 'rgba(54, 162, 235, 0.2)',
-      borderColor: 'rgba(54, 162, 235, 1)',
-      borderWidth: 1
-    });
-  }
+  // for (var i = 0; i < ROPerformanceData.length; i++) {
+  //   console.log(ROPerformanceData[i]);
+  //   performanceChart.data.datasets.push({
+  //     label: ROPerformanceData[i].ro_username,
+  //     // get performance data from the second key in the json and dont use the first key
+  //     data: ROPerformanceData[i].[1],
+  //     backgroundColor: 'rgba(54, 162, 235, 0.2)',
+  //     borderColor: 'rgba(54, 162, 235, 1)',
+  //     borderWidth: 1
+  //   });
+  // }
 
   performanceChart.update();
 
 
-
-  //active loans
-  // $(function(){
-  //   var table3 = $('#activeLoanTable'). DataTable({
-  //   processing: true,
-  //   serverSide: true,
-  //   ajax: "{{ route('loans.active') }}",
-  //   columns: [
-  //     {data: 'id', name: 'id'},
-  //     {data: 'loan_id', name: 'loan_id'},
-  //     //from customer_id in loans table, get customer first name and last name
-  //     //return the first name and last name as a string
-  //     {data: 'customer', name: 'customer', render: function(data, type, row){
-  //       return data.first_name + ' ' + data.last_name;
-  //     }},
-  //     {data: 'loan_amount', name: 'loan_amount'},
-  //     {data: 'total_payable', name: 'total_loan'},
-  //     {data: 'remaining_balance', name: 'remaining_balance'},
-  //     {data: 'loan_duration', name: 'loan_duration'},
-  //     {data: 'creator', name: 'creator', render: function(data, type, row){
-  //       return data.first_name + ' ' + data.last_name;
-  //     }},
-  //     //loan end date set it in carbon
-  //     {data: 'loan_end_date', name: 'loan_end_date'},
-  //     {data: 'loan_status', name: 'loan_status'},
-  //     {
-  //       data: 'action', 
-  //       name: 'action', 
-  //       orderable: true, 
-  //       searchable: true
-  //     },
-
-  //   ]
-  // });
-
-  
-
-  // $(function(){
-  //     var table2 = $('#overdueLoanTable'). DataTable({
-  //     processing: true,
-  //     serverSide: true,
-  //     ajax: "{{ route('loans.overdue') }}",
-  //     columns: [
-  //       {data: 'id', name: 'id'},
-  //       {data: 'loan_id', name: 'loan_id'},
-  //       //from customer_id in loans table, get customer first name and last name
-  //      //return the first name and last name as a string
-  //       {data: 'customer', name: 'customer', render: function(data, type, row){
-  //         return data.first_name + ' ' + data.last_name;
-  //       }},
-  //       {data: 'loan_amount', name: 'loan_amount'},
-  //       {data: 'total_payable', name: 'total_loan'},
-  //       {data: 'loan_duration', name: 'loan_duration'},
-  //       {data: 'creator', name: 'creator', render: function(data, type, row){
-  //         return data.first_name + ' ' + data.last_name;
-  //       }},
-  //       //loan end date set it in carbon
-  //       {data: 'loan_start_date', name: 'loan_start_date'},
-  //       {data: 'loan_end_date', name: 'loan_end_date'},
-  //       {data: 'loan_status', name: 'loan_status'},
-  //       {
-  //         data: 'action', 
-  //         name: 'action', 
-  //         orderable: true, 
-  //         searchable: true
-  //       },
-
-  //     ]
-  //   });
-
-  // });
 
 
 

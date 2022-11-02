@@ -31,7 +31,15 @@
                         
                             <div class="form-group col-md-6">
                             <label for="customer_name">{{ __('Customer Name') }}</label>
-                            <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ $loan->customer->first_name }} {{ $loan->customer->last_name }}" readonly>
+                            <!-- <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ $loan->customer->first_name }} {{ $loan->customer->last_name }}" readonly> -->
+                            <!--have a readonly select option for customer name-->
+                            <select class="form-control" name="customer_id" id="customer_name" readonly >
+                                <option value="{{ $loan->customer->id }}" {{ $loan->customer->id == $loan->customer->id ? 'selected' : '' }}>{{ $loan->customer->first_name }} {{ $loan->customer->last_name }}</option>
+                            </select>
+
+
+
+                            <!-- <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ $loan->customer->first_name }} {{ $loan->customer->last_name }}" readonly> -->
 
                             </div>
                             <!--customer phone number from customer table-->
@@ -45,12 +53,12 @@
                         <div class="form-row">
                             <div class="form-group col-md-6">
                             <label for="loan_amount">{{ __('Loan Amount') }}</label>
-                            <input type="text" class="form-control" id="loan_amount" name="loan_amount" value="{{ $loan->loan_amount }}" readonly>
+                            <input type="text" class="form-control" id="loan_amount" name="loan_amount" value="{{ $loan->amount }}" readonly>
                             </div>
                             <!--loan interest from loan table-->
                             <div class="form-group col-md-6">
-                            <label for="loan_interest">{{ __('Loan Interest') }}</label>
-                            <input type="text" class="form-control" id="loan_interest" name="loan_interest" value="{{ $loan->loan_interest }}" readonly>
+                                <label for="loan_interest">{{ __('Loan Interest') }}</label>
+                                <input type="text" class="form-control" id="loan_interest" name="loan_interest" value="{{ $loan->interest }}" readonly>
                             </div>
                         </div>
 
@@ -71,7 +79,7 @@
                             <!--enter amount to be disbursed-->
                             <div class="form-group col-md-6">
                                 <label for="disburse_amount">{{ __('Disburse Amount') }}</label>
-                                <input type="text" class="form-control" id="disburse_amount" name="amount" value="{{ $loan->loan_amount }}" required>
+                                <input type="text" class="form-control" id="disburse_amount" name="amount" value="{{ $loan->amount }}" required>
                             </div>
                             <!--loan interest from loan table-->
                         </div>
@@ -79,7 +87,7 @@
                         <!--whole description row-->
                         <div class="form-group">
                             <label for="description">{{ __('Description') }}</label>
-                            <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+                            <textarea class="form-control" id="description" name="description" rows="3" ></textarea>
                         </div>
                     
                     </div>

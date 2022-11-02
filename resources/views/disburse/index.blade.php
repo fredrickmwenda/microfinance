@@ -9,45 +9,39 @@
     <div class="col-12">
       <div class="card">
         <div class="card-body">
-            <div class="row">
-              <div class="col-6">
-              <!-- 'admin.all.transaction.search.report -->
-                <form action="">
+            <div class="row mb-3">
+              <div class="col-lg-6">       
+                <form method="GET" action="{{ route('admin.disburse.index') }}">
                   <div class="form-row">
-                      <div class="col-lg-5">
-                          <div class="form-group">
-                              <label>{{ __('Start Date') }}</label>
-                              <input type="date" class="form-control" name="start_date" required>
-                          </div>
+                      <div class="col-lg-6">
+                          <!--input transaction_no-->
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="transaction_no" placeholder="{{ __('Transaction No') }}" value="{{ request()->transaction_no }}">
+                        </div>
+                        
                       </div>
-                      <div class="col-lg-5">
-                          <div class="form-group">
-                              <label>{{ __('End Date') }}</label>
-                              <input type="date" class="form-control" name="end_date" required>
-                          </div>
-                      </div>
-                      <div class="col-lg-2 mt-2">
-                          <button type="submit" class="btn btn-primary mt-4">{{ __('Search') }}</button>
+                      <!--Filter and clear button-->
+                      <div class="col-lg-6 ">
+                        <div class="form-group ">              
+                            <div class="input-group">
+                              <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i>Search</button>
+                              <!--clear button have a refresh icon-->
+                              <a href="{{ route('admin.disburse.index') }}" class="btn btn-danger ml-2"><i class="fas fa-sync-alt"></i>Clear</a>
+                            </div>
+                         
+                        </div>
                       </div>                                    
                   </div>
                 </form>
               </div>
-              <div class="col-6 mt-2">
-                 
-                 <form action="">
-                    <div class="input-group form-row mt-3">
-
-                       <input type="text" class="form-control" placeholder="Search..." required="" name="value" autocomplete="off" value="" id="query_term">
-                       <select class="form-control" name="type">
-                    
-                          <option value="trxid">{{ __('Transaction No') }}</option>
-                       </select>
-                       <div class="input-group-append">                                            
-                          <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
-                       </div>
-                    </div>
-                  </form>
+              <div class="col-lg-6">
+                @can('disburse.create')
+                <div class="float-right">
+                  <a href="{{ route('admin.disburse.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> {{ __('Add New Disbursement') }}</a>
+                </div>
+                @endcan
               </div>
+
             </div>
             @if (Session::has('message'))
               <div class="alert alert-danger">{{ Session::get('message') }}</div>
@@ -63,13 +57,9 @@
                         <th>#</th>
                         <th>{{ __('Transaction No') }}</th>
                         <th>{{ __('Customer Name') }}</th>
-                        <th>{{ __('Amount') }}</th>
-                        <th>{{ __('Loan Amount') }}</th>
-
-                        <th>{{ __('Trx ID') }}</th>
-                        <th>{{ __('Amount') }}</th>
-                        <th>{{ __('Balance') }}</th>
-                        <th>{{ __('Date') }}</th>
+                        <th>{{ __('Amount Disbursed') }}</th>
+                        <th>{{ __('Disburser') }}</th>
+                        <th>{{ __('Date Disbursed') }}</th>
                         <th>{{ __('Status') }}</th>
                         <th>{{ __('Action') }}</th>
                     </tr>
@@ -78,24 +68,50 @@
                     @foreach($disbursements as $key => $row)
                     <tr>
                       <td>{{ $key+1 }}</td>
-                      <td><a href="{{ route('admin.users.show', $row->user->id) }}">{{ $row->customer->first_name }} {{ $row->customer->last_name }}</a></td>
+                      <td>{{ $row->disbursement_code }}</td>
                       <td>
+                        <a href="">{{ $row->disbursedTo->first_name }} {{ $row->disbursedTo->last_name }}</a>
+                      </td>
+                      <td>
+                        {{ $row->disbursement_amount }}
                         
                       </td>
-                      <td></td>
-                      <td>{{ $row->balance }}</td>
+
+                      <td>
+                        {{ $row->disburser->first_name }} {{ $row->disburser->last_name }}
+                      </td>
                       <td>{{ date('d-m-Y', strtotime($row->created_at)) }}</td>
                       <td>
-                          @if($row->status == "sent")
+                          @if($row->status == "success")
                           <span class="badge badge-success">{{ __('Success') }}</span>
                           @else
                           <span class="badge badge-danger">{{ __('Failed') }}</span>
                           @endif
                       </td>
-                      <td>  
-                        <a title="view" class="btn btn-info btn-sm" href="{{ route('admin.disburse.view', $row->id) }}">
+                      <td>
+                        <div class="dropdown">
+                          <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            {{ __('Action') }}
+                          </button>
+                          <!--edit and delete-->
+                          <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                            <!-- @can('disburse.edit')
+                            <a class="dropdown-item" href="{{ route('admin.disburse.edit', $row->id) }}"><i class="fa fa-edit"></i>{{ __('Edit') }}</a>
+                            @endcan -->
+                            @can('disburse.delete')
+                            <a class="dropdown-item" href="javascript:void(0);" data-id="{{ $row->id }}" ><i class="fa fa-trash"></i> {{ __('Delete') }}</a>
+                            <!--delete-->
+                            <form id="delete-form-{{ $row->id }}" action="{{ route('admin.disburse.destroy', $row->id) }}" method="POST" style="display: none;">
+                              @csrf
+                              @method('DELETE')
+                            </form>
+                            @endcan
+                          </div>
+
+                        </div>  
+                        <!-- <a title="view" class="btn btn-info btn-sm" href="{{ route('admin.disburse.show', $row->id) }}">
                             <i class="fa fa-eye"></i>
-                        </a>
+                        </a> -->
                       </td>
                     </tr>
                     @endforeach

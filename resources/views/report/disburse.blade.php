@@ -15,7 +15,7 @@
         <div class="card-body">
           <div class="row">
             <div class="col-lg-12">
-              <form method="GET" action="{{ route('customers.report') }}">
+              <form method="GET" action="{{ route('disburse.report') }}">
                 <div class="row">
                   <div class="col-lg-3">
                     <div class="form-group row">

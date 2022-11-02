@@ -20,33 +20,26 @@ class ReportController extends Controller
     //transanction report
     public function transactionReport(Request $request)
     {
-        try{
+       
             $user = auth()->user();
-            if($user->hasRole('admin')){
-                if (isset($request->from_date) && isset($request->to_date)) {
-                    $from_date = $request->from_date;
-                    $to_date = $request->to_date;
-                    $res  = DatesValidator::validate($from_date, $to_date);
-                    
-                    if ($res != 'success') {
-                        # code...
-                        return redirect()->back()->with('error', $res);
-                    }
-                    $transactions = Transaction::with('payment_gateway', 'user', 'customer', 'loan')->whereBetween('created_at', [$from_date, $to_date])->paginate(100);
-                }
-                else{
-                    $transactions = Transaction::with('payment_gateway', 'user', 'customer', 'loan')->paginate(100);
-                }
-                // $transactions = Transaction::with('payment_gateway', 'user', 'customer', 'loan')->paginate(100);
+            $transactions = Transaction::with('user', 'loan', 'customer')->get();
+            $total_transactions = $transactions->count();
 
-            }else{
-                $transactions = Transaction::with('payment_gateway', 'user', 'customer', 'loan')->where('user_id', $user->id)->paginate(100);
+            if (isset($request->from_date) && isset($request->to_date)) {
+                $from_date = $request->from_date;
+                $to_date = $request->to_date;
+                $res  = DatesValidator::validate($from_date, $to_date);
+                
+                if ($res != 'success') {
+                    # code...
+                    return redirect()->back()->with('error', $res);
+                }
+                $transactions = Transaction::with( 'user', 'customer', 'loan')->whereBetween('created_at', [$from_date, $to_date])->paginate(100);
+                $total_transactions = $transactions->count();
             }
-            return view('report.transaction.index', compact('transactions'));
-        }
-        catch(\Exception $e){
-            return redirect()->back()->with('error', $e->getMessage());
-        }
+            
+            return view('report.transaction', compact('transactions', 'total_transactions'));
+
     }
 
     //disburse report

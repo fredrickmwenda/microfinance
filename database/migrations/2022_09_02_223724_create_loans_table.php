@@ -26,7 +26,7 @@ return new class extends Migration
             $table->decimal('total_payable', 10, 2);         
             $table->double('total_payment')->nullable();
             $table->double('remaining_balance');
-            $table->enum('status', ['pending', 'approved', 'rejected', 'disbursed', 'active','closed', 'overdue',  'defaulted', 'written_off'])->default('pending');
+            $table->enum('status', ['pending', 'approved', 'rejected', 'disbursed', 'active','closed', 'overdue','defaulted', 'written_off'])->default('pending');
             $table->double('late_payment_fee')->default(0);
             $table->text('loan_purpose')->nullable();
             $table->enum('payment_type', ['one_time', 'installment'])->default('one_time');

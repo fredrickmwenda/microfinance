@@ -7,6 +7,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Http;
 use App\Jobs\EquityTokenJob;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Request;
 
 class Jenga
 {
@@ -64,7 +66,7 @@ class Jenga
 
     // }
 
-    public function jengaToken(){
+    public static function jengaToken(){
         $token = EquityToken::first();
     if (!$token) {
         dispatch(new EquityTokenJob());
@@ -115,7 +117,7 @@ class Jenga
         
         
         $params = array_merge($defaults, $params);
-        // dd($params);
+       
         // $token = $this->token;
         try {
             $client = new Client();
@@ -128,7 +130,7 @@ class Jenga
                 ],
             ]);
             $response = json_decode($request->getBody()->getContents());
-            // dd($response);
+            
             return $response;
         } catch (RequestException $e) {
             return (string) $e->getResponse()->getBody();
@@ -148,7 +150,7 @@ class Jenga
     }   
 
 
-    public function sendMoney()
+    public function sendMoney($params)
     {
         $params= [
             'type' => 'MobileWallet',
@@ -185,12 +187,13 @@ class Jenga
      * @param  array $params An array of data equired by the API to perform the request
      * @return Action         Call to the appropriate action
      */
-    public static function sendMobileMoney(){
+    public  function sendMobileMoney($params){
+        // dd($params);
 
-        $params= [
-            'type' => 'MobileWallet',
+        // $params= [
+        //     'type' => 'MobileWallet',
 
-        ];
+        // ];
         $defaults = [
             'country_code' => 'KE',
             'source_name' => 'Fredrick Mwenda',
@@ -199,21 +202,20 @@ class Jenga
             'customer_mobileNumber' => '0713723353',
             'wallet_name' => 'Mpesa',
             'currencyCode' => 'KES',
-            'amount' => '10',
+            'amount' => '10000',
             'type' => 'MobileWallet', 
             'reference' => rand(100000000000, 999999999999),
             'date' => date('Y-m-d'),
             'description' => 'Test',
         ];
         $params = array_merge($defaults, $params);
-
-        $token = $this->jengaToken();
+// 
+        $token =  $this->jengaToken();
 
         if (!$token) {
             return response()->json(['error' => 'true', 'message' => 'Token not found']);
         }
         // $plainText = $params['transfer_amount'].$params['transfer_currencyCode'].$params['transfer_reference'].$params['source_accountNumber'];
-        $token = $this->jengaToken();
        
         try {
             $client = new Client();
@@ -224,18 +226,18 @@ class Jenga
                 'Authorization' => 'Bearer '.$token,
                 'signature' => $this->generateSignature($params['amount'].$params['currencyCode'].$params['reference'].$params['source_accountNumber']),
                 ],
-                'body' => json_encode([
+                'json' => [
                     'source' => [
-                        'countryCode' =>$params['country_code'],
-                        'accountNumber' => $params['source_accountNumber'],
+                        'countryCode' => $params['country_code'],
                         'name' => $params['source_name'],
+                        'accountNumber' => $params['source_accountNumber'],
                     ],
                     'destination' => [
-                        'type' => "mobile",
-                        'countryCode' => $params['country_code'],
-                        'name' => $params['customer_name'],
-                        'mobileNumber' => $params['customer_mobileNumber'],
-                        'walletName' =>  'Mpesa',
+                        "type" => "mobile",
+                        "countryCode" => $params['country_code'],
+                        "name" => $params['customer_name'],
+                        "mobileNumber" => $params['customer_mobileNumber'],
+                        "walletName" => $params['wallet_name'],
                     ],
                     'transfer' => [
                         'type' => $params['type'],
@@ -243,35 +245,9 @@ class Jenga
                         'currencyCode' => $params['currencyCode'],
                         'reference' => $params['reference'],
                         'date' => $params['date'],
-                        'description' => 'Test',
-
+                        'description' => $params['description'],
                     ],
-                ]),
-
-                
-
-                // 'json' => [
-                //     'source' => [
-                //         'countryCode' => $params['country_code'],
-                //         'name' => $params['source_name'],
-                //         'accountNumber' => $params['source_accountNumber'],
-                //     ],
-                //     'destination' => [
-                //         "type" => "mobile",
-                //         "countryCode" => $params['country_code'],
-                //         "name" => $params['customer_name'],
-                //         "mobileNumber" => $params['customer_mobileNumber'],
-                //         "walletName" => $params['wallet_name'],
-                //     ],
-                //     'transfer' => [
-                //         'type' => $params['type'],
-                //         'amount' => $params['amount'],
-                //         'currencyCode' => $params['currencyCode'],
-                //         'reference' => $params['reference'],
-                //         'date' => $params['date'],
-                //         'description' => $params['description'],
-                //     ],
-                // ],
+                ],
                 
                 // 'body' => '{"source":{"countryCode": "'.$params['country_code'].'","name": "'.$params['source_name'].'","accountNumber": "'.$params['source_accountNumber'].'"},"destination":{"type":"mobile","countryCode": "'.$params['country_code'].'","name": "'.$params['customer_name'].'","mobileNumber": "'.$params['customer_mobileNumber'].'""walletName": "'.$params['wallet_name'].'"},"transfer":{"type":"MobileWallet","amount": "'.$params['transfer_amount'].'","currencyCode": "'.$params['transfer_currencyCode'].'","reference": "'.$params['transfer_reference'].'","date": "'.$params['date'].'","description": "some remarks here"}}',
                                         // 'reference' => $params['transfer_reference'],
@@ -286,36 +262,46 @@ class Jenga
         }
     }
 
+    //Transaction Status callback after sendMobileMoney request is successfull
+    public function transactionStatus($data){
+        Log::info('Transaction Status: '.$data);
+        // $data = $request->all();
+        // Log::info($data);
+        // call the api with the transaction id to check on the payment status
+        $token =  $this->jengaToken();
 
-    // public function authenticate()
-    // {
-        
-    //     try {
-    //         $client = new \GuzzleHttp\Client();
-    //         $response = $client->request('POST', 'https://uat.finserve.africa/authentication/api/v3/authenticate/merchant', [
+        if (!$token) {
+            return response()->json(['error' => 'true', 'message' => 'Token not found']);
+        }
+        try {
+            $client = new Client();
+            $request = $client->request('POST', 'https://sandbox.jengahq.io/transaction-test/v2/b2c/status/query', [
+                'headers' => [
+                'Content-type' => 'application/json',
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer '.$token,
+                ],
+                'body' => json_encode([
+                    'requestId' => $data['requestId'],
+                    'destination' => [
+                        'type' =>"M-Pesa"
+                    ],
+                    'transfer' => [
+                        'date' => $data['date'],
+                    ],
+                ]),
+            ]);
 
-    //             'headers'=>[
-    //                 'Content-Type' => 'application/json',
-    //                 'Accept' => 'application/json',
-    //                 'Api-Key' =>env('EQUITY_API_KEY'),
-    //             ],
-    //             'form_params' => [
-    //                 'merchantCode' => env('EQUITY_MERCHANT_ID'),
-    //                 'consumerSecret' => env('EQUITY_CONSUMER_SECRET'),
-    //               ],
-    //           ]);
-    //         $response = json_decode($response->getBody()->getContents());
-
-    //         return $response->AccessToken;
+            $response = json_decode($request->getBody()->getContents());
+            Log::info($response);
+            return $response;
+        } catch (RequestException $e) {
+            return (string) $e->getResponse()->getBody();
+        }
+    }
 
 
-    //     } catch (RequestException $e) {
-    //         return (string) $e->getResponse()->getBody();
-    //     }
-    // }
-
-
-
+  //send from equity account 
 
 
 

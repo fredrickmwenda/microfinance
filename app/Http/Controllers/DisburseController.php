@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DatesValidator;
 use App\Helpers\Jenga;
 use App\Models\CallbackResponse;
 use App\Models\customer;
@@ -11,6 +12,8 @@ use App\Models\Transaction;
 use App\Notifications\DisbursementNotification;
 use Illuminate\Http\Request;
 use Termwind\Components\Dd;
+//log
+use Illuminate\Support\Facades\Log;
 
 class DisburseController extends Controller
 {
@@ -30,9 +33,23 @@ class DisburseController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function index()
+    public function index( Request $request)
     {
-        $disbursements = Disburse::paginate();
+        // $disbursements = Disburse::paginate(20);
+
+        $res  = DatesValidator::validate($request->from_date, $request->to_date);
+
+        if ($res != 'success') {
+            # code...
+            return redirect()->back()->with('error', $res);
+        }
+
+        $disbursements = Disburse::select("*")->when($request->transaction_no, function ($query) use ($request){
+            return $query->where('disbursement_code', $request->transaction_no);
+        })->paginate(20);
+
+
+
         
         return view('disburse.index', compact('disbursements'));
     }
@@ -48,6 +65,7 @@ class DisburseController extends Controller
         $customer = customer::with('loans')->whereHas('loans', function($query){
             $query->where('status', 'approved');
         })->get();
+        // dd($customer);
 
         return view('disburse.create', compact('customer'));
     }
@@ -58,6 +76,7 @@ class DisburseController extends Controller
     //disburse loan
     public function disburseLoanStore(Request $request, $id)
     {
+        // dd($request->all());
         //validate request
         $request->validate([
             'amount' => 'required',
@@ -67,40 +86,47 @@ class DisburseController extends Controller
             'customer_phone' => 'required',
         ]);
 
-        //check if amount to be disbursed is less than or equal to loan amount
-        if($request->amount <= $request->loan_amount){
+         //check if amount to be disbursed is less than or equal to loan amount
+         if($request->amount <= $request->loan_amount){
             //check if payment method is mpesa
             if($request->payment_method == 'mpesa'){
-                //  combine customer first name and last name
-                $current_loan = Loan::where('loan_id', $id)->first();
-                $customer_name = $current_loan->customer->first_name . ' ' . $current_loan->customer->last_name;
+                $current_loan = Loan::with('customer')->where('customer_id', $request->customer_id)->where('status', 'approved')->first();
+               
+                $customer_name = $current_loan->customer->first_name.' '.$current_loan->customer->last_name;
                 $params = [
                     'country_code' => 'KE',
                     'source_name' => 'Fredrick Mwenda',
-                    'source_accountNumber' => $this->account_number,
+                    'source_accountNumber' => config('app.equity_api_account_number'),
                     'customer_name' => $customer_name,
-                    'customer_mobileNumber' => $request->customer_phone,
+                    // 'customer_mobileNumber' => $request->customer_phone,
+                    'customer_mobileNumber' => '254713723353',
                     'wallet_name' => 'Mpesa',
                     'currencyCode' => 'KES',
-                    'amount' => $request->amount,
+                    // 'amount' => $request->amount,
+                    'amount' => 10,
                     'type' => 'MobileWallet', 
                     'reference' => rand(100000000000, 999999999999),
                     'date' => date('Y-m-d'),
                     'description' => 'Test',
                 ];
-               
-                $mpesa = Jenga::sendMobileMoney();
+                // $current_loan->end_date = now()->addDays($current_loan->duration);
+                // dd($current_loan->end_date);
+
+                $mpesa = new Jenga();
+                $mpesa = $mpesa->sendMobileMoney($params);
                 if($mpesa->status == false){
-                    return redirect()->route('disbursement.index')->with('error', $mpesa->message);
+                    return redirect()->route('admin.disburse.index')->with('error', $mpesa->message);
                 }
                 else if ($mpesa->status == true){
-                    //read payment from jenga api                
-                    //update customer loan status
-                    
-                    $current_loan->status = "disbursed";
-                    $current_loan->disbursed_at = now();
+                    $data = json_decode(json_encode($mpesa), true);
+
+                    $disbursement_code = $data['transactionId '];
+                    Log::info($disbursement_code);
+                   
+                    // $current_loan->disbursed_
                     $current_loan->disbursed_by = auth()->user()->id;
                     $current_loan->start_date = now();
+                    $current_loan->status = 'disbursed';
                     // get the loan duration which is in days  and add that to start date to get the date that the loan has to end
                     $current_loan->end_date = now()->addDays($current_loan->duration);
                     $current_loan->save();
@@ -109,14 +135,14 @@ class DisburseController extends Controller
                     $disb = new Disburse();
                     $disb->loan_id = $current_loan->id;
                     // create a unique disbursement id, with the loan id and the current time and customer 2 first letters of first name
-                    $disb->disbursement_id = $current_loan->loan_id.'-'.time().'-'.substr($current_loan->customer->first_name, 0, 2);
+                    $disb->disbursement_code = $disbursement_code;
                     $disb->disbursement_amount = $request->amount;
-                    $disb->transaction_code = $mpesa->transactionId;
+                    // $disb->transaction_code = $mpesa['transactionId'];
                     $disb->payment_method = $request->payment_method;
                     $disb->disbursed_to = $current_loan->customer->id;
                     $disb->disbursed_by = auth()->user()->id;
-                    $disb->phone = $request->customer_phone;                  
-                    $disb->created_at = now();
+                    $disb->phone = $request->customer_phone;
+                    $disb->status = 'success';               
                     $disb->save();
 
                     //notify customer of transaction
@@ -126,7 +152,7 @@ class DisburseController extends Controller
                         'payment_method' => $request->payment_method,
                         'customer_name' => $request->customer_first_name.' '.$request->customer_last_name,
                         'customer_phone' => $request->customer_phone,
-                        'transaction_id' => $mpesa->transactionId,
+                        'transaction_id' => $disbursement_code,
                         // get loan amount from Loan model
                         'loan_amount' => $current_loan->amount,
                         'time' => \Carbon\Carbon::now(),
@@ -135,20 +161,20 @@ class DisburseController extends Controller
                     //     $current_loan->customer->notify(new DisbursementNotification($disbursement));
                     // }
                     // else{
-                    //     $message = ("Dear ".$current_loan->customer->first_name. " " .$current_loan->customer->last_name.", 
-                    //     your disbursement is USD ".$request->amount.". Your loan has been approved and disbursed. This
-                    //     money will be deducted from your next salary");
-                    //     // send sms notification to customer
-                    //     Jenga::sendSMS($current_loan->customer->phone_number,$message);
-                    //     return redirect('disbursement')->with('success', 'Amount disbursed to ' .$current_loan->customer->first_name.' '.$current_loan->customer->last_name. 'successfully');
+                    //     $message = ("Dear ".$current_loan->customer->first_name.", your loan of KES ".$current_loan->amount." has been disbursed.
+                    //     Transaction ID: ".$mpesa->transactionId." Amount: KES ".$request->amount." Payment Method: ".$request->payment_method." Time: ".\Carbon\Carbon::now());
+                    //     $this->sendSMS($current_loan->customer->phone, $message);
                     // }
-                    return redirect()->route('disbursement.index')->with('success', 'Amount disbursed to ' .$current_loan->customer->first_name.' '.$current_loan->customer->last_name. 'successfully');
+                    return redirect()->route('admin.disburse.index')->with('success', 'Amount disbursed to ' .$current_loan->customer->first_name.' '.$current_loan->customer->last_name. 'successfully');
+
                 }
-            }       
+
+            }
+            
         }
         else{
             return redirect()->back()->with('error', 'Amount to be disbursed is greater than loan amount');
-        }
+        } 
 
     }
 
@@ -193,12 +219,13 @@ class DisburseController extends Controller
      */
     public function store(Request $request)
     {
+        // dd($request->all());
 
         $request->validate([
             'amount' => 'required',
             'payment_method' => 'required',
             'loan_amount' => 'required',
-            'customer_id' => 'required',
+            'customer_id' => 'required',        
             'customer_phone' => 'required',
         ]);
 
@@ -207,33 +234,43 @@ class DisburseController extends Controller
         if($request->amount <= $request->loan_amount){
             //check if payment method is mpesa
             if($request->payment_method == 'mpesa'){
-                $current_loan = Loan::with('customer')->where('customer_id', $request->customer_id)->first();
+                $current_loan = Loan::with('customer')->where('customer_id', $request->customer_id)->where('status', 'approved')->first();
                 $customer_name = $current_loan->customer->first_name.' '.$current_loan->customer->last_name;
                 $params = [
                     'country_code' => 'KE',
                     'source_name' => 'Fredrick Mwenda',
-                    'source_accountNumber' => $this->account_number,
+                    'source_accountNumber' => config('app.equity_api_account_number'),
                     'customer_name' => $customer_name,
-                    'customer_mobileNumber' => $request->customer_phone,
+                    // 'customer_mobileNumber' => $request->customer_phone,
+                    'customer_mobileNumber' => '254713723353',
                     'wallet_name' => 'Mpesa',
                     'currencyCode' => 'KES',
-                    'amount' => $request->amount,
+                    // 'amount' => $request->amount,
+                    'amount' => 10,
                     'type' => 'MobileWallet', 
                     'reference' => rand(100000000000, 999999999999),
                     'date' => date('Y-m-d'),
                     'description' => 'Test',
                 ];
+                $current_loan->end_date = now()->addDays($current_loan->duration);
+                // dd($current_loan->end_date);
 
-                $mpesa = Jenga::sendMobileMoney();
+                $mpesa = new Jenga();
+                $mpesa = $mpesa->sendMobileMoney($params);
                 if($mpesa->status == false){
-                    return redirect()->route('disbursement.index')->with('error', $mpesa->message);
+                    return redirect()->route('admin.disburse.index')->with('error', $mpesa->message);
                 }
                 else if ($mpesa->status == true){
-                    //store to loans table
+
+                    $data = json_decode(json_encode($mpesa), true);
+
+                    $disbursement_code = $data['transactionId '];
+                    Log::info($disbursement_code);
                    
-                    $current_loan->disbursed = 1;
+                    // $current_loan->disbursed_
                     $current_loan->disbursed_by = auth()->user()->id;
                     $current_loan->start_date = now();
+                    $current_loan->status = 'disbursed';
                     // get the loan duration which is in days  and add that to start date to get the date that the loan has to end
                     $current_loan->end_date = now()->addDays($current_loan->duration);
                     $current_loan->save();
@@ -242,14 +279,14 @@ class DisburseController extends Controller
                     $disb = new Disburse();
                     $disb->loan_id = $current_loan->id;
                     // create a unique disbursement id, with the loan id and the current time and customer 2 first letters of first name
-                    $disb->disbursement_id = $current_loan->loan_id.'-'.time().'-'.substr($current_loan->customer->first_name, 0, 2);
+                    $disb->disbursement_code = $disbursement_code;
                     $disb->disbursement_amount = $request->amount;
-                    $disb->transaction_code = $mpesa->transactionId;
+                    // $disb->transaction_code = $mpesa['transactionId'];
                     $disb->payment_method = $request->payment_method;
                     $disb->disbursed_to = $current_loan->customer->id;
                     $disb->disbursed_by = auth()->user()->id;
-                    $disb->phone = $request->customer_phone;                  
-                    $disb->created_at = now();
+                    $disb->phone = $request->customer_phone;
+                    $disb->status = 'success';               
                     $disb->save();
 
                     //notify customer of transaction
@@ -259,7 +296,7 @@ class DisburseController extends Controller
                         'payment_method' => $request->payment_method,
                         'customer_name' => $request->customer_first_name.' '.$request->customer_last_name,
                         'customer_phone' => $request->customer_phone,
-                        'transaction_id' => $mpesa->transactionId,
+                        'transaction_id' => $disbursement_code,
                         // get loan amount from Loan model
                         'loan_amount' => $current_loan->amount,
                         'time' => \Carbon\Carbon::now(),
@@ -272,7 +309,7 @@ class DisburseController extends Controller
                     //     Transaction ID: ".$mpesa->transactionId." Amount: KES ".$request->amount." Payment Method: ".$request->payment_method." Time: ".\Carbon\Carbon::now());
                     //     $this->sendSMS($current_loan->customer->phone, $message);
                     // }
-                    return redirect()->route('disbursement.index')->with('success', 'Amount disbursed to ' .$current_loan->customer->first_name.' '.$current_loan->customer->last_name. 'successfully');
+                    return redirect()->route('admin.disburse.index')->with('success', 'Amount disbursed to ' .$current_loan->customer->first_name.' '.$current_loan->customer->last_name. 'successfully');
 
                 }
 
@@ -290,10 +327,13 @@ class DisburseController extends Controller
      * @param  \App\Models\Disburse  $disburse
      * @return \Illuminate\Http\Response
      */
-    public function show(Disburse $disburse)
+    public function show($id)
     {
-        //
+        $disbursement = Disburse::with('loan', 'disburser', 'disbursedTo')->where('id', $id)->first();
+        dd($disbursement);
+        return view('disbursements.show', compact('disbursement'));
     }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -301,9 +341,11 @@ class DisburseController extends Controller
      * @param  \App\Models\Disburse  $disburse
      * @return \Illuminate\Http\Response
      */
-    public function edit(Disburse $disburse)
+    public function edit($id)
     {
-        //
+
+        $disbursement = Disburse::with('loan', 'disburser', 'disbursedTo')->where('id', $id)->first();
+        return view('disburse.edit', compact('disbursement'));
     }
 
     /**
@@ -324,9 +366,13 @@ class DisburseController extends Controller
      * @param  \App\Models\Disburse  $disburse
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Disburse $disburse)
+    public function destroy($id)
     {
-        //
+        $disbursement = Disburse::find($id);
+        $disbursement->delete();
+        return redirect()->route('admin.disburse.index')->with('success', 'Disbursement deleted successfully');
     }
+        //
+    
 
 }

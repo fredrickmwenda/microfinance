@@ -21,11 +21,13 @@
                   __("Collateral")
                   }}</a>
                </li> -->
+               @if($loan->payment_type == 'installment')
                <li class="nav-item">
                   <a class="nav-link" data-toggle="tab" href="#schedule">{{
                   __("Loan Payment Schedule")
                   }}</a>
                </li>
+               @endif
                <li class="nav-item">
                   <a class="nav-link" data-toggle="tab" href="#loan_payments">{{
                   __("Loan Payments")
@@ -55,64 +57,62 @@
                         <td>{{ __("Borrower") }}</td>
                         <td>{{ $loan->customer->first_name }} {{ $loan->customer->last_name }}</td>
                      </tr>
-                     <tr>
+                     <!-- <tr>
                         <td>{{ __("Account") }}</td>
                         <td>{{ $loan->customer->email }}</td>
-                     </tr>
+                     </tr> -->
                      <tr>
                         <td>{{ __("Status ") }}</td>
                         <td>
-                            @if($loan->loan_status == "pending")
-                            <span class="badge badge-warning">{{ $loan->loan_status }}</span>
-                            @elseif($loan->loan_status == "approved")
-                            <span class="badge badge-success">{{ $loan->loan_status }}</span>
-                            @elseif($loan->loan_status == "rejected")
-                            <span class="badge badge-danger">{{ $loan->loan_status }}</span>
-                            @endif
-
-                            @if($loan->loan_status == "approved")
-                            <a class="btn btn-outline-primary btn-sm" href="{{ route('disburse.loan', $loan->loan_id) }}"><i class="icofont-check-circled"></i> {{ __("Click to Disburse") }}</a>
-                              @endif   
-                           
-                           @if($loan->loan_status == "pending")
-                           @can('loan_management.approve_loan')
-                           <a class="btn btn-outline-primary btn-sm" href="{{ route('loan.approve', $loan->id) }}"><i class="icofont-check-circled"></i> {{ __("Click to Approve") }}</a>
-                            <!-- on click of reject button, show a modal to enter reason for rejection -->
-                            @endcan
-                            @can('loan_management.reject_loan')
-                           <a class="btn btn-outline-danger btn-sm float-right" href="#" data-toggle="modal" data-target="#rejectModal"><i class="icofont-close-circled"></i> {{ __("Click to Reject") }}</a>
-                           @endcan
-                           <!-- ><i class="icofont-close-line-circled"></i> {{ __("Click to Reject") }}</a> -->
+                           @if($loan->status == "pending")
+                            <span class="badge badge-warning">{{ $loan->status }}</span>
+                            @elseif($loan->status == "approved")
+                            <span class="badge badge-success">{{ $loan->status }}</span>
+                            @elseif($loan->status == "rejected")
+                            <span class="badge badge-danger">{{ $loan->status }}</span>
+                            @else
+                              <span class="badge badge-info">{{ $loan->status }}</span>
                            @endif
 
-                           <!-- @if($loan->loan_status == "approved") -->
-                           <!--disburse loan button -->
-                           <!-- @can('disburse.create') -->
-                           <a class="btn btn-outline-primary btn-sm" href="{{ route('loan.disburse', $loan->id) }}"><i class="icofont-check-circled"></i> {{ __("Click to Disburse") }}</a>
-                           <!-- @endcan -->
-                           <!-- @endif -->
+                           @if($loan->status == "approved")
+                              @can('loan.disburse')
+                              <a class="btn btn-outline-primary btn-sm" href="{{ route('disburse.loan', $loan->loan_id) }}"><i class="icofont-check-circled"></i> {{ __("Click to Disburse") }}</a>
+                              @endcan
+                           @endif   
                            
+                           @if($loan->status == "pending")
+                              @can('loan.approve')
+                              <a class="btn btn-outline-primary btn-sm" href="{{ route('loan.approve', $loan->id) }}"><i class="icofont-check-circled"></i> {{ __("Click to Approve") }}</a>
+                              <!-- on click of reject button, show a modal to enter reason for rejection -->
+                              @endcan
+                              @can('loan.reject')
+                              <a class="btn btn-outline-danger btn-sm float-right" href="#" data-toggle="modal" data-target="#rejectModal"><i class="icofont-close-circled"></i> {{ __("Click to Reject") }}</a>
+                              @endcan  
+                           @endif
+                                                     
                         </td>
                      </tr>
+                     @if($loan->status == 'disbursed' || $loan->status == 'closed' || $loan->status == 'active' || $loan->status == 'overdue' || $loan->status == 'defaulted' || $loan->status == 'written_off')
                      <tr>
-                        @if($loan->loan_payment_type == "installment")
+                        @if($loan->payment_type == "installment")
                         <td>{{ __("First Payment Date") }}</td>
                         <td>{{ $loan->first_payment_date }}</td>
                         @else
                         <td>{{ __("Payment Date") }}</td>
-                        <td>{{ $loan->first_payment_date }}</td>
+                        <td>{{ $loan->end_date }}</td>
                         @endif
                      </tr>
                      <tr>
                         <td>{{ __("Release Date") }}</td>
                         <td>
-                           {{ $loan->release_date != '' ? $loan->release_date : '' }}
+                           {{ $loan->start_date }}
                         </td>
                      </tr>
+                     @endif
                      <tr>
                         <td>{{ __("Applied Amount") }}</td>
                         <td>
-                           {{ $loan->loan_amount }}
+                           {{ $loan->amount }}
                         </td>
                      </tr>
                      <tr>
@@ -124,30 +124,37 @@
                      <tr>
                         <td>{{ __("Total Paid") }}</td>
                         <td class="text-success">
-                           {{ $loan->total_paid}}
+                           <!-- Total paid is total_payble -remaining_balance -->
+                           {{ $loan->total_payable - $loan->remaining_balance }}
+                        
                         </td>
                      </tr>
                      <tr>
                         <td>{{ __("Due Amount") }}</td>
                         <td class="text-danger">
-                           {{ $loan->total_payable - $loan->total_paid }}
+                           {{ $loan->remaining_balance}}
                         </td>
                      </tr>
-                     <tr>
+                     <!-- <tr>
                         <td>{{ __("Late Payment Penalties") }}</td>
                         <td>{{ $loan->late_payment_fee }} </td>
-                     </tr>
+                     </tr> -->
+                     <!-- check if loan attachments exist, we are checking in a collection -->
+                     @if($loan_attachments)
                      <tr>
                         <td>{{ __("Attachment") }}</td>
                         <td>
-                           {!! $loan->attachment == "" ? '' : '<a
-                              href="'. asset('public/uploads/media/'.$loan->loan_attachments) .'"
-                              target="_blank"
-                              >'.__('Download').'</a
-                              >' !!}
+                           
+                           <!-- loan attachments can be multiple, so we need to loop through them -->
+                           @foreach($loan_attachments as $attachment)
+                           <a href="{{ asset('public/loan_attachments'.$attachment->attachment_name) }}" target="_blank">{{ $attachment->attachment_name }}</a>
+                           @endforeach
+                           <!-- storage path is storage/app/public/loan_attachments -->
+                           <!-- <a href="{{ asset('storage/loan_attachments/'.$loan->loan_attachments) }}" target="_blank">{{ $loan->loan_attachments }}</a> -->
                         </td>
                      </tr>
-                     @if($loan->loan_status == "approved")
+                     @endif
+                     @if($loan->status == "approved")
                      <tr>
                         <td>{{ __("Approved Date") }}</td>
                         <td>{{ $loan->approved_at }}</td>
@@ -157,113 +164,15 @@
                         <td>{{ $loan->approver->first_name }} {{ $loan->approver->last_name }}</td>
                      </tr>
                      @endif
+                     @if(isset($loan->loan_purpose))
                      <tr>
                         <td>{{ __("Description") }}</td>
                         <td>{{ $loan->loan_purpose }}</td>
                      </tr>
-                     <!-- <tr>
-                        <td>{{ __("Remarks") }}</td>
-                        <td>{{ $loan->remarks }}</td>
-                     </tr> -->
+                     @endif
+
                   </table>
                </div>
-               <!-- <div class="tab-pane fade" id="collateral">
-                  <div class="card">
-                     <div class="card-header d-flex align-items-center">
-                        <span>{{ __("All Collaterals") }}</span>
-                        <a
-                           class="btn btn-primary btn-sm ml-auto"
-                           href="#"
-                           ><i class="icofont-plus-circle"></i>
-                        {{ __("Add New Collateral") }}</a
-                           >
-                     </div>
-                     <div class="card-body">
-                        <div class="table-responsive">
-                           <table class="table table-bordered mt-2">
-                              <thead>
-                                 <tr>
-                                    <th>{{ __("Name") }}</th>
-                                    <th>{{ __("Collateral Type") }}</th>
-                                    <th>{{ __("Serial Number") }}</th>
-                                    <th>{{ __("Estimated Price") }}</th>
-                                    <th class="text-center">{{ __("Action") }}</th>
-                                 </tr>
-                              </thead>
-                              <tbody>
-                                 @foreach($loancollaterals as $loancollateral)
-                                 <tr data-id="row_{{ $loancollateral->id }}">
-                                    <td class="name">{{ $loancollateral->name }}</td>
-                                    <td class="collateral_type">
-                                       {{ $loancollateral->collateral_type }}
-                                    </td>
-                                    <td class="serial_number">
-                                       {{ $loancollateral->serial_number }}
-                                    </td>
-                                    <td class="estimated_price">
-                                       {{ $loancollateral->estimated_price }}
-                                    </td>
-                                    <td class="text-center">
-                                       <div class="dropdown">
-                                          <button
-                                             class="btn btn-primary dropdown-toggle btn-sm"
-                                             type="button"
-                                             id="dropdownMenuButton"
-                                             data-toggle="dropdown"
-                                             aria-haspopup="true"
-                                             aria-expanded="false"
-                                             >
-                                          {{ __("Action") }}
-                                          </button>
-                                          <form
-                                             action="#"
-                                             method="post"
-                                             >
-                                             {{ csrf_field() }}
-                                             <input
-                                                name="_method"
-                                                type="hidden"
-                                                value="DELETE"
-                                                />
-                                             <div
-                                                class="dropdown-menu"
-                                                aria-labelledby="dropdownMenuButton"
-                                                >
-                                                <a
-                                                   href="#"
-                                                   class="
-                                                   dropdown-item dropdown-edit dropdown-edit
-                                                   "
-                                                   ><i class="icofont-ui-edit"></i>
-                                                {{ __("Edit") }}</a
-                                                   >
-                                                <a
-                                                   href="#"
-                                                   class="
-                                                   dropdown-item dropdown-view dropdown-view
-                                                   "
-                                                   ><i class="icofont-eye-alt"></i>
-                                                {{ __("View") }}</a
-                                                   >
-                                                <button
-                                                   class="btn-remove dropdown-item"
-                                                   type="submit"
-                                                   >
-                                                <i class="icofont-trash"></i>
-                                                {{ __("Delete") }}
-                                                </button>
-                                             </div>
-                                          </form>
-                                       </div>
-                                    </td>
-                                 </tr>
-                                 @endforeach
-                              </tbody>
-                           </table>
-                        </div>
-                     </div>
-                  </div>
-               </div> -->
                <div class="tab-pane fade mt-4" id="schedule">
                   <table class="table table-bordered data-table">
                      <thead>

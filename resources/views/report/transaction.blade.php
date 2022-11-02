@@ -7,83 +7,41 @@
 @section('content')
 <div class="row">
     <div class="col-12">
-      <div class="card">
+    <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">Total Transactions: ({{ $total_transactions }})</h3>
+        </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                  <div class="card card-statistic-1">
-                    <div class="card-icon bg-primary">
-                      <i class="far fa-user"></i>
-                    </div>
-                    <div class="card-wrap">
-                      <div class="card-header">
-                        <h4>{{ __('Total Users') }}</h4>
-                      </div>
-                      <div class="card-body">
-                        {{ $total_user }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                  <div class="card card-statistic-1">
-                    <div class="card-icon bg-success">
-                      <i class="fas fa-circle"></i>
-                    </div>
-                    <div class="card-wrap">
-                      <div class="card-header">
-                        <h4>{{ __('Active Users') }}</h4>
-                      </div>
-                      <div class="card-body">
-                        {{ $active_user }}
-                      </div>
-                    </div>
-                  </div>
-                </div>      
-                <div class="col-lg-3 col-md-6 col-sm-6 col-12">
-                    <div class="card card-statistic-1">
-                      <div class="card-icon bg-danger">
-                        <i class="far fa-circle"></i>
-                      </div>
-                      <div class="card-wrap">
-                        <div class="card-header">
-                          <h4>{{ __('Inactive Users') }}</h4>
-                        </div>
-                        <div class="card-body">
-                          {{ $banned_user }}
-                        </div>
-                      </div>
-                    </div>
-                  </div>            
-              </div>
               <div class="col-lg-8">
-                <form method="get" action="{{ route('admin.report.users.search') }}">
-                <div class="row">
-                    <div class="col-lg-6">
-                      <div class="form-group row">
-                        <div class="col-lg-3 d-flex align-items-center">
-                          {{ __('From') }}
-                       </div>
-                       <div class="col-lg-9">
-                          <input type="date" class="form-control" name="from">
-                       </div>
+                <form method="get" action="{{ route('transactios.report') }}">
+                  <div class="row">
+                      <div class="col-lg-6">
+                        <div class="form-group row">
+                          <div class="col-lg-3 d-flex align-items-center">
+                            {{ __('From') }}
+                        </div>
+                        <div class="col-lg-9">
+                            <input type="date" class="form-control" name="from">
+                        </div>
+                        </div>
                       </div>
-                    </div>
-                    <div class="col-lg-6">
-                      <div class="form-group row">
-                        <div class="col-lg-3 d-flex align-items-center">
-                          To
-                       </div>
-                       <div class="col-lg-9 input-group">
-                          <input type="date" class="form-control" name="to">
-                          <div class="input-group-append">                                            
-                            <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
-                         </div>
-                       </div>
+                      <div class="col-lg-6">
+                        <div class="form-group row">
+                          <div class="col-lg-3 d-flex align-items-center">
+                            To
+                        </div>
+                        <div class="col-lg-9 input-group">
+                            <input type="date" class="form-control" name="to">
+                            <div class="input-group-append">                                            
+                              <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
+                          </div>
+                        </div>
+                        </div>
                       </div>
-                    </div>
-                </div>
-              </form>
+                  </div>
+                </form>
+              </div>
             </div>
             <div class="table-responsive">
               <table class="table table-striped" id="transaction_report">
@@ -137,37 +95,37 @@
 @endsection
 @push('js')
 
-<!-- 
-<script src="{{ asset('assets/backend/admin/assets/js/datatables.bootstrap4.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script> -->
-    <!-- Buttons -->
-    <script src="{{ asset('assets/backend/admin/assets/js/dataTables.buttons.min.js') }}"></script>
-    <script src="{{ asset('assets/backend/admin/assets/js/buttons.bootstrap4.min.js') }}"></script>
+
+    <script src="{{ asset('assets/backend/admin/assets/js/datatables/dataTables.buttons.min.js') }}"></script>
+    <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.bootstrap4.min.js') }}"></script>
     <script src="{{ asset('assets/backend/admin/assets/js/jszip/jszip.min.js') }}"></script>
     <script src="{{ asset('assets/backend/admin/assets/js/pdfmake/pdfmake.min.js') }}"></script>
-    <script src="{{ asset(assets/backend/admin/assets/js/pdfmake/build/vfs_fonts.js') }}"></script>
-    <script src="{{ asset('assets/backend/admin/assets/js/buttons.html5.min.js') }}"></script>
-    <script src="{{ asset('assets/backend/admin/assets/js/buttons.print.min.js') }}"></script>
-    <script src="{{ asset('assets/backend/admin/assets/js/buttons.colVis.min.js') }}"></script>
-
-    <!-- Responsive -->
-    <!-- <script src="{{ asset('assets/libs/datatables.net-responsive/js/dataTables.responsive.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-responsive-bs4/js/responsive.bootstrap4.min.js') }}"></script> -->
-
-    <!-- Custom Export Lib -->
-    <!-- <script src="{{ asset('assets/libs/datatables-export/dataTables.export.js') }}"></script> -->
-
-    <!-- Datatables init -->
+    <script src="{{ asset('assets/backend/admin/assets/js/pdfmake/vfs_fonts.js') }}"></script>
+    <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.html5.min.js') }}"></script>
+    <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.print.min.js') }}"></script>
+    <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.colVis.min.js') }}"></script>
     <script>
       $(document).ready(function() {
         $("#transaction_report").DataTable({
           dom: "Bfrtip",
           buttons: [
             "copy",
-            "csv",
-            "excel",
-            "pdf",
-            "print",
+            {
+            extend: "csv",
+            title: "Transaction Report"
+            },
+            {
+            extend: "excel",
+            title: "Transaction Report"
+            },
+            {
+            extend: "pdf",
+            title: "Transaction Report"
+            },
+            {
+            extend: "print",
+            title: "Transaction Report"
+            },
             "colvis"
           ],
           responsive: true,

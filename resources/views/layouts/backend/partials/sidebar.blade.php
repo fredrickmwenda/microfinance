@@ -172,7 +172,7 @@
               <li><a class="nav-link" href="{{route('customers.report')}}">{{ __('Customer Report') }}</a></li>
               @endcan
               @can('report.transaction')
-              <li><a class="nav-link" href="{{ route('transaction.report') }}">{{ __('Transaction Report') }}</a></li>
+              <li><a class="nav-link" href="{{ route('transactios.report') }}">{{ __('Transaction Report') }}</a></li>
               @endcan
               <!---Disburse Report-->
               @can('report.disburse')

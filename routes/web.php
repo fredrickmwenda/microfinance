@@ -27,9 +27,9 @@ Route::get('/', function () {
         //get role id
         $role = Auth::user()->role_id;
         //if role is admin, redirect to admin dashboard
-        if ($role == 1) {
+        if ($role == 1 || $role == 3) {
             return redirect()->route('admin.dashboard');
-        } elseif ($role == 2 || $role == 7) {
+        } elseif ($role == 2 ) {
             return redirect()->route('agent.dashboard');
         }
         // return redirect()->route('dashboard');
@@ -43,7 +43,6 @@ Auth::routes();
 Route::group(['middleware' => ['auth']], function () {
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/admin/dashboard',  [App\Http\Controllers\HomeController::class, 'index'])->name('admin.dashboard');
-    //agent dashboard
     Route::get('/agent/dashboard',  [App\Http\Controllers\ROController::class, 'index'])->name('agent.dashboard');
     Route::get('/user/profile', [App\Http\Controllers\UserController::class, 'profile'])->name('user.profile');
     
@@ -61,6 +60,9 @@ Route::group(['middleware' => ['auth']], function () {
 
     //getDashboardStatistics which accepts start date and end date as parameters to get the statistics
     Route::get('/dashboard-statistics/{start_date}/{end_date}', [App\Http\Controllers\HomeController::class, 'getDashboardStatistics'])->name('dashboard.data');
+
+    //getDashboardStatics for ro dashboard
+    Route::get('/ro-dashboard-statistics/{start_date}/{end_date}', [App\Http\Controllers\ROController::class, 'getDashboardStatistics'])->name('ro.dashboard.data');
     
     //Branch resource routes
     Route::group(['prefix' => 'admin', 'as' => 'admin.'], function () {
@@ -90,6 +92,20 @@ Route::group(['middleware' => ['auth']], function () {
 
         Route::resource('disburse', 'App\Http\Controllers\DisburseController');
         Route::get('customer-details', [App\Http\Controllers\DisburseController::class, 'getCustomerDetails'])->name('customer_details.get_customer_details');
+
+        // notifications
+        Route::get('notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+        Route::get('notifications/{id}/show', [App\Http\Controllers\NotificationController::class, 'show'])->name('notifications.show');
+        Route::get('notifications/{id}/destroy', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('notifications.destroy');
+        // Route::get('notifications/delete', [App\Http\Controllers\NotificationController::class, 'delete'])->name('notifications.delete');
+        Route::get('notifications/mark-all-as-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_as_read');
+        Route::get('notifications/mark-as-read/{id}', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
+        // Route::get('notifications/mark-as-unread/{id}', [App\Http\Controllers\NotificationController::class, 'markAsUnread'])->name('notifications.mark_as_unread');
+        // Route::get('notifications/mark-all-as-unread', [App\Http\Controllers\NotificationController::class, 'markAllAsUnread'])->name('notifications.mark_all_as_unread');
+        // Route::get('notifications/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
+
+
+        
 
 
     });
@@ -136,7 +152,7 @@ Route::group(['middleware' => ['auth']], function () {
     //search customer
     Route::get('customer/search', [App\Http\Controllers\CustomerController::class, 'search'])->name('customer.search');
     //transaction Report
-    Route::get('transaction/report', [App\Http\Controllers\TransactionController::class, 'transactionReport'])->name('customer.transaction.report');
+    // Route::get('transaction/report', [App\Http\Controllers\TransactionController::class, 'transactionReport'])->name('customer.transaction.report');
 
 
 
@@ -169,7 +185,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('disburse/{id}/loan', [App\Http\Controllers\DisburseController::class, 'disburseLoanStore'])->name('disburse.loan.store');
 
     //Reports
-    Route::get('transaction/report', [App\Http\Controllers\ReportController::class, 'transactionReport'])->name('transaction.report');
+    Route::get('transactions/report', [App\Http\Controllers\ReportController::class, 'transactionReport'])->name('transactios.report');
     Route::get('loan/report', [App\Http\Controllers\ReportController::class, 'loanReport'])->name('loan.report');
     Route::get('customers/report', [App\Http\Controllers\ReportController::class, 'customerReport'])->name('customers.report');
     Route::get('disburse/report', [App\Http\Controllers\ReportController::class, 'disburseReport'])->name('disburse.report');

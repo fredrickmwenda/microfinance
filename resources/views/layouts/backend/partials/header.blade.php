@@ -7,6 +7,35 @@
     </ul>
   </form>
   <ul class="navbar-nav navbar-right">
+    <!-- notifications with its icon -->
+    @if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3)
+    <li class="dropdown dropdown-list-toggle"><a href="#" data-toggle="dropdown" class="nav-link nav-link-lg message-toggle beep"><i class="far fa-bell"></i></a>
+      <div class="dropdown-menu dropdown-list dropdown-menu-right">
+        <div class="dropdown-header">Notifications
+          <div class="float-right">
+            <a href="{{ route('admin.notifications.mark_all_as_read') }}">Mark All as Read</a>
+          </div>
+        </div>
+        <div class="dropdown-list-content dropdown-list-icons">
+          <!--only take 5 notifications-->
+          @foreach (Auth::user()->unreadNotifications->take(5) as $notification)
+          <a href="#" class="dropdown-item dropdown-item-unread">
+            <div class="dropdown-item-icon bg-primary text-white">
+              <i class="fas fa-code"></i>
+            </div>
+            <div class="dropdown-item-desc">
+              {{ $notification->data['customer_name'] }} has made a payment of {{ $notification->data['amount'] }} on loan {{ $notification->data['loan_id'] }} at {{ $notification->data['transaction_date'] }}. The transaction reference is {{ $notification->data['transaction_reference'] }}. The remaining balance is {{ $notification->data['balance'] }}
+              <div class="time text-primary">{{ $notification->created_at->diffForHumans() }}</div>
+            </div>
+          </a>
+          @endforeach
+        </div>
+        <div class="dropdown-footer text-center">
+          <a href="{{ route('admin.notifications.index') }}">View All <i class="fas fa-chevron-right"></i></a>
+        </div>
+      </div>
+    </li>
+    @endif
     <li class="dropdown"><a href="#" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
       @if(Auth::user()->avatar)
       <img alt="image" src="{{ asset('assets/images/profile/'. Auth::user()->avatar) }}" class="rounded-circle mr-1">
@@ -27,3 +56,4 @@
     </li>
   </ul>
 </nav>
+

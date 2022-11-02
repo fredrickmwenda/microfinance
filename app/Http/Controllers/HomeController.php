@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Charts;
 use App\Models\customer;
 use App\Models\Disburse;
 use App\Models\Loan;
@@ -101,8 +102,8 @@ class HomeController extends Controller
 
         //performance of ro officers according to the number of loans they have created which are approved, disbursed, closed or written off
         // $ro_officers = User::where('role', 'ro')->get();
-        $ro_officers = User::all();
-        //dd($ro_officers);
+        $ro_officers = User::where('role_id', 2)->get();
+
         
         $months = [
             'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -112,75 +113,67 @@ class HomeController extends Controller
 
         $ro_officers_performance = [];
         $performance = [];
-        // loans for september
-        // $loans = Loan::where('created_by', 7)->whereIn('status', ['approved', 'disbursed', 'closed', 'written_off'])->whereMonth('created_at', 9)->get();
-        // dd($loans, $loans->count());
         
         foreach($ro_officers as $ro_officer){
-            // $ro_officers_performance[$ro_officer->id] = [
-            //     'name' => $ro_officer->name,
-            //     'approved' => 0,
-            //     'disbursed' => 0,
-            //     'closed' => 0,
-            //     'written_off' => 0,
-            //     'total' => 0,
-            // ];
             $loans = Loan::where('created_by', $ro_officer->id)->whereIn('status', ['approved', 'disbursed', 'closed', 'written_off'])->get();
+            
            
             if(count($loans) > 0){
                 
                 $loansRO = Loan::where('created_by', $ro_officer->id)->whereIn('status', ['approved', 'disbursed', 'closed', 'written_off'])->get()->groupBy(function($date) {
                     return Carbon::parse($date->updated_at)->format('M'); // grouping by months
-                });
-                
-            
-            foreach($months as $month){
-                //get the loans created by the ro officer in the month
-                if(array_key_exists($month, $loansRO->toArray())){
-                   // dd( $loansRO[$month]);
-                    
-                    foreach ($loansRO  as $loan => $value) {
-                       
-                        if($loan == $month){
-                            
-                            $monthlyUniqueLoans  = $value;
-                            $total_monthly_loans= count($monthlyUniqueLoans);
-                            $total_processing_fee = $monthlyUniqueLoans->sum('processing_fee');
-                            $total_loan_interest = $monthlyUniqueLoans->sum('interest');
-                            $total_total_payable = $monthlyUniqueLoans->sum('total_payable');
-                            $ro_username = $ro_officer->first_name;
-                            // performance is processing fee +loan_interest / amount
-                            $performance = ($total_processing_fee + $total_loan_interest) / $total_total_payable;
+                });            
+                foreach($months as $month){
+                    //get the loans created by the ro officer in the month
+                    if(array_key_exists($month, $loansRO->toArray())){
+                    // dd( $loansRO[$month]);
+                        
+                        foreach ($loansRO  as $loan => $value) {
+                        
+                            if($loan == $month){
+                                
+                                $monthlyUniqueLoans  = $value;
+                                $total_monthly_loans= count($monthlyUniqueLoans);
+                                $total_processing_fee = $monthlyUniqueLoans->sum('processing_fee');
+                                $total_loan_interest = $monthlyUniqueLoans->sum('interest');
+                                $total_total_payable = $monthlyUniqueLoans->sum('total_payable');
+                                $ro_username = $ro_officer->first_name;
+                                // performance is processing fee +loan_interest / amount
+                                $performance = ($total_processing_fee + $total_loan_interest) / $total_total_payable;
 
-                            $performancePerc = $performance * 100;
+                                $performancePerc = $performance * 100;
 
-                            $performancePerc = number_format($performancePerc, 2, '.', '');
-                            
+                                $performancePerc = number_format($performancePerc, 2, '.', '');
 
-                            array_push($ro_officers_performance, [
-                                'ro_username' => $ro_username,
-                                'month' => $month,
-                                'total_loans' => $total_monthly_loans,
-                                'total_processing_fee' => $total_processing_fee,
-                                'total_loan_interest' => $total_loan_interest,
-                                'total_total_payable' => $total_total_payable,
-                                'performance' => $performance,
-                                'performancePerc' => $performancePerc,
-                            ]);
+                                
 
+                                array_push($ro_officers_performance, [
+                                    'usernames' => $ro_username,
+                                    'month' => $month,
+                                    // 'total_loans' => $total_monthly_loans,
+                                    // 'total_processing_fee' => $total_processing_fee,
+                                    // 'total_loan_interest' => $total_loan_interest,
+                                    // 'total_total_payable' => $total_total_payable,
+                                    // 'performance' => $performance,
+                                    'performance' => $performancePerc
+                                    // $month  => $performancePerc,
+                                ]);
+
+                            }
                         }
                     }
-
-
-                //performance is the number of loans created by the ro officer which are approved, disbursed, closed or written off +
-                // $performance[$month] = Loan::where('created_by', $ro_officer->id)->whereMonth('created_at', array_search($month, $months) + 1)->whereIn('status', ['approved', 'disbursed', 'closed', 'written_off'])->count();
-            }
             
+                }
+            
+            }
         }
-    }
+       
 
 
-    $ROPerformanceData  = json_encode($ro_officers_performance);
+        $ROPerformanceData  = json_encode($ro_officers_performance);
+        // $performanceData  = json_encode($performance);
+        // dd($performanceData);
+        // dd($ROPerformanceData);
 
 
   
@@ -196,7 +189,6 @@ class HomeController extends Controller
         $loanData = $loanSet->original->loans;
         //convert to json
         $loanData = json_encode($loanData);
-        
 
 
         $activeLoanData = $loanSet->original->activeLoans;
@@ -208,6 +200,7 @@ class HomeController extends Controller
 
 
         $transactionData = $this->getTransactionsAndDisbursements();
+        // dd($transactionData);
         $transactionData = json_encode($transactionData);
 
         $transactionSet = json_decode($transactionData);
@@ -218,6 +211,7 @@ class HomeController extends Controller
 
         $disbursementData = $transactionSet->original->disbursements;
         $disbursementData = json_encode($disbursementData);
+        
 
         // get loans created between 7 days ago and today
         $loansCreatedWithin7Days = Loan::where('created_at', '>=',  Carbon::now()->subDays(7))->get();
@@ -228,13 +222,13 @@ class HomeController extends Controller
  
 
 
-        }
+        
 
          return view('dashboard',compact('total_users','total_customers','all_pending_loans','all_approved_loans','all_rejected_loans','all_disbursed_loans','all_closed_loans','all_written_off_loans','all_recovered_loans','all_overdue_loans','all_defaulted_loans','total_loans','total_pending_loans','total_approved_loans','total_rejected_loans','total_disbursed_loans','total_closed_loans','total_written_off_loans','total_recovered_loans','total_overdue_loans','total_defaulted_loans','total_amount_pending_loans','total_amount_approved_loans','total_amount_rejected_loans','total_amount_closed_loans','total_interest_earned','profit','total_amount_pending_loans','total_amount_approved_loans','total_amount_rejected_loans','total_amount_disbursed_loans','total_amount_closed_loans','total_amount_written_off_loans','total_amount_recovered_loans','total_amount_overdue_loans','total_amount_defaulted_loans', 'expenditure', 'profit', 'total_loans', 'total_disbursed', 'total_disbursed_amount', 'total_amount_loans', 'loanData', 'activeLoanData', 'pendingLoanData', 'overDueLoanData','transactionData', 'disbursementData', 'ROPerformanceData' ));
     }
 
 
-  //function to get DashboardStatistics that passes start and end date to the function, returns the statistics for the period
+     //function to get DashboardStatistics that passes start and end date to the function, returns the statistics for the period
     public function getDashboardStatistics($start_date, $end_date){
         // if start date matches end date, then it is a single day
         if($start_date == $end_date){
@@ -247,7 +241,7 @@ class HomeController extends Controller
             $expenditure = Disburse::whereDate('created_at', $start_date)->sum('disbursement_amount');
 
             //get Total interest earned from closed loans
-            $profit = Loan::where('status', 'closed')->whereDate('updated_at', $start_date )->sum('loan_interest');
+            $profit = Loan::where('status', 'closed')->whereDate('updated_at', $start_date )->sum('interest');
 
             
             $total_pending_loans = Loan::whereDate('updated_at', $start_date)->where('status', 'pending')->count();
@@ -282,7 +276,7 @@ class HomeController extends Controller
             $total_amount_loans = Loan::where('created_at', '>=', Carbon::parse($start_date)->startOfDay())->where('created_at', '<=', Carbon::parse($end_date)->endOfDay())->sum('amount');
 
             //get Total disbursed loans
-            $expenditure = Disburse::where('created_at', '>=', Carbon::parse($start_date)->startOfDay())->where('created_at', '<=', Carbon::parse($end_date)->endOfDay())->sum('_amount');
+            $expenditure = Disburse::where('created_at', '>=', Carbon::parse($start_date)->startOfDay())->where('created_at', '<=', Carbon::parse($end_date)->endOfDay())->sum('disbursement_amount');
 
 
             //get Total interest earned from closed loans
@@ -457,6 +451,11 @@ class HomeController extends Controller
                       
                     }
                 }
+                else{
+                    $monthh = $month;
+                    $type ='all';
+                    $sortedData[$monthh] = 0;
+                }
                 // active loans by month
                 if(array_key_exists($month, $activeLoansByMonth->toArray())){
                     foreach($activeLoansByMonth as $loan => $value){
@@ -473,6 +472,11 @@ class HomeController extends Controller
                         }
                       
                     }
+                }
+                else{
+                    $monthh = $month;
+                    $type = 'active';
+                    $activeLoanData[$monthh] = 0;
                 }
 
                 // overdue loans by month
@@ -492,6 +496,11 @@ class HomeController extends Controller
                       
                     }
                 }
+                else{
+                    $monthh = $month;
+                    $type = 'overdue';
+                    $overDueLoanData[$monthh] = 0;
+                }
 
                 // pending loans by month
                 if(array_key_exists($month, $pendingLoansByMonth->toArray())){
@@ -510,131 +519,24 @@ class HomeController extends Controller
                       
                     }
                 }
+                else{
+                    $monthh = $month;
+                    $type = 'pending';
+                    $pendingLoanData[$monthh] = 0;
+                }
 
             }
 
-            // if its filtered by 3 months, 6 months or 1 year
-            // if($request->has('filter')){
-            //     $filter = $request->filter;
-            //     // check if the filter is 3 months
-            //     if($filter == '3months'){
-            //         // get the current month
-            //         $currentMonth = Carbon::now()->format('F');
-            //         // get the previous 3 months
-            //         $previousMonths = Carbon::now()->subMonths(3)->format('F');
-
-            //         $loans = Loan::whereBetween('created_at', [$previousMonths, $currentMonth])->get();
-            //         $activeLoans = Loan::where('status', 'active')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //         $overDueLoans = Loan::where('status', 'overdue')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //         $pendingLoans = Loan::where('status', 'pending')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //     }
-
-            //     // check if the filter is 6 months
-            //     if($filter == '6months'){
-            //         // get the current month
-            //         $currentMonth = Carbon::now()->format('F');
-            //         // get the previous 6 months
-            //         $previousMonths = Carbon::now()->subMonths(6)->format('F');
-
-            //         $loans = Loan::whereBetween('created_at', [$previousMonths, $currentMonth])->get();
-            //         $activeLoans = Loan::where('status', 'active')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //         $overDueLoans = Loan::where('status', 'overdue')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //         $pendingLoans = Loan::where('status', 'pending')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //     }
-
-            //     // check if the filter is 1 year
-            //     if($filter == '1year'){
-            //         // get the current month
-            //         $currentMonth = Carbon::now()->format('F');
-            //         // get the previous 1 year
-            //         $previousMonths = Carbon::now()->subMonths(12)->format('F');
-
-            //         $loans = Loan::whereBetween('created_at', [$previousMonths, $currentMonth])->get();
-            //         $activeLoans = Loan::where('status', 'active')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //         $overDueLoans = Loan::where('status', 'overdue')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //         $pendingLoans = Loan::where('status', 'pending')->whereBetween('updated_at', [$previousMonths, $currentMonth])->get();
-            //     }
-            // }
-
-
         }
-        else if($user->role_id == 3){
-            $loansByMonth = Loan::where('created_by', $user->id)->get()->groupBy(function($date) {
-                return Carbon::parse($date->created_at)->format('F'); // grouping by months
-            });
-
-            $activeLoansByMonth = Loan::where('status', 'active')->where('created_by', $user->id)->get()->groupBy(function($date) {
-                return Carbon::parse($date->updated_at)->format('F'); // grouping by months
-            });
-
-            $overDueLoansByMonth = Loan::where('status', 'overdue')->where('created_by', $user->id)->get()->groupBy(function($date) {
-                return Carbon::parse($date->updated_at)->format('F'); // grouping by months
-            });
-
-            $pendingLoansByMonth = Loan::where('status', 'pending')->where('created_by', $user->id)->get()->groupBy(function($date) {
-                return Carbon::parse($date->updated_at)->format('F'); // grouping by months
-            });
-
-            // get the current month
-            foreach($months as $month){
-                // loans by month
-                if(array_key_exists($month, $loansByMonth->toArray())){
-                    foreach($loansByMonth as $loan => $value){
-                        if($loan == $month){
-                            $monthlyUniqueLoans = $value;
-                            $monthlyLoansCount = count($monthlyUniqueLoans->toArray());
-                            $monthlyLoansAmount = $monthlyUniqueLoans->pluck('total_payable')->sum();
-                            $monthh = $month;
-                            $type = 'all';
-                           
-                            array_push($sortedData, ['month' => $monthh, 'loans' => $monthlyLoansCount, 'amount' => $monthlyLoansAmount, 'type' => $type]);
-
-                            break;
-                        }
-                      
-                    }
-                }
-
-                // active loans by month
-                if(array_key_exists($month, $activeLoansByMonth->toArray())){
-                    foreach($activeLoansByMonth as $loan => $value){
-                        if($loan == $month){
-                            $monthlyUniqueLoans = $value;
-                            $monthlyLoansCount = count($monthlyUniqueLoans->toArray());
-                            $monthlyLoansAmount = $monthlyUniqueLoans->pluck('total_payable')->sum();
-                            $monthh = $month;
-                            $type = 'active';
-                            array_push($sortedData, ['month' => $monthh, 'loans' => $monthlyLoansCount, 'amount' => $monthlyLoansAmount, 'type' => $type]);
-
-                            break;
-                        }
-                      
-                    }
-                }
-
-                // overdue loans by month
-                if(array_key_exists($month, $overDueLoansByMonth->toArray())){
-                    // $sortedData['loans'][$month] = count($loansByMonth[$month]);
-                    foreach($overDueLoansByMonth as $loan => $value){
-                        if($loan == $month){
-                            $monthlyUniqueLoans = $value;
-                            $monthlyLoansCount = count($monthlyUniqueLoans->toArray());
-                            $monthlyLoansAmount = $monthlyUniqueLoans->pluck('total_payable')->sum();
-                            $monthh = $month;
-                            $type = 'overdue';
-            
-                            array_push($sortedData, ['month' => $monthh, 'loans' => $monthlyLoansCount, 'amount' => $monthlyLoansAmount, 'type' => $type]);
-
-                            break;
-                        }
-
-                    }
-                }
-            }
-
-        }
+ 
 
         $loanData =  $sortedData;
+        $activeLoanData = Charts::getData($activeLoanData);
+        $overDueLoanData = Charts::getData($overDueLoanData);
+        $pendingLoanData = Charts::getData($pendingLoanData);
+        $loanData = Charts::getData($loanData);
+
+        
 
         #endregionreturn response()->json($loanData);
         // return loandata, activeLoanData, overDueLoanData, pendingLoanDataa as an array
@@ -678,14 +580,13 @@ class HomeController extends Controller
         ];
         $transactions = [];
         $disbursements = [];
-        $sortedData = [];
 
         $transactionsByMonth = Transaction::all()->groupBy(function($date) {
-            return Carbon::parse($date->created_at)->format('F'); // grouping by months
+            return Carbon::parse($date->created_at)->format('M'); // grouping by months
         });
 
         $disbursementsByMonth =  Disburse::all()->groupBy(function($date) {
-            return Carbon::parse($date->created_at)->format('F'); // grouping by months
+            return Carbon::parse($date->created_at)->format('M'); // grouping by months
         });
 
         // get the current month
@@ -696,7 +597,7 @@ class HomeController extends Controller
                     if($transaction == $month){
                         $monthlyUniqueTransactions = $value;
                         $monthlyTransactionsCount = count($monthlyUniqueTransactions->toArray());
-                        $monthlyTransactionsAmount = $monthlyUniqueTransactions->pluck('disbursement_amount')->sum();
+                        $monthlyTransactionsAmount = $monthlyUniqueTransactions->pluck('amount')->sum();
                         $monthh = $month;
                         // $type = 'all';
 
@@ -709,6 +610,11 @@ class HomeController extends Controller
                   
                 }
             }
+            else{
+                $monthh = $month;
+                // $type = 'all';
+                $transactions[$monthh] = 0;
+            }
 
             // disbursements by month
             if(array_key_exists($month, $disbursementsByMonth->toArray())){
@@ -716,7 +622,7 @@ class HomeController extends Controller
                     if($disbursement == $month){
                         $monthlyUniqueDisbursements = $value;
                         $monthlyDisbursementsCount = count($monthlyUniqueDisbursements->toArray());
-                        $monthlyDisbursementsAmount = $monthlyUniqueDisbursements->pluck('amount')->sum();
+                        $monthlyDisbursementsAmount = $monthlyUniqueDisbursements->pluck('disbursement_amount')->sum();
                         $monthh = $month;
 
                         $disbursements[$monthh] = [$monthlyDisbursementsAmount];
@@ -728,49 +634,179 @@ class HomeController extends Controller
                   
                 }
             }
+            else{
+                $monthh = $month;
+                // $type = 'all';
+                $disbursements[$monthh] = 0;
+            }
+
         }
+        $transactions = Charts::getData($transactions);
+        $disbursements = Charts::getData($disbursements);
+       // dd($transactions, $disbursements);
 
         return response()->json(['transactions' => $transactions, 'disbursements' => $disbursements], 200);
 
     }
 
-    // get performance of users
-    public function getPerformanceOfUsers(){
+    //filter performance of users, the filtration is done by user selecting a dropdown option
+    //in the frontend, the option selected is passed to the backend as a parameter
+    //the parameter is then used to filter the data
+    //the parameter are this week, this month, 3 months, 6 months and 1 year
+    public function filterPerformanceOfUsers(Request $request){
         $user = Auth::user();
-        $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        $sortedData = [];
-        //get users with loans, where the status is active, disburded , completed 
-        $users = User::with('loans')->whereHas('loans', function($query){
-            $query->where('status', 'active')
-            ->orWhere('status', 'disbursed')
-            ->orWhere('status', 'completed');
-        })->get();
-        dd($users);
-        $usersByMonth = $users->groupBy(function($date) {
-            return Carbon::parse($date->created_at)->format('F'); // grouping by months
-        });
+        $users = User::where('role_id', 2)->get();
+        $userPerformance = [];
+        $userPerformanceData = [];
+        $filter = $request->filter;
 
-        // get the current month
-        foreach($months as $month){
-            // users by month
-            if(array_key_exists($month, $usersByMonth->toArray())){
-                foreach($usersByMonth as $user => $value){
-                    if($user == $month){
-                        $monthlyUniqueUsers = $value;
-                        $monthlyUsersCount = count($monthlyUniqueUsers->toArray());
-                        $monthh = $month;
-                        $type = 'all';
+        //get the current date
+        $current = Carbon::now();
+        $currentDate = $current->toDateString();
+        $currentMonth = $current->month;
+        $currentYear = $current->year;
 
-                        array_push($sortedData, ['month' => $monthh, 'users' => $monthlyUsersCount, 'type' => $type]);
+        //get the first day of the current month
+        $firstDayOfCurrentMonth = Carbon::now()->startOfMonth()->toDateString();
 
-                        break;
-                    }
-                  
+        //get the first day of the current year
+        $firstDayOfCurrentYear = Carbon::now()->startOfYear()->toDateString();
+
+        //get the first day of the current week
+        $firstDayOfCurrentWeek = Carbon::now()->startOfWeek()->toDateString();
+
+        //get the first day of the current quarter
+        $firstDayOfCurrentQuarter = Carbon::now()->startOfQuarter()->toDateString();
+
+        //get the first day of the current semester
+        $firstDayOfCurrentSemester = Carbon::now()->startOfSemester()->toDateString();
+
+        //check if the filter is this week
+        if($filter == 'this week'){
+            //get the users performance for this week and add it to the userPerformance array
+            foreach($users as $user){
+                //check if the user has a loan
+                if($user->loans->count() > 0){
+                    //get the user's loans
+                    $loans = $user->loans;
+                    //get the user's loans for this week
+                    $loansForThisWeek = $loans->where('created_at', '>=', $firstDayOfCurrentWeek);
+                    //get the user's loans for this week that are either active, paid or overdue
+                    $loansForThisWeek = $loansForThisWeek->where('status', 'active')->orWhere('status', 'paid')->orWhere('status', 'overdue');
+
+                    //get the user's loans for this week that are active and add it to the userPerformance array
+                    if($loansForThisWeek->count() > 0){
+                        // performance is $total_processing_fee + $total_loan_interest / $total_total_payable * 100
+                        $total_processing_fee = $loansForThisWeek->pluck('processing_fee')->sum();
+                        $total_loan_interest = $loansForThisWeek->pluck('loan_interest')->sum();
+                        $total_total_payable = $loansForThisWeek->pluck('total_payable')->sum();
+                        $performance = ($total_processing_fee + $total_loan_interest) / $total_total_payable * 100;
+                        $userPerformance[$user->name] = $performance;
+
+                    }               
                 }
             }
         }
+        else if($filter == 'this month'){
+            //get the users performance for this month and add it to the userPerformance array
+            foreach($users as $user){
+                //check if the user has a loan
+                if($user->loans->count() > 0){
+                    //get the user's loans
+                    $loans = $user->loans;
+                    //get the user's loans for this month
+                    $loansForThisMonth = $loans->where('created_at', '>=', $firstDayOfCurrentMonth);
+                    //get the user's loans for this month that are either active, paid or overdue
+                    $loansForThisMonth = $loansForThisMonth->where('status', 'active')->orWhere('status', 'paid')->orWhere('status', 'overdue');
 
-        return response()->json($sortedData, 200);
+                    //get the user's loans for this month that are active and add it to the userPerformance array
+                    if($loansForThisMonth->count() > 0){
+                        // performance is $total_processing_fee + $total_loan_interest / $total_total_payable * 100
+                        $total_processing_fee = $loansForThisMonth->pluck('processing_fee')->sum();
+                        $total_loan_interest = $loansForThisMonth->pluck('loan_interest')->sum();
+                        $total_total_payable = $loansForThisMonth->pluck('total_payable')->sum();
+                        $performance = ($total_processing_fee + $total_loan_interest) / $total_total_payable * 100;
+                        $userPerformance[$user->name] = $performance;
+
+                    }
+                }
+            }
+        }
+        else if($filter == '3 months'){
+            //get the users performance for this month and add it to the userPerformance array
+            foreach($users as $user){
+                //check if the user has a loan
+                if($user->loans->count() > 0){
+                    //get the user's loans
+                    $loans = $user->loans;
+                    //get the user's loans for this quarter
+                    $loansForThisQuarter = $loans->where('created_at', '>=', $firstDayOfCurrentQuarter);
+                    //get the user's loans for this quarter that are either active, paid or overdue
+                    $loansForThisQuarter = $loansForThisQuarter->where('status', 'active')->orWhere('status', 'paid')->orWhere('status', 'overdue');
+
+                    //get the user's loans for this quarter that are active and add it to the userPerformance array
+                    if($loansForThisQuarter->count() > 0){
+                        // performance is $total_processing_fee + $total_loan_interest / $total_total_payable * 100
+                        $total_processing_fee = $loansForThisQuarter->pluck('processing_fee')->sum();
+                        $total_loan_interest = $loansForThisQuarter->pluck('loan_interest')->sum();
+                        $total_total_payable = $loansForThisQuarter->pluck('total_payable')->sum();
+                        $performance = ($total_processing_fee + $total_loan_interest) / $total_total_payable * 100;
+                        $userPerformance[$user->name] = $performance;
+
+                    }
+
+                }
+            }
+        }
+        
+                    
+
+
+
+
+
+
     }
+
+    
+
+    // get performance of users
+    // public function getPerformanceOfUsers(){
+    //     $user = Auth::user();
+    //     $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    //     $sortedData = [];
+    //     //get users with loans, where the status is active, disburded , completed 
+    //     $users = User::with('loans')->whereHas('loans', function($query){
+    //         $query->where('status', 'active')
+    //         ->orWhere('status', 'disbursed')
+    //         ->orWhere('status', 'completed');
+    //     })->get();
+    //     dd($users);
+    //     $usersByMonth = $users->groupBy(function($date) {
+    //         return Carbon::parse($date->created_at)->format('F'); // grouping by months
+    //     });
+
+    //     // get the current month
+    //     foreach($months as $month){
+    //         // users by month
+    //         if(array_key_exists($month, $usersByMonth->toArray())){
+    //             foreach($usersByMonth as $user => $value){
+    //                 if($user == $month){
+    //                     $monthlyUniqueUsers = $value;
+    //                     $monthlyUsersCount = count($monthlyUniqueUsers->toArray());
+    //                     $monthh = $month;
+    //                     $type = 'all';
+
+    //                     array_push($sortedData, ['month' => $monthh, 'users' => $monthlyUsersCount, 'type' => $type]);
+
+    //                     break;
+    //                 }
+                  
+    //             }
+    //         }
+    //     }
+
+    //     return response()->json($sortedData, 200);
+    // }
 
 }

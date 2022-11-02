@@ -124,7 +124,7 @@ class RoleController extends Controller
     {
         $request->validate([
             'name' => 'required|max:100|unique:roles,name,' . $id
-        ], [
+        ],[
             'name.requried' => 'Please give a role name'
         ]);
         $role = Role::find($id);

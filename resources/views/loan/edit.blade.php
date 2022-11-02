@@ -30,15 +30,15 @@
                   </div>
                   <div class="form-group col-md-6">
                     <label for="loan_amount">{{ __('Loan Amount') }}</label>
-                    <input type="text" class="form-control" id="loan_amount" name="loan_amount" value="{{ $loan_edit->loan_amount }}" required>
+                    <input type="text" class="form-control" id="loan_amount" name="loan_amount" value="{{ $loan_edit->amount }}" required>
                   </div>
                 </div>
                 <div class="form-row mb-3">
                   <div class="form-group col-md-6">
                     <label for="loan_interest">{{ __('Loan Interest') }}</label>
                     @php
-                      $loan_interest = $loan_edit->loan_interest;
-                      $loan_interest = ($loan_interest * 100)/$loan_edit->loan_amount;
+                      $loan_interest = $loan_edit->interest;
+                      $loan_interest = ($loan_interest * 100)/$loan_edit->amount;
                       //convert to no decimal
                       $loan_interest = number_format($loan_interest, 0, '.', '');
                     @endphp
@@ -47,7 +47,7 @@
                   <div class="form-group col-md-6">
                     <label for="loan_duration">{{ __('Loan Duration') }}</label>
 
-                    <input type="text" class="form-control" id="loan_duration" name="loan_duration" value="{{ $loan_edit->loan_duration }}" required>
+                    <input type="text" class="form-control" id="loan_duration" name="loan_duration" value="{{ $loan_edit->duration }}" required>
                   </div>
                 </div>
                 <!--processing fee and loan creator-->
@@ -65,16 +65,21 @@
                 <div class="form-row mb-3">
                   <div class="form-group col-md-6">
                     <label for="loan_status">{{ __('Loan Status') }}</label>
+                    <!--only users who can approve or disburse loans can change the status-->
+                    @if (Auth::user()->can('loan.approve') || Auth::user()->can('loan.disburse'))
                     <select id="loan_status" name="loan_status" class="form-control">
                       <!--options are pending, approved, rejected,disbursed,active,closed, overdue->-->
-                      <option value="pending" {{ $loan_edit->loan_status == 'pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
-                      <option value="approved" {{ $loan_edit->loan_status == 'approved' ? 'selected' : '' }}>{{ __('Approved') }}</option>
-                      <option value="rejected" {{ $loan_edit->loan_status == 'rejected' ? 'selected' : '' }}>{{ __('Rejected') }}</option>
-                      <option value="disbursed" {{ $loan_edit->loan_status == 'disbursed' ? 'selected' : '' }}>{{ __('Disbursed') }}</option>
-                      <option value="active" {{ $loan_edit->loan_status == 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
-                      <option value="closed" {{ $loan_edit->loan_status == 'closed' ? 'selected' : '' }}>{{ __('Closed') }}</option>
-                      <option value="overdue" {{ $loan_edit->loan_status == 'overdue' ? 'selected' : '' }}>{{ __('Overdue') }}</option>
+                      <option value="pending" {{ $loan_edit->status == 'pending' ? 'selected' : '' }}>{{ __('Pending') }}</option>
+                      <option value="approved" {{ $loan_edit->status == 'approved' ? 'selected' : '' }}>{{ __('Approved') }}</option>
+                      <option value="rejected" {{ $loan_edit->status == 'rejected' ? 'selected' : '' }}>{{ __('Rejected') }}</option>
+                      <option value="disbursed" {{ $loan_edit->status == 'disbursed' ? 'selected' : '' }}>{{ __('Disbursed') }}</option>
+                      <option value="active" {{ $loan_edit->status == 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                      <option value="closed" {{ $loan_edit->status == 'closed' ? 'selected' : '' }}>{{ __('Closed') }}</option>
+                      <option value="overdue" {{ $loan_edit->status == 'overdue' ? 'selected' : '' }}>{{ __('Overdue') }}</option>
                     </select>
+                    @else
+                    <input type="text" class="form-control" id="loan_status" name="loan_status" value="{{ $loan_edit->status }}" readonly>
+                    @endif
                   </div>
 
                   <!--loan payment status-->

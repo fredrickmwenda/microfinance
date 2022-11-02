@@ -11,28 +11,39 @@
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-lg-6">
-                  @can('customer.create')
-                  <form method="POST" action="{{ route('customer.search') }}">
-                    @csrf
-                    <div class="input-group mb-2 col-12">
-                       <input type="text" class="form-control" placeholder="Search..." required="" name="src" autocomplete="off" value="">
-                       <select class="form-control" name="type">
-                          <option value="email">{{ __('Search By Email') }}</option>
-                          <option value="phone">{{ __('Search By Phone') }}</option>
-                          <option value="account_number">{{ __('Search By Account Number') }}</option>
-                       </select>
-                       <div class="input-group-append">                                            
-                          <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i></button>
-                       </div>
+                  
+                  <form method="GET" action="{{ route('customer.index') }}">
+                    <div class="form-row">
+                      <div class = "col-lg-6">
+                        <div class="input-group mb-2">
+                          <input type="text" class="form-control" placeholder="Search..." required="" name="src" autocomplete="off" value="">
+                          <select class="form-control" name="type" required="">
+                              <option value="email">{{ __('Search By Email') }}</option>
+                              <option value="phone">{{ __('Search By Phone') }}</option>
+                              <option value="national_id">{{ __('Search By National ID') }}</option>
+                          </select>
+                        </div>
+                      </div>
+
+                    <div class="col-lg-6 ">
+                        <div class="form-group "> 
+                          <div class="input-group">                                            
+                              <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i>Search</button>
+                              <a href="{{ route('customer.index') }}" class="btn btn-primary ml-2"><i class="fas fa-sync"></i>Refresh</a>
+                          </div>
+                        </div>
+                    </div>
                     </div>
                   </form>
-                  @endcan
+                  
                 </div>
+                @can('customer.create')
                 <div class="col-lg-6">
                     <div class="add-new-btn">
-                        <a href="{{ route('customer.create') }}" class="btn btn-primary float-right">{{ __('Add New Customer') }}</a>
+                        <a href="{{ route('customer.create') }}" class="btn btn-primary float-right"><i class="fas fa-plus"></i>{{ __('Add New Customer') }}</a>
                     </div>
                 </div>
+                @endcan
             </div>
             <div class="table-responsive">
             <table class="table table-striped" id="customertable-2">
@@ -90,7 +101,7 @@
                             <a class="dropdown-item has-icon" href="{{ route('customer.show', $customer->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
                             @endcan
                             @can('customer.edit')
-                            <a class="dropdown-item has-icon" href="{{ route('customer.edit', $customer->id) }}"><i class="fa fa-edit"></i>{{ __('edit') }}</a>
+                            <a class="dropdown-item has-icon" href="{{ route('customer.edit', $customer->id) }}"><i class="fa fa-edit"></i>{{ __('Edit') }}</a>
                             @endcan
                            @can('customer.delete')
                             <a class="dropdown-item has-icon delete-confirm" href="javascript:void(0)" data-id={{ $customer->id }}><i class="fa fa-trash"></i>{{ __('Delete') }}</a>

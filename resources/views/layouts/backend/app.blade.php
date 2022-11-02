@@ -83,6 +83,73 @@
   <script src="{{ asset('assets/backend/admin/assets/js/custom.js') }}"></script>
 
   <!--alert-->
+  <script type="text/javascript">
+  $(document).ready(function() {
+    // pusher notification
+    var notificationsWrapper   = $('.dropdown-notifications');
+    var notificationsToggle    = notificationsWrapper.find('a[data-toggle]');
+    var notificationsCountElem = notificationsToggle.find('i[data-count]');
+    var notificationsCount     = parseInt(notificationsCountElem.data('count'));
+    var notifications          = notificationsWrapper.find('div.dropdown-notifications');
+
+    if (notificationsCount <= 0) {
+      notificationsWrapper.hide();
+    }
+
+    // Enable pusher logging - don't include this in production
+    Pusher.logToConsole = true;
+
+    var pusher = new Pusher(env('PUSHER_APP_KEY'), {
+      cluster: env('PUSHER_APP_CLUSTER')
+    });
+    // {
+    //   cluster: 'YOUR_PUSHER_APP_CLUSTER',
+    //   encrypted: true
+    // });
+
+    // Subscribe to the channel we specified in our Laravel Event
+    var channel = pusher.subscribe('loan-payment');
+
+    // Bind a function to a Event (the full Laravel class)
+    channel.bind('App\\Events\\LoanPayment', function(data) {
+      var existingNotifications = notifications.html();
+      var newNotificationHtml = `
+        <a href="#" class="dropdown-item dropdown-item-unread">
+          <div class="dropdown-item-icon bg-primary text-white">
+            <i class="fas fa-code"></i>
+          </div>
+          <div class="dropdown-item-desc">
+            ${data.customer_name} has made a payment of ${data.amount} on loan ${data.loan_id} at ${data.transaction_date}. The transaction reference is ${data.transaction_reference}. The remaining balance is ${data.balance}
+            <div class="time text-primary">${data.created_at}</div>
+          </div>
+        </a>
+      `;
+
+      notifications.html(newNotificationHtml + existingNotifications);
+      notificationsCount += 1;
+      notificationsCountElem.attr('data-count', notificationsCount);
+      notificationsWrapper.find('.notif-count').text(notificationsCount);
+      notificationsWrapper.show();
+    });
+    // mark all notifications as read
+    $('.dropdown-header').on('click', function() {
+      var notification_id = $(this).data('id');
+      $.ajax({     
+        url: '/admin/notifications/mark-as-read/' + notification_id,
+        type: "GET",
+        success: function(data) {
+          console.log(data);
+
+          // remove the badge
+          // $('.beep').remove();
+
+
+        }
+      });
+    });
+  });
+
+</script>
 
   @if (isset($errors) && $errors->any())
   

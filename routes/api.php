@@ -18,12 +18,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// mpesa/b2c/timeout
-Route::any('/mpesa/b2c/timeout', [App\Http\Controllers\DisburseController::class, 'queueTimeOutURL'])->name('mpesa.b2c.timeout');
-// mpesa/b2c/result
-Route::any('/mpesa/b2c/result', [App\Http\Controllers\DisburseController::class, 'transactionStatusQueryURL'])->name('mpesa.b2c.result');
-// enrollment_callback', [App\Http\Controllers\HomeController::class, 'enroll_callback'])->name('homeController');
-
+// http://localhost:8000/api/equity/callback
 //jenga webhook
-Route::any('/jenga/webhook', [App\Http\Controllers\TransactionController::class, 'webhook'])->name('jenga.webhook');
+Route::any('/equity/callback', [App\Http\Controllers\TransactionController::class, 'webhook'])->name('equity.callback');
 
+//callback
+Route::any('/callback', [App\Http\Controllers\TransactionController::class, 'callback'])->name('callback');
+
+
+
+https://e8f1-41-90-69-253.eu.ngrok.io/api/equity/callback
