@@ -120,7 +120,7 @@
 										<a class="dropdown-item has-icon" href="{{ route('admin.users.edit',$row->id) }}"><i class="fa fa-edit"></i>{{ __('Edit') }}</a>
 										@endcan
 										@can('user.delete')
-										<a class="dropdown-item has-icon" href="{{ route('admin.users.delete',$row->id) }}"><i class="fa fa-trash"></i>{{ __('Delete') }}</a>
+										<a class="dropdown-item has-icon" href="{{ route('admin.user.destroy',$row->id) }}"><i class="fa fa-trash"></i>{{ __('Delete') }}</a>
 										@endcan
 									</div>
 								</div>

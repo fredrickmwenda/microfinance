@@ -158,7 +158,7 @@
       $(document).ready(function() {
         toastr.error('{{ $error }}', 'Error', {
           closeButton: true,
-          progressBar: true,
+          // progressBar: true,
         });
         // toastr.error('{{ $error }}', 'Error!')
       });
@@ -170,15 +170,21 @@
   @if (session('message'))
         <script>
             $(document).ready(function() {
-                toastr.success('{{ session('message') }}', 'Success!')
+                toastr.success('{{ session('message') }}', 'Success!', {
+                    closeButton: true,
+                    // progressBar: true,
+                });
             });
         </script>
   @endif
 
-  @if (session('error'))
+  @if (session('success'))
         <script>
             $(document).ready(function() {
-                toastr.error('{{ session('error') }}', 'Error!')
+                toastr.success('{{ session('success') }}', 'Success!', {
+                    closeButton: true,
+                    // progressBar: true,
+                });
             });
         </script>
   @endif

@@ -21,9 +21,26 @@ class TransactionController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $transactions = Transaction::with('payment_gateway', 'user', 'customer', 'loan')->paginate(100);
+       
+        $transactions = Transaction::select('*')->when($request->type, function ($query) use ($request){
+            if($request->type == 'trxid'){
+                $query->where('transaction_code', 'like', '%'.$request->value.'%');
+            }elseif($request->type == 'name'){
+                $query->whereHas('customer', function($query) use ($request){
+                    // split the name into first and last name by space
+                    $name = explode(' ', $request->value);
+                    
+                    //query to be where first name and last name are like the search value
+                    $query->where('first_name', 'like', '%'.$name[0].'%')->where('last_name', 'like', '%'.$name[1].'%');
+                });
+            }elseif($request->type == 'national_id'){
+                $query->whereHas('customer', function($query) use ($request){
+                    $query->where('national_id', 'like', '%'.$request->value.'%');
+                });
+            }
+        })->with('customer', 'user', 'loan')->orderBy('id', 'desc')->paginate(10);
         return view('transaction.index', compact('transactions'));
     }
 
@@ -222,7 +239,11 @@ class TransactionController extends Controller
      */
     public function show($id)
     {
-        //
+        $transaction = Transaction::with('customer', 'payment_gateway', 'loan', 'user')->find($id);
+
+        return view('transaction.show', compact('transaction'));
+
+        
     }
 
     /**

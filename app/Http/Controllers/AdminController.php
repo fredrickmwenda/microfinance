@@ -37,7 +37,7 @@ class AdminController extends Controller
     //store new user
     public function store(Request $request)
     {
-
+        // if 
         $this->validate($request, [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -71,7 +71,13 @@ class AdminController extends Controller
         //get thre role of the user
         $role = Role::find($request->role_id);
         $user->assignRole($role->name);
-        return redirect()->route('admin.users.index')->with('success', 'User created successfully');
+        //send usercreation notification
+        ///take unhash password from the request and wrap it up in user object
+        $user->password = $request->password;
+        $user->role = $role->name;
+        
+        $user->notify(new \App\Notifications\UserCreation($user));
+        return redirect()->route('admin.users.index')->with('success', 'User created successfully')->withInput();
     }
 
     public function show($id)

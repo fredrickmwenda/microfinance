@@ -11,11 +11,35 @@
         <div class="card-body">
             <div class="row mb-4">
                 <div class="col-lg-6">
-                  <h4>{{ __('Loans List') }}</h4>
+                <form action="{{ route('loan.index') }}" method="GET">
+                  <div class="form-row">                                              
+                    <div class="col-lg-6">
+                      <div class="input-group form-row">
+                        <input type="text" class="form-control" placeholder="Search..." required="" name="value" autocomplete="off" value="" id="query_term">
+                        <select class="form-control" name="type">               
+                            <option value="name">{{ __('Customer Name') }}</option>
+                            <option value="phone">{{ __('Customer Phone') }}</option>                    
+                            <option value="national_id">{{ __('National ID') }}</option>
+                            <!-- <option value="status">{{ __('Loan Status') }}</option> -->
+                        </select>
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="form-group row">
+                      <div class="col-lg-12">
+                        <div class="input-group">
+                          <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i>Search</button>
+                          <a href="{{ route('loan.index') }}" class="btn btn-danger ml-2"><i class="fas fa-sync-alt"></i>Refresh</a>
+                        </div>
+                      </div>                        
+                      </div>
+                    </div>
+                  </div>
+                </form>
                 </div>
                 <div class="col-lg-6">
                     <div class="add-new-btn">
-                        <a href="{{ route('loan.create') }}" class="btn btn-primary float-right">{{ __('Add New Loan') }}</a>
+                        <a href="{{ route('loan.create') }}" class="btn btn-primary float-right"><i class="fas fa-plus"></i>{{ __('Add New Loan') }}</a>
                     </div>
                 </div>
             </div>
@@ -95,6 +119,8 @@
     </div>
 </div>
 @endsection
+
+//chat openeners for texting
 
 @push('js')
 <script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>

@@ -13,7 +13,7 @@ class Loan extends Model
     //a customer has many loans
     public function customer()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(customer::class);
     }
 
 
@@ -52,7 +52,11 @@ class Loan extends Model
         return $this->hasOne(Disburse::class);
     }
 
-    //
+    //get loans created by a specific user
+    public function scopeCreatedBy($query, $user_id)
+    {
+        return $query->where('created_by', $user_id);
+    }
     
 
 }

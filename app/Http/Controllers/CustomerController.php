@@ -21,6 +21,9 @@ class CustomerController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+
+    
     public function index(Request $request)
     {
 
@@ -127,7 +130,7 @@ class CustomerController extends Controller
 
 
         $customer = customer::create($request->all());
-        return redirect()->route('customer.index')->with('success', 'Customer Created Successfully');
+        return redirect()->route('customer.index')->with('success', 'Customer Created Successfully')->withInput();
     }
 
     /**
@@ -189,7 +192,7 @@ class CustomerController extends Controller
             'guarantor_first_name'        => 'required',
             'guarantor_last_name'        => 'required',
             'guarantor_phone_nmuber'        => 'required',
-            'guarantor_email_address'        => 'email|unique:customers,email_address,'.$customer->id,
+            // 'guarantor_email_address'        => 'email|unique:customers,email_address,'.$customer->id,
             'guarantor_national_id'        => 'required',
             #referee
             'referee_first_name'        => 'required',

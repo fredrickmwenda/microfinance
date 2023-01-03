@@ -33,7 +33,9 @@ class SendEmailJob implements ShouldQueue
      */
     public function handle()
     {
-        dd($this->details);
+        //
+       // dd($this->details);
+       Mail::to($this->details['email'])->send(new TransactionMail($this->details));
 
         //check the model
 

@@ -19,6 +19,12 @@ class NotificationController extends Controller
         return view('notifications.show', compact('notification'));
     }
 
+    public static function all()
+    {
+        # code...
+        return auth()->user()->notifications;
+    }
+
     //destroy notification
     public function destroy($id){
         $notification = auth()->user()->notifications()->where('id', $id)->first();

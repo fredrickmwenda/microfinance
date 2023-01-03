@@ -29,7 +29,7 @@
                         <div class="form-group "> 
                           <div class="input-group">                                            
                               <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i>Search</button>
-                              <a href="{{ route('customer.index') }}" class="btn btn-primary ml-2"><i class="fas fa-sync"></i>Refresh</a>
+                              <a href="{{ route('customer.index') }}" class="btn btn-danger ml-2"><i class="fas fa-sync"></i>Refresh</a>
                           </div>
                         </div>
                     </div>

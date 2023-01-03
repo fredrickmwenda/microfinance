@@ -139,6 +139,9 @@ return [
     'equity_api_base_endpoint' => env('EQUITY_API_BASE_URL'),
     //account number
     'equity_api_account_number' => env('EQUITY_ACCOUNT_NUMBER'),
+
+    //alert usern
+    'equity_api_alert_username' => env('EQUITY_ALERT_USERNAME'),
     
 
     /*

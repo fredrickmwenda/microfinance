@@ -70,6 +70,8 @@
               <li><a class="nav-link" href="{{ route('loan.create')}}">{{ __('Loan Request') }} </a></li>
               @endcan
 
+              <li> <a class="nav-link" href="{{ route('loans.prehistoric')}}">{{ __('Loan Prehistoric') }} </a></li>
+
               @can('loan.pending.index')
               <li><a class="nav-link" href="{{ route('loans.pending')}}">{{ __('Loans Pending') }} </a></li>
               @endcan
@@ -93,6 +95,10 @@
               @can('loan.closed.index')             
               <li><a class="nav-link" href="{{ route('loans.closed')}}">{{ __('Loans Closed') }} </a></li>
               @endcan
+
+              <li > <a class="nav-link" href="{{ route('loans.due_today')}}">{{ __('Loans Due') }} </a></li>
+
+              <li > <a class="nav-link" href="{{ route('loans.due_tomorrow')}}">{{ __('Loans Expected') }} </a></li>
             </ul>
           </li>
           @endcan
@@ -115,7 +121,7 @@
               <li><a class="nav-link" href="{{ route('customers.active') }}">{{ __('Active Customers') }}</a></li>
               @endcan
            
-              @can('customer.inactive ')             
+              @can('customer.inactive')             
               <li><a class="nav-link" href="{{ route('customers.inactive') }}">{{ __('Inactive Customers') }}</a></li>
               @endcan
    

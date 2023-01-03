@@ -15,7 +15,7 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="add-new-btn">
-                        <a href="{{ route('loan.create') }}" class="btn btn-primary float-right">{{ __('Add New Loan') }}</a>
+                        <a href="{{ route('loan.create') }}" class="btn btn-primary float-right"><i class="fas fa-plus"></i>{{ __('Add New Loan') }}</a>
                     </div>
                 </div>
             </div>

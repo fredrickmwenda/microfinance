@@ -15,7 +15,7 @@
                 </div>
                 <div class="col-lg-6">
                     <div class="add-new-btn">
-                        <a href="{{ route('loan.create') }}" class="btn btn-primary float-right">{{ __('Add New Loan') }}</a>
+                        <a href="{{ route('loan.create') }}" class="btn btn-primary float-right"><i class="fas fa-plus"></i>{{ __('Add New Loan') }}</a>
                     </div>
                 </div>
             </div>
@@ -44,16 +44,12 @@
                       <td>
                         {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
                       </td>
-                      <td>{{ $loan->loan_amount }}</td>
-                      <td>{{ $loan->loan_interest }}</td>
-                      <td>{{ $loan->loan_duration }}</td>
+                      <td>{{ $loan->amount }}</td>
+                      <td>{{ $loan->interest }}</td>
+                      <td>{{ $loan->duration }}</td>
                       <td>
-                        @if($loan->loan_status == "pending")
-                        <span class="badge badge-warning">{{ $loan->loan_status }}</span>
-                        @elseif($loan->loan_status == "approved")
-                        <span class="badge badge-success">{{ $loan->loan_status }}</span>
-                        @elseif($loan->loan_status == "rejected")
-                        <span class="badge badge-danger">{{ $loan->loan_status }}</span>
+                        @if($loan->status == "overdue")
+                        <span class="badge badge-warning">{{ $loan->status }}</span>
                         @endif
                       </td>
                       <!--get the user who created the loan using created_by column-->

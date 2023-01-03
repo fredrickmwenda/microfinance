@@ -10,15 +10,19 @@
       <div class="card">
         <div class="card-body">
             <div class="row mb-3">
-              <div class="col-lg-6">       
+              <div class="col-lg-8">       
                 <form method="GET" action="{{ route('admin.disburse.index') }}">
                   <div class="form-row">
                       <div class="col-lg-6">
                           <!--input transaction_no-->
-                        <div class="form-group">
-                            <input type="text" class="form-control" name="transaction_no" placeholder="{{ __('Transaction No') }}" value="{{ request()->transaction_no }}">
-                        </div>
-                        
+                          <div class="input-group form-row">
+                            <input type="text" class="form-control" placeholder="Search..." required="" name="value" autocomplete="off" value="" id="query_term">
+                            <select class="form-control" name="type">               
+                                <option value="trxid">{{ __('Transaction No') }}</option>
+                                <option value="name">{{ __('Customer Name') }}</option>
+                                <option value="national_id">{{ __('National ID') }}</option>
+                            </select>
+                          </div> 
                       </div>
                       <!--Filter and clear button-->
                       <div class="col-lg-6 ">
@@ -34,7 +38,7 @@
                   </div>
                 </form>
               </div>
-              <div class="col-lg-6">
+              <div class="col-lg-4">
                 @can('disburse.create')
                 <div class="float-right">
                   <a href="{{ route('admin.disburse.create') }}" class="btn btn-primary"><i class="fas fa-plus"></i> {{ __('Add New Disbursement') }}</a>

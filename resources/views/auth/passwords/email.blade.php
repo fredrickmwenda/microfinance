@@ -12,7 +12,7 @@
                                
 
                                 <div class="card-body">
-                                <img class="logo" src="https://livo-bank.trickycode.xyz/public/uploads/media/logo.png">
+                                <img class="logo" src="">
                                 <h6 class="py-4">{{ __('Reset Password') }}</h6>
                                     @if (session('status'))
                                         <div class="alert alert-success" role="alert">
@@ -52,7 +52,7 @@
                             <div id="auth-bg" class="d-flex align-items-center justify-content-center">
                                 <div class="px-5">
                                     <p class="mb-1 font-weight-light">WELCOME TO</p>
-                                    <h2 class="font-weight-bold">Livo Bank</h2>
+                                    <h2 class="font-weight-bold">Mweguni Enterprises</h2>
 
                                     <div class="divider"></div>
 

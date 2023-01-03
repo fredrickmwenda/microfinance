@@ -58,7 +58,7 @@
                       <div class="col-lg-12">
                         <div class="input-group">
                           <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i>Filter</button>
-                          <a href="{{ route('customers.report') }}" class="btn btn-danger ml-2"><i class="fas fa-sync-alt"></i>Clear</a>
+                          <a href="{{ route('disburse.report') }}" class="btn btn-danger ml-2"><i class="fas fa-sync-alt"></i>Clear</a>
                         </div>
                       </div>
                     </div>
@@ -89,10 +89,10 @@
                   @forelse($disburses as $key => $disbursement)
                   <tr>
                     <td>{{ $key + 1 }}</td>
-                    <td>{{ $disbursement->disbursement_id }}</td>
+                    <td>{{ $disbursement->disbursement_code }}</td>
                     <td>{{ $disbursement->disbursement_amount }}</td>
                     <td>{{ $disbursement->disbursedTo->first_name }} {{ $disbursement->disbursedTo->last_name }}</td>
-                    <td>{{ $disbursement->loan->loan_amount }}</td>
+                    <td>{{ $disbursement->loan->amount }}</td>
                     <td>{{ $disbursement->disburser->first_name }} {{ $disbursement->disburser->last_name }}</td>
 
                     <td>
@@ -113,8 +113,7 @@
               </tbody>
             </table>
             {{ $disburses->links() }}
-          </div>
-          
+          </div>  
         </div>
       </div>
     </div>

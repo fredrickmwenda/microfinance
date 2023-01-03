@@ -9,7 +9,9 @@ use App\Models\customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\DatesValidator;
+use App\Models\User;
 use Carbon\Carbon;
+use Termwind\Components\Dd;
 
 class ReportController extends Controller
 {
@@ -47,6 +49,7 @@ class ReportController extends Controller
     {
            
         $disburses = Disburse::with('loan', 'disburser', 'disbursedTo')->paginate(20);
+       
         $total_disburses = Disburse::count();
         
         if (isset($request->from_date) && isset($request->to_date)) {
@@ -88,7 +91,7 @@ class ReportController extends Controller
                 // $transactions = Transaction::with('payment_gateway', 'user', 'customer', 'loan')->paginate(100);
 
             }else{
-                $loans = Loan::with('user', 'customer')->where('user_id', $user->id)->paginate(100);
+                $loans = Loan::with('user', 'customer')->where('created_by', $user->id)->paginate(100);
             }
             return view('report.loan.index', compact('loans'));
         }
@@ -100,169 +103,137 @@ class ReportController extends Controller
     //performance report
     public function performanceReport(Request $request)
     {
-        try{
-            $user = auth()->user();
-            if($user->hasRole('admin')){
-                if (isset($request->from_date) && isset($request->to_date)) {
-                    $from_date = $request->from_date;
-                    $to_date = $request->to_date;
-                    $res  = DatesValidator::validate($from_date, $to_date);
-                    
-                    if ($res != 'success') {
-                        # code...
-                        return redirect()->back()->with('error', $res);
-                    }
-                    //calculate performance of a lender user according to the date range
-                    //the performance is calculated from all loans, the lender user has created and how much money he has disbursed and how much money he has collected, from the loans paid
-
-                    //get all loans created by the lender users
-                    $loans = Loan::with('user', 'customer', 'disburse', 'transaction')->whereBetween('created_at', [$from_date, $to_date])->get();
-                    $total_registered_loans = 0;
-                    $total_paid_loans = 0;
-                    $total_disbursed_amount = 0;
-                    $total_collected_amount = 0;
-                    $total_profit = 0;
-                    $performance = 0;
-                    foreach($loans as $loan){
-                        $total_registered_loans += 1;
-                        if($loan->status == 'paid'){
-                            $total_paid_loans += 1;
-                            $total_disbursed_amount += $loan->disburse->amount;
-                            $total_collected_amount += $loan->transaction->amount;
-                            $total_profit += $loan->transaction->amount - $loan->disburse->amount;
 
 
-                        }
-                    }
-                    $total_registered_loans = number_format($total_registered_loans, 2);
-                    $total_paid_loans = number_format($total_paid_loans, 2);
-                    $total_disbursed_amount = number_format($total_disbursed_amount, 2);
-                    $total_collected_amount = number_format($total_collected_amount, 2);
-                    $total_profit = number_format($total_profit, 2);
+        $loans = Loan::with('creator', 'customer', 'disburse')->whereIn('status', ['approved', 'disbursed', 'paid'])->get();
+        $ros = User::where('role_id', 2)->get();
+ 
+        $performance = [];
+        $total_loan_amount = [];
 
-                    if($total_disbursed_amount > 0){
-                        $performance = ($total_collected_amount / $total_disbursed_amount) * 100;
-                    }
-                }
 
-                $loans = Loan::with('user', 'customer', 'disburse', 'transaction')->paginate(100);
-                $total_registered_loans = 0;
-                $total_paid_loans = 0;
-                $total_disbursed_amount = 0;
-                $total_collected_amount = 0;
-                $total_profit = 0;
-                $performance = 0;
-                foreach($loans as $loan){
-                    $total_registered_loans += 1;
-                    if($loan->status == 'paid'){
-                        $total_paid_loans += 1;
-                        $total_disbursed_amount += $loan->disburse->amount;
-                        $total_collected_amount += $loan->transaction->amount;
-                        $total_profit += $loan->transaction->amount - $loan->disburse->amount;
-
-                    }
-                }
-                $total_registered_loans = number_format($total_registered_loans, 2);
-                $total_paid_loans = number_format($total_paid_loans, 2);
-                $total_disbursed_amount = number_format($total_disbursed_amount, 2);
-                $total_collected_amount = number_format($total_collected_amount, 2);
-                $total_profit = number_format($total_profit, 2);
-
-                if($total_disbursed_amount > 0){
-                    $performance = ($total_collected_amount / $total_disbursed_amount) * 100;
-                }
-
+  
+        if (isset($request->from_date) && isset($request->to_date)) {
+            $from_date = $request->from_date;
+            $to_date = $request->to_date;
+            $res  = DatesValidator::validate($from_date, $to_date);
+            
+            if ($res != 'success') {
+                # code...
+                return redirect()->back()->with('error', $res);
             }
-            else{
-                //calculate performance of a lender user according to the date range
-                //the performance is calculated from all loans, the lender user has created and how much money he has disbursed and how much money he has collected, from the loans paid
+    
+            foreach ($ros as $ro) {
+               // performance is processing fee +loan_interest / amount
+                $processing_fee = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('processing_fee');
+                $loan_interest = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('interest');
+                $total_amount = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('amount');
+                $total_payable_amount = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('total_payable');
+                $total_overdue_loans = Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable');
 
-                //get all loans created by the lender users
-                $loans = Loan::with('user', 'customer', 'disburse', 'transaction')->where('user_id', $user->id)->paginate(100);
-                $total_registered_loans = 0;
-                $total_paid_loans = 0;
-                $total_disbursed_amount = 0;
-                $total_collected_amount = 0;
-                $total_profit = 0;
-                $performance = 0;
-                foreach($loans as $loan){
-                    $total_registered_loans += 1;
-                    if($loan->status == 'paid'){
-                        $total_paid_loans += 1;
-                        $total_disbursed_amount += $loan->disburse->amount;
-                        $total_collected_amount += $loan->transaction->amount;
-                        $total_profit += $loan->transaction->amount - $loan->disburse->amount;
-
-                    }
-                }
-                $total_registered_loans = number_format($total_registered_loans, 2);
-                $total_paid_loans = number_format($total_paid_loans, 2);
-                $total_disbursed_amount = number_format($total_disbursed_amount, 2);
-                $total_collected_amount = number_format($total_collected_amount, 2);
-                $total_profit = number_format($total_profit, 2);
-
-                if($total_disbursed_amount > 0){
-                    $performance = ($total_collected_amount / $total_disbursed_amount) * 100;
+                
+                if ($total_overdue_loans == 0 ) {
+                    $performancey = 0;
+                }else{
+                    $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
                 }
 
-                //check if theuser is searching for a specific date range
-                if (isset($request->from_date) && isset($request->to_date)) {
-                    $from_date = $request->from_date;
-                    $to_date = $request->to_date;
-                    //calculate performance of a lender user according to the date range
-                    //the performance is calculated from all loans, the lender user has created and how much money he has disbursed and how much money he has collected, from the loans paid
+                // $performancey = number_format($performancey, 2);
+                //turn $ro->id to string
+                $ro_id = (string)$ro->id;
 
-                    //get all loans created by the lender users
-                    $loans = Loan::with('user', 'customer', 'disburse', 'transaction')->where('user_id', $user->id)->whereBetween('created_at', [$from_date, $to_date])->get();
-                    $total_registered_loans = 0;
-                    $total_paid_loans = 0;
-                    $total_disbursed_amount = 0;
-                    $total_collected_amount = 0;
-                    $total_profit = 0;
-                    $performance = 0;
-                    foreach($loans as $loan){
-                        $total_registered_loans += 1;
-                        if($loan->status == 'paid'){
-                            $total_paid_loans += 1;
-                            $total_disbursed_amount += $loan->disburse->amount;
-                            $total_collected_amount += $loan->transaction->amount;
-                            $total_profit += $loan->transaction->amount - $loan->disburse->amount;
+                array_push($performance, [
+                    'ro_id' => $ro_id,
+                    'performance' => $performancey
+                ]);
 
-                        }
-                    }
-                    $total_registered_loans = number_format($total_registered_loans, 2);
-                    $total_paid_loans = number_format($total_paid_loans, 2);
-                    $total_disbursed_amount = number_format($total_disbursed_amount, 2);
-                    $total_collected_amount = number_format($total_collected_amount, 2);
-                    $total_profit = number_format($total_profit, 2);
+                $data =[
+                    'ro_id' => $ro_id,
+                    'total_loans' => Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->count(),
+                    'total_amount' => $total_amount,
+                    'total_payable' => $total_payable_amount,
+                    'total_active_loans' => Loan::where('created_by', $ro->id)->where('status', 'active')->count(),
+                    'total_overdue_loans' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->count(),
+                    'total_overdue_amount' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('amount'),
+                ];
+    
+                array_push($total_loan_amount, $data);
 
-                    if($total_disbursed_amount > 0){
-                        $performance = ($total_collected_amount / $total_disbursed_amount) * 100;
-                    }
-                }
+                
             }
-            return view('report.performance', compact('user', 'loans', 'total_registered_loans', 'total_paid_loans', 'total_disbursed_amount', 'total_collected_amount', 'total_profit', 'performance'));
+           
+            //in $performance, set ro_id as key and performance as value
+            $performance = array_column($performance, 'performance', 'ro_id');
+           
 
-                // $loans = Loan::where('user_id', $user->id)->whereBetween('created_at', [$from_date, $to_date])->get();
-                // $total_loan_amount = 0;
-                // $total_disburse_amount = 0;
-                // //look at this keenly
-                // $total_collection_amount = 0;
-                // $performance = 0;
-                // foreach($loans as $loan){
-                //     $total_loan_amount += $loan->amount;
-                //     $total_disburse_amount += $loan->disburse->amount;
-                //     $total_collection_amount += $loan->transaction->amount;
-                // }
-                // $performance = ($total_collection_amount - $total_disburse_amount) / $total_loan_amount * 100;
-              
+        }
+        else{
 
-       
-            // return view('report.performance.index', compact('loans'));
+            
+
+
+        //loop through ROS and get their total registered loans, total paid loans, total disbursed amount, total collected amount, total profit and performance
+
+        foreach ($ros as $ro) {
+            //get loans for this RO, using the created_by field
+            $total_registered_loans = Loan::where('created_by', $ro->id)->count();
+            $total__loans = Loan::where('created_by', $ro->id)->where('status', 'paid')->count();
+          
+           // performance is processing fee +loan_interest / amount
+            $processing_fee = Loan::where('created_by', $ro->id)->sum('processing_fee');
+            $loan_interest = Loan::where('created_by', $ro->id)->sum('interest');
+            $total_amount = Loan::where('created_by', $ro->id)->sum('amount');
+            $total_payable_amount = Loan::where('created_by', $ro->id)->sum('total_payable');
+
+            $total_overdue_loans = Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable');
+
+                
+                if ($total_overdue_loans == 0 ) {
+                    $performancey = 0;
+                }else{
+                    $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
+                }
+            // $performancey= ($total_profit / $total_amount) * 100;
+
+            $performancey = number_format($performancey, 2);
+            //turn $ro->id to string
+            $ro_id = (string)$ro->id;
+
+
+            //array push
+            array_push($performance, [
+                'ro_id' => $ro_id,
+                'performance' => $performancey
+            ]);
+
+            $data =[
+                'ro_id' => $ro_id,
+                'total_loans' => $total_registered_loans,
+                'total_amount' => $total_amount,
+                'total_payable' => $total_payable_amount,
+                'total_active_loans' => Loan::where('created_by', $ro->id)->where('status', 'active')->count(),
+                'total_overdue_loans' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->count(),
+                'total_overdue_amount' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('amount'),
+            ];
+
+            array_push($total_loan_amount, $data);
+
+
         }
-        catch(\Exception $e){
-            return redirect()->back()->with('error', $e->getMessage());
+        
+         //in $performance, set ro_id as key and performance as value
+        $performance = array_column($performance, 'performance', 'ro_id');
+
+            
         }
+
+
+    
+           
+
+      
+        return view('report.performance', compact('ros', 'performance', 'loans', 'total_loan_amount'));
+    
     }
 
     //customer report

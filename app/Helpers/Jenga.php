@@ -18,6 +18,7 @@ class Jenga
     public $phone;
     public $account_number;
     public $endpoint;
+    public $source_name;
     // public $token;
 
     public function __construct()
@@ -28,6 +29,7 @@ class Jenga
         $this->phone = config('app.equity_api_phone') ?? '';
         $this->account_number = config('app.equity_api_account_number') ?? '';
         $this->endpoint = config('app.equity_api_base_endpoint') ?? '';
+        $this->source_name = config('app.equity_api_source_name') ?? '';
         // $this->token = $this->authenticate() ?? '';
         // $this->token = $this->getBearerToken()->accessToken ?? '';
     }
@@ -36,8 +38,6 @@ class Jenga
 
     public function getBearerToken()
     {
-        // dd(env('EQUITY_CONSUMER_KEY'), env('EQUITY_CONSUMER_SECRET'), env('EQUITY_MERCHANT_ID'));
-        // $url = config('jenga.auth_url') . '/authenticate/merchant';
         $url = 'https://uat.finserve.africa/authentication/api/v3/authenticate/merchant';
         $headers = [
             'Content-Type' => 'application/json',
@@ -68,16 +68,17 @@ class Jenga
 
     public static function jengaToken(){
         $token = EquityToken::first();
-    if (!$token) {
-        dispatch(new EquityTokenJob());
+        
+        if (!$token) {
+            dispatch(new EquityTokenJob());
+            $token = EquityToken::first();
+        
+            if ($token) {
+                return $token->access_token;
+            }
 
-        $token = EquityToken::first();
-        if ($token) {
-            return $token->access_token;
-        }
-
-        return null;
-    }
+            return null;
+       }
     //Check if the token exixts and has expired. If it has, refresh the token.
     if ($token && time() > $token->expires_in) {
         dispatch(new EquityTokenJob());
@@ -142,7 +143,24 @@ class Jenga
     {
         // dd($data);
         $plainText  = $data;
-        $try = file_get_contents(storage_path('app\keys\private.pem'));
+        //get the private key from public folder in cpanel
+        $location = public_path('keys/private.pem');
+        //First, you need to use openssl_pkcs12_read to read the key file
+        $read = openssl_pkcs12_read(file_get_contents($location), $certs, env('EQUITY_PRIVATE_KEY_PASSWD'));
+        // dd($certs);
+        //Then, you can get the private key from the $certs array
+        $privateKey = $certs['pkey'];
+        // dd($privateKey);
+        // $privateKey = file_get_contents($location);
+        // $privateKey = openssl_pkey_get_private($privateKey, env('EQUITY_PRIVATE_KEY_PASSWD'));
+        // dd($privateKey);
+        //sign the data
+        openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
+
+
+
+
+        $try = file_get_contents($location);
         $privateKey = openssl_pkey_get_private($try, env('EQUITY_PRIVATE_KEY_PASSWD'));
         openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         // dd(base64_encode($signature));
@@ -158,7 +176,7 @@ class Jenga
         ];
         $defaults = [
             'country_code' => 'KE',
-            'source_name' => 'Fredrick Mwenda',
+            'source_name' => $this->source_name,
             'source_accountNumber' => $this->account_number,
             'customer_name' =>'Fredrick Mwenda',
             'customer_mobileNumber' => '0713723353',
@@ -188,15 +206,10 @@ class Jenga
      * @return Action         Call to the appropriate action
      */
     public  function sendMobileMoney($params){
-        // dd($params);
-
-        // $params= [
-        //     'type' => 'MobileWallet',
-
-        // ];
+    
         $defaults = [
             'country_code' => 'KE',
-            'source_name' => 'Fredrick Mwenda',
+            'source_name' => $this->source_name,
             'source_accountNumber' => $this->account_number,
             'customer_name' =>'Fredrick Mwenda',
             'customer_mobileNumber' => '0713723353',
@@ -213,10 +226,8 @@ class Jenga
         $token =  $this->jengaToken();
 
         if (!$token) {
-            return response()->json(['error' => 'true', 'message' => 'Token not found']);
+            return response()->json(['error' => 'true', 'message' => 'Token not found', 'status' => 401]);
         }
-        // $plainText = $params['transfer_amount'].$params['transfer_currencyCode'].$params['transfer_reference'].$params['source_accountNumber'];
-       
         try {
             $client = new Client();
             $request = $client->request('POST', 'https://uat.finserve.africa/v3-apis/transaction-api/v3.0/remittance/sendmobile', [
@@ -249,15 +260,15 @@ class Jenga
                     ],
                 ],
                 
-                // 'body' => '{"source":{"countryCode": "'.$params['country_code'].'","name": "'.$params['source_name'].'","accountNumber": "'.$params['source_accountNumber'].'"},"destination":{"type":"mobile","countryCode": "'.$params['country_code'].'","name": "'.$params['customer_name'].'","mobileNumber": "'.$params['customer_mobileNumber'].'""walletName": "'.$params['wallet_name'].'"},"transfer":{"type":"MobileWallet","amount": "'.$params['transfer_amount'].'","currencyCode": "'.$params['transfer_currencyCode'].'","reference": "'.$params['transfer_reference'].'","date": "'.$params['date'].'","description": "some remarks here"}}',
-                                        // 'reference' => $params['transfer_reference'],
             ]
             );
 
             $response = json_decode($request->getBody()->getContents());
+            Log::info('Send Mobile Money: '.$response);
             // dd($response);
             return $response;
         } catch (RequestException $e) {
+            Log::info('Send Mobile Money Error: '.$e->getResponse()->getBody());
             return (string) $e->getResponse()->getBody();
         }
     }

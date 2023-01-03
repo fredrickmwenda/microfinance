@@ -215,13 +215,13 @@
             }
             //if the value is between 3000 to 10000 set the interest rate to 550
             else if(loan_amount >= 3000 && loan_amount <= 10000){
-                // $('input[name="loan_interest"]').val(500);
-                $('input[name="processing_fee"]').val(500);
+                // $('input[name="loan_interest"]').val(600);
+                $('input[name="processing_fee"]').val(600);
                 
             }
             //from 10000 and above the interest rate increases by 50
             else if(loan_amount > 10000){
-                var interest_rate = 500 + (loan_amount - 10000) / 1000 * 50;
+                var interest_rate = 600 + (loan_amount - 10000) / 1000 * 50;
                 //incase the interest rate has decimals round it to the nearest integer
                 interest_rate = Math.round(interest_rate);
                 $('input[name="processing_fee"]').val(interest_rate);

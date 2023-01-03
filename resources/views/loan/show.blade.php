@@ -316,10 +316,10 @@
                         <form action="{{ route('loan.reject', $loan->id) }}"method="put">
                            {{ csrf_field() }}
                            <div class="form-group">
-                              <label for="reject_reason">{{ __("Reason") }}</label>
+                              <label for="rejection_reason">{{ __("Reason") }}</label>
                               <textarea
-                                 name="reject_reason"
-                                 id="reject_reason"
+                                 name="rejection_reason"
+                                 id="rejection_reason"
                                  cols="30"
                                  rows="5"
                                  class="form-control"

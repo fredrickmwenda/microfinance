@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\SendEmailJob;
+use App\Jobs\SendLoanApproval;
+use App\Jobs\SendLoanRejection;
 use App\Models\customer;
 use App\Models\Loan;
 use App\Models\LoanAttachment;
@@ -27,7 +29,34 @@ class LoanController extends Controller
     public function index()
     {
         //get loan paginated and order by id in ascending order
-        $loans = Loan::with('customer', 'loan_attachments', 'approver', 'creator')->orderBy('id', 'asc')->paginate(10);
+        $loans = Loan::select('*')->when(request()->type, function ($query) {
+            // loan status, customer name, customer phone, customer national id
+            // if (request()->type =='status') {
+            //     $query->where('status', request()->status);
+            // }
+            if(request()->type =='name') {
+                $query->whereHas('customer', function ($query) {
+                    $name = explode(' ', request()->value);
+                    if(count($name) == 2){
+                        $query->where('first_name', 'like', '%'.$name[0].'%')
+                            ->where('last_name', 'like', '%'.$name[1].'%');
+                    }else{
+                        $query->where('first_name', 'like', '%'.request()->value.'%')->orWhere('last_name', 'like', '%'.request()->value.'%');
+                    }
+                });
+            }
+            else if(request()->type =='phone') {
+                $query->whereHas('customer', function ($query) {
+                    $query->where('phone', 'like', '%' . request()->value . '%');
+                });
+            }
+            else if(request()->type =='national_id') {
+                $query->whereHas('customer', function ($query) {
+                    $query->where('national_id', 'like', '%' . request()->value . '%');
+                });
+            }
+        })->orderBy('id', 'desc')->paginate(10);
+        // Loan::with('customer', 'loan_attachments', 'approver', 'creator')->orderBy('id', 'asc')->paginate(10);
         return view('loan.index', compact('loans'));
         //
     }
@@ -337,40 +366,7 @@ class LoanController extends Controller
                 break;
         }
 
-        // if ($interest_type == 'flat_rate') {
 
-        //     $calculator             = new LoanCalculator($apply_amount, $first_payment_date, $interest_rate, $term, $term_period, $late_payment_penalties);
-        //     $table_data             = $calculator->get_flat_rate();
-        //     $data['payable_amount'] = $calculator->payable_amount;
-
-        // } else if ($interest_type == 'fixed_rate') {
-
-        //     $calculator             = new Calculator($apply_amount, $first_payment_date, $interest_rate, $term, $term_period, $late_payment_penalties);
-        //     $table_data             = $calculator->get_fixed_rate();
-        //     $data['payable_amount'] = $calculator->payable_amount;
-
-        // } else if ($interest_type == 'mortgage') {
-
-        //     $calculator             = new Calculator($apply_amount, $first_payment_date, $interest_rate, $term, $term_period, $late_payment_penalties);
-        //     $table_data             = $calculator->get_mortgage();
-        //     $data['payable_amount'] = $calculator->payable_amount;
-
-        // } else if ($interest_type == 'one_time') {
-
-        //     $calculator             = new Calculator($apply_amount, $first_payment_date, $interest_rate, 1, $term_period, $late_payment_penalties);
-        //     $table_data             = $calculator->get_one_time();
-        //     $data['payable_amount'] = $calculator->payable_amount;
-
-        // }
-
-        // $data['table_data']             = $table_data;
-        // $data['first_payment_date']     = $request->first_payment_date;
-        // $data['apply_amount']           = $request->apply_amount;
-        // $data['interest_rate']          = $request->interest_rate;
-        // $data['interest_type']          = $request->interest_type;
-        // $data['term']                   = $request->term;
-        // $data['term_period']            = $request->term_period;
-        // $data['late_payment_penalties'] = $request->late_payment_penalties;
 
         return view('loan.calculator', $data);
 
@@ -384,10 +380,19 @@ class LoanController extends Controller
             $loan->approved_by = Auth::user()->id;
             $loan->approved_at = Carbon::now();
             $loan->save();
+
+            $details = [
+                'title' => 'Loan Approved',
+                'body' => 'Your loan of ' . $loan->amount . ' has been approved, and will be disbursed soon.',
+                'loan_amount' => $loan->amount,
+                'loan_duration' => $loan->duration,
+                'loan_total_payable' => $loan->total_payable,
+                'customer_name' => $loan->customer->first_name . ' ' . $loan->customer->last_name,
+            ];
             //send email using Job Queue to customer
             $customer = customer::find($loan->customer_id);
             if(!is_null($customer->email)){
-                $job = (new SendEmailJob($customer->email, 'Loan Approved', 'Your loan has been approved'))->delay(Carbon::now()->addSeconds(5));
+                $job = (new SendLoanApproval($details, $customer->email))->delay(Carbon::now()->addSeconds(5));
                 dispatch($job);
             }
             // if (config('system_settings.enable_email_notification')) {
@@ -410,16 +415,20 @@ class LoanController extends Controller
             $loan->rejected_at = Carbon::now();
             $loan->rejected_reason = $request->rejection_reason;
             $loan->save();
-            //if the customer has an email address, send him an email about the rejection
-            // if ($loan->customer->email) {
-            //     $data = array(
-            //         'name' => $loan->customer->name,
-            //         'rejection_reason' => $request->rejection_reason,
-            //     );
-            //     Mail::send('emails.loan_rejection', $data, function ($message) use ($loan) {
-            //         $message->to($loan->customer->email, $loan->customer->name)->subject('Loan Rejection');
-            //     });
-            // }
+            $details = [
+                'title' => 'Loan Rejected',
+                'loan_amount' => $loan->amount,
+                'loan_duration' => $loan->duration,
+                'loan_total_payable' => $loan->total_payable,
+                'customer_name' => $loan->customer->first_name . ' ' . $loan->customer->last_name,
+                'rejection_reason' => $request->rejection_reason,
+            ];
+            //send email using Job Queue to customer
+            $customer = customer::find($loan->customer_id);
+            if(!is_null($customer->email)){
+                $job = (new SendLoanRejection($details, $customer->email))->delay(Carbon::now()->addSeconds(5));
+                dispatch($job);
+            }
             return redirect()->route('loan.index')->with('success', 'Loan rejected successfully');
         } else {
             return redirect()->route('loan.index')->with('error', 'Loan not found');
@@ -459,10 +468,148 @@ class LoanController extends Controller
         return view('loan.active', compact('loans'));
     }
 
+    //create prehistoric loan which is already paid
+    public function createPrehistoricLoansPage() {
+        $customers = customer::all();
+        return view('loan.prehistoric', compact('customers'));
+    }
+
+    public function storePrehistoricLoans(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'loan_amount' => 'required|numeric',
+            'duration' => 'required',
+            'due_date' => 'required',
+            'loan_creation_date' => 'required',
+            'loan_payment_type' => 'required',
+            'customer_id' => 'required',
+            'loan_interest' => 'required|numeric',
+            'processing_fee' => 'required|numeric',
+        ]);
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+  
+        $loan_id = $request->customer_id . rand(1000, 9999);
+
+
+        //Calculate the interest from the loan amount and interest rate
+        $interest = ($request->loan_amount * $request->loan_interest) / 100;
+
+        //incase interest has a decimal point, round it up to the nearest integer
+        $interest = round($interest);
+        // $interest = (float) $interest;
+        
+        if($request->loan_payment_type == "one_time"){
+            $total_amount = $request->loan_amount + $interest;
+            $data = [
+                'loan_id' => $loan_id,
+                'amount' => $request->loan_amount,
+                'interest' =>  $interest,
+                'total_payable' => $total_amount,
+                'duration' => $request->duration,
+                'payment_type' => $request->loan_payment_type,
+                'customer_id' => $request->customer_id,
+                'created_by' => Auth::user()->id,
+                'loan_purpose' => $request->loan_purpose,
+                'remaining_balance' => $total_amount,
+                'processing_fee' => $request->processing_fee,
+                'start_date' => $request->loan_creation_date,
+                'end_date' => $request->due_date,
+                'status' => 'closed',
+                'payment_status' => 'paid',
+                'total_paid' => $total_amount,
+                'remaining_balance' => 0,
+            ];
+            Loan::create($data);
+
+            if($request->has('loan_attachments')){
+                $loan = Loan::latest()->first();
+                foreach($request->loan_attachments as $attachment)
+                { 
+                    $attachment_name = $attachment->getClientOriginalName();
+                    $attachment->storeAs('public/loan_attachments', $attachment_name);
+                    //store the loan id and the attachment name in the loan_attachments table
+                    $loan->loan_attachments()->create([
+                        'loan_id' => $loan->loan_id,
+                        'attachment_name' => $attachment_name,
+                    ]); 
+                }
+            }
+            //redirect to the loan index page
+            return redirect()->route('loan.index')->with('success', 'Prehistoric Loan created successfully');
+        }
+        elseif($request->loan_payment_type == "installment"){
+            $total_amount = $request->loan_amount + $interest;
+            \Log:: info($total_amount);
+            #divide installments equally from duration and number of installments
+            $installment = $total_amount / $request->installments;
+           // $installment = round($installment, 2);
+           //we get the last payment date from the first payment date and the duration
+            $last_payment_date = date('Y-m-d', strtotime($request->loan_first_payment_date. ' + '.$request->duration.' days'));
+            
+            $data = [
+                'loan_id' => $loan_id,
+                'amount' => $request->loan_amount,
+                'interest' => $interest,
+                'total_payable' => $total_amount,
+                'duration' => $request->duration,
+                'payment_type' => $request->loan_payment_type,
+                'customer_id' => $request->customer_id,
+                'created_by' => Auth::user()->id,
+                'first_payment_date' => $request->first_installment_date,
+                'last_payment_date' => $request->due_date,
+                'installment_payment' => $installment,
+                'number_of_installments' => $request->installments,
+                'loan_purpose' => $request->loan_purpose,
+                'remaining_balance' => $total_amount,
+                'processing_fee' => $request->processing_fee,
+                'start_date' => $request->loan_creation_date,
+                'end_date' => $request->due_date,
+                'status' => 'closed',
+                'payment_status' => 'paid',
+                'total_payment' => $total_amount,
+                'remaining_balance' => 0,
+            ];
+            Loan::create($data);
+
+            if($request->has('loan_attachments')){
+                $loan = Loan::latest()->first();
+                foreach($request->loan_attachments as $attachment)
+                { 
+                    $attachment_name = $attachment->getClientOriginalName();
+                    $attachment->storeAs('public/loan_attachments', $attachment_name);
+                    //store the loan id and the attachment name in the loan_attachments table
+                    $loan->loan_attachments()->create([
+                        'loan_id' => $loan->loan_id,
+                        'attachment_name' => $attachment_name,
+                    ]); 
+                }
+            }
+            //redirect to the loan index page
+            return redirect()->route('loan.index')->with('success', 'Prehistoric Loan created successfully');
+        }
+        else{
+            return redirect()->back()->with('error', 'Loan payment type can only be one time payment or installment');
+        }
+    }
+
+
     //overdue loans page
     public function overdueLoansPage() {
         $loans = Loan::where('status', 'overdue')->get();
         return view('loan.overdue', compact('loans'));
+    }
+    //loans expected to be paid tomorrow
+    public function dueTomorrowLoansPage() {
+        $loans = Loan::where('end_date', Carbon::tomorrow())->get();
+        return view('loan.expected_tomorrow', compact('loans'));
+    }
+
+    //loans expected to be paid today
+    public function dueTodayLoansPage() {
+        $loans = Loan::where('end_date', Carbon::today())->get();
+        return view('loan.due_today', compact('loans'));
     }
 
     public function getPendingLoans(Request $request){
@@ -630,8 +777,8 @@ class LoanController extends Controller
 
 
 
-
-
+//the cron is mweguni.co.ke/App/Console/Commands/LoanExpiry.php
+    
 
     /**
      * Remove the specified resource from storage.

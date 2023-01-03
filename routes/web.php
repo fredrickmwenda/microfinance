@@ -20,6 +20,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\LoanController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 Route::get('/', function () {
     //if the user is logged in, redirect to dashboard
@@ -55,7 +56,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/admin/users/{id}/edit', [App\Http\Controllers\AdminController::class, 'edit'])->name('admin.users.edit');
     Route::post('/admin/users/{id}/edit', [App\Http\Controllers\AdminController::class, 'update'])->name('admin.users.update');
     #destroy
-    Route::get('/admin/users/{id}/destroy', [App\Http\Controllers\AdminController::class, 'destroy_user'])->name('admin.users.destroy');
+    Route::get('/admin/users/{id}/destroy', [App\Http\Controllers\AdminController::class, 'destroy'])->name('admin.user.destroy');
     Route::get('/admin/users/delete', [App\Http\Controllers\AdminController::class, 'delete_users'])->name('admin.users.delete');
 
     //getDashboardStatistics which accepts start date and end date as parameters to get the statistics
@@ -121,6 +122,12 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/loans/closed', [App\Http\Controllers\LoanController::class, 'closedLoansPage'])->name('loans.closed');
     Route::get('/loans/active', [App\Http\Controllers\LoanController::class, 'activeLoansPage'])->name('loans.active');
     Route::get('/loans/disbursed', [App\Http\Controllers\LoanController::class, 'disbursedLoansPage'])->name('loans.disbursed');
+    Route::get('/loans/due_today', [App\Http\Controllers\LoanController::class, 'dueTodayLoansPage'])->name('loans.due_today');
+    Route::get('/loans/due_tomorrow', [App\Http\Controllers\LoanController::class, 'dueTomorrowLoansPage'])->name('loans.due_tomorrow');
+    // prehistoric loans
+    Route::get('/loans/prehistoric', [App\Http\Controllers\LoanController::class, 'createPrehistoricLoansPage'])->name('loans.prehistoric');
+    //store prehistoric loans
+    Route::post('/loans/prehistoric/store', [App\Http\Controllers\LoanController::class, 'storePrehistoricLoans'])->name('loans.prehistoric.store');
 
     //get Pending Loans
     Route::get('/loans/pending/get', [App\Http\Controllers\LoanController::class, 'getPendingLoans'])->name('loans.pending.get');

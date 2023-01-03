@@ -19,12 +19,13 @@ class DisburseController extends Controller
 {
 
     // get accountNumber from config
-    private $accountNumber;
+   
 
 
     public function __construct()
     {
-        $this->accountNumber = config('app.equity_api_account_number') ?? '';
+        $this->middleware('auth');
+       
     }
 
     /**
@@ -35,18 +36,32 @@ class DisburseController extends Controller
 
     public function index( Request $request)
     {
-        // $disbursements = Disburse::paginate(20);
 
-        $res  = DatesValidator::validate($request->from_date, $request->to_date);
+        
+        $disbursements = Disburse::select("*")->when($request->type, function ($query) use ($request){
+            if($request->type == 'trxid'){
+                $query->where('disbursement_code', 'like', '%'.$request->value.'%');
+            }elseif($request->type == 'name'){
+                //check if name is one full name
 
-        if ($res != 'success') {
-            # code...
-            return redirect()->back()->with('error', $res);
-        }
+                $name = explode(' ', $request->value);
+                if(count($name) == 2){
+                    $query->whereHas('customer', function($q) use ($name){
+                        $q->where('first_name', 'like', '%'.$name[0].'%')->where('last_name', 'like', '%'.$name[1].'%');
+                    });
+                }else{
+                    $query->whereHas('customer', function($q) use ($name){
+                        $q->where('first_name', 'like', '%'.$name[0].'%')->orWhere('last_name', 'like', '%'.$name[0].'%');
+                    });
+                }
+            }elseif($request->type == 'national_id'){
+                $query->whereHas('disbursedTo', function ($query) use ($request){
+                    $query->where('national_id', 'like', '%'.$request->value.'%');
+                });
+            }
+        })->orderBy('id', 'desc')->paginate(10);
 
-        $disbursements = Disburse::select("*")->when($request->transaction_no, function ($query) use ($request){
-            return $query->where('disbursement_code', $request->transaction_no);
-        })->paginate(20);
+       
 
 
 
@@ -95,29 +110,33 @@ class DisburseController extends Controller
                 $customer_name = $current_loan->customer->first_name.' '.$current_loan->customer->last_name;
                 $params = [
                     'country_code' => 'KE',
-                    'source_name' => 'Fredrick Mwenda',
+                    'source_name' =>  config('app.equity_source_name'),
+                    // 'source_name' => 'Fredrick Mwenda',
                     'source_accountNumber' => config('app.equity_api_account_number'),
                     'customer_name' => $customer_name,
-                    // 'customer_mobileNumber' => $request->customer_phone,
-                    'customer_mobileNumber' => '254713723353',
+                    'customer_mobileNumber' => $request->customer_phone,
+                    //'customer_mobileNumber' => '254713723353',
                     'wallet_name' => 'Mpesa',
                     'currencyCode' => 'KES',
-                    // 'amount' => $request->amount,
-                    'amount' => 10,
+                    'amount' => $request->amount,
+                    //'amount' => 10,
                     'type' => 'MobileWallet', 
                     'reference' => rand(100000000000, 999999999999),
                     'date' => date('Y-m-d'),
-                    'description' => 'Test',
+                    'description' => 'Mweguni Loan Disburse',
                 ];
                 // $current_loan->end_date = now()->addDays($current_loan->duration);
                 // dd($current_loan->end_date);
 
                 $mpesa = new Jenga();
                 $mpesa = $mpesa->sendMobileMoney($params);
-                if($mpesa->status == false){
+                // dd($mpesa);
+                //first check if a json response message of Token not found is returned
+
+                if($mpesa->status == 'false'){
                     return redirect()->route('admin.disburse.index')->with('error', $mpesa->message);
                 }
-                else if ($mpesa->status == true){
+                else if ($mpesa->status == 'true'){
                     $data = json_decode(json_encode($mpesa), true);
 
                     $disbursement_code = $data['transactionId '];
@@ -155,11 +174,16 @@ class DisburseController extends Controller
                         'transaction_id' => $disbursement_code,
                         // get loan amount from Loan model
                         'loan_amount' => $current_loan->amount,
+                        'loan_duration' => $current_loan->duration,
+                        'loan_start_date' => $current_loan->start_date,
+                        'loan_end_date' => $current_loan->end_date,
+                        'loan_total_payable' => $current_loan->total_payable,
                         'time' => \Carbon\Carbon::now(),
                     ];
-                    // if($current_loan->customer->email != null){
-                    //     $current_loan->customer->notify(new DisbursementNotification($disbursement));
-                    // }
+                    //check if customer has an email address before sending email using job
+                    if($current_loan->customer->email != null){
+                        $current_loan->customer->notify(new DisbursementNotification($disbursement));
+                    }
                     // else{
                     //     $message = ("Dear ".$current_loan->customer->first_name.", your loan of KES ".$current_loan->amount." has been disbursed.
                     //     Transaction ID: ".$mpesa->transactionId." Amount: KES ".$request->amount." Payment Method: ".$request->payment_method." Time: ".\Carbon\Carbon::now());
@@ -168,6 +192,10 @@ class DisburseController extends Controller
                     return redirect()->route('admin.disburse.index')->with('success', 'Amount disbursed to ' .$current_loan->customer->first_name.' '.$current_loan->customer->last_name. 'successfully');
 
                 }
+                else if($mpesa->status == 401){
+                    return redirect()->route('admin.disburse.index')->with('error', 'Jenga Token Expired');
+                }
+
 
             }
             

@@ -87,6 +87,12 @@ class User extends Authenticatable
         return $this->hasMany('App\Models\Disburse', 'disbursed_by', 'id');
     }
 
+    //relationship wit Spatie Role, a user has one role
+    // public function roles()
+    // {
+    //     return $this->belongsTo(Spatie\Permission\Models\Role::class, 'role_id', 'id');
+    // }
+
     // public function getIsAdminAttribute()
     // {
     //     return $this->roles->contains(1);

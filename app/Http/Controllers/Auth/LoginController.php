@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Session;
 
@@ -47,44 +48,15 @@ class LoginController extends Controller
         $role = Auth::user()->role_id;
 
         if ($role == 1 ||  $role == 4) {
+            //delete all session from database, if user is admin
+            // DB::table('sessions')->where('user_id', Auth::user()->id)->delete();
             return route('admin.dashboard');
         } elseif ($role == 2 || $role == 7) {
+            //delete all session from database, if user is agent
+            // DB::table('sessions')->where('user_id', Auth::user()->id)->delete();
             return route('agent.dashboard');
         }
-        // }else{
-        //     return route('home');
-        // }
 
-        // if(Auth::user()->role_id == 1) {
-        //     return route('admin.dashboard');
-           
-        //     // if(Auth::user()->two_step_auth == 1) {
-        //     //     return $this->redirectTo = route('profile.otp');
-        //     // } 
-            
-         
-        // } elseif(Auth::check() && Auth::user()->role_id == 6 || Auth::user()->role_id == 7) {
-        //     return route('agent.dashboard');
-
-        //     //  return $this->redirectTo = route('');
-        //     // if(Auth::user()->two_step_auth == 1) {
-        //     //    return $this->redirectTo = route('user.otp');
-        //     // } else {
-        //         // if (Session::has('withdraw_method_id')) 
-        //         // {
-        //         //     $user = User::findOrFail(Auth::id());
-        //         //     session([
-        //         //         'account_number' => $user->account_number,
-        //         //     ]);
-        //         //     return $this->redirectTo = route('user.transfer.ecurrency.confirm');
-        //         // }else {
-        //         //     return $this->redirectTo = route('user.dashboard');
-        //         // }
-            
-        // }
-        // else {
-        //     return $this->redirectTo = route('login');
-        // }
     }
 
     public function logout(Request $request) {

@@ -16,10 +16,13 @@ class LoanExpiryNotification extends Notification
      *
      * @return void
      */
-    public function __construct()
+
+    private $loan;
+    public function __construct($loan)
     {
-        //
+        $this->loan = $loan;
     }
+
 
     /**
      * Get the notification's delivery channels.
@@ -29,7 +32,7 @@ class LoanExpiryNotification extends Notification
      */
     public function via($notifiable)
     {
-        return ['mail'];
+        return ['database'];
     }
 
     /**
@@ -41,9 +44,11 @@ class LoanExpiryNotification extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+                    ->line('Loan Overdue Notification')
+                    ->line('Customer ' . $this->loan['first_name'] . ' ' . $this->loan['last_name'] . ' has an overdue loan of ' . $this->loan['amount'] . ' on loan ' . $this->loan['loan_id'] )
+                    ->line('The loan was due on ' . $this->loan['end_date'])
+                    ->action('View Loan', url('/loans/' . $this->loan['loan_id']))
+                    ->line('Well received!');
     }
 
     /**
@@ -55,7 +60,8 @@ class LoanExpiryNotification extends Notification
     public function toArray($notifiable)
     {
         return [
-            //
+            'loan' => $this->loan
+
         ];
     }
 }

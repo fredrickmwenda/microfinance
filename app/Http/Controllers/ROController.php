@@ -14,34 +14,22 @@ class ROController extends Controller
 {
     
     public function index(){
-    //     if (!Auth()->user()->can('ro-officer.dashboard')) {
-    //         return abort(401);
-    //    } 
 
-    // get all users that belong to RO role
-    // $role = Role::with('users')->where('name', 'RO')->first();
-    // dd($role);
-    // $users = $role->users()->get();
-    // dd($users);
-
-       
         //total customers created, total_loans,
         $total_customers = customer::where('created_by', Auth()->user()->id)->count();
         
         $total_loans = Loan::where('created_by', Auth()->user()->id)->count();
-        //Performance Rate of the RO is the total_processing_fee of loans created by the RO which have been been disbursed, half paid and closed + Number of clients created by the RO which have been been disbursed, half paid and closed + total_
-        $total_processing_fee_ro = Loan::where('created_by', Auth()->user()->id)->where('status', 'disbursed')->orWhere('status', 'active')->orWhere('status', 'closed')->sum('processing_fee');
-        $total_interest_ro = Loan::where('created_by', Auth()->user()->id)->where('status', 'disbursed')->orWhere('status', 'active')->orWhere('status', 'closed')->sum('interest');
-        $total_clients_ro = customer::whereHas('loans', function($q){
-            $q->where('created_by', Auth()->user()->id)->where('status', 'disbursed')->orWhere('status', 'active')->orWhere('status', 'closed');
-        })->count();
+        //Performance Rate of the RO is the  total_payable amount in total_loans_overdue excluding only rejected loans/ total_payable amount in total_loans * 100
+        $total_payable_amount = Loan::where('created_by', Auth()->user()->id)->where('status', '!=', 'rejected')->sum('total_payable');
+        $total_payable_amount_overdue = Loan::where('created_by', Auth()->user()->id)->where('status', 'overdue')->sum('total_payable');
+
 
         
-        if($total_processing_fee_ro == 0 && $total_interest_ro == 0 && $total_clients_ro == 0){
+        if($total_payable_amount == 0){
             $performance_rate_ro = 0;
         }
         else{
-            $performance_rate_ro = ($total_processing_fee_ro + $total_interest_ro)* $total_clients_ro /  100;
+            $performance_rate_ro = ($total_payable_amount_overdue / $total_payable_amount) * 100;
            
         }
 
@@ -108,17 +96,17 @@ class ROController extends Controller
         $total_loans = Loan::where('created_by', Auth()->user()->id)->whereBetween('created_at', [$start_date, $end_date])->count();
         $total_disbursed = Loan::where('created_by', Auth()->user()->id)->where('status', 'disbursed')->whereBetween('created_at', [$start_date, $end_date])->count();
 
-        $total_processing_fee = Loan::where('created_by', Auth()->user()->id)->where('status', 'disbursed')->whereBetween('created_at', [$start_date, $end_date])->sum('processing_fee');
-        $total_interest_earned = Loan::where('created_by', Auth()->user()->id)->where('status', 'disbursed')->whereBetween('created_at', [$start_date, $end_date])->sum('interest');
+        $total_payable_amount = Loan::where('created_by', Auth()->user()->id)->where('status', '!=', 'rejected')->whereBetween('created_at', [$start_date, $end_date])->sum('total_payable');
+        $total_payable_amount_overdue = Loan::where('created_by', Auth()->user()->id)->where('status', 'overdue')->whereBetween('created_at', [$start_date, $end_date])->sum('interest');
         $total_clients_ro = customer::whereHas('loans', function($q){
             $q->where('created_by', Auth()->user()->id)->where('status', 'disbursed')->orWhere('status', 'active')->orWhere('status', 'closed');
         })->whereBetween('created_at', [$start_date, $end_date])->count();
 
-        if($total_processing_fee == 0 && $total_interest_earned == 0 && $total_clients_ro == 0){
+        if($total_payable_amount){
             $performance_rate_ro = 0;
         }
         else{
-            $performance_rate_ro = ($total_processing_fee + $total_interest_earned )* $total_clients_ro /  100;
+            $performance_rate_ro = ($total_payable_amount / $total_payable_amount_overdue) * 100;
         }
 
         // $performance_rate_ro  = ($total_processing_fee + $total_interest_earned / $total_clients_ro) * 100;

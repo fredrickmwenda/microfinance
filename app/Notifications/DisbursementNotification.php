@@ -17,7 +17,7 @@ class DisbursementNotification extends Notification
      * @return void
      */
 
-    protected $disbursement;
+    public $disbursement;
     public function __construct($disbursement)
     {
         $this->disbursement = $disbursement;

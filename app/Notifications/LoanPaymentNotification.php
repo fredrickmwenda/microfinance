@@ -16,11 +16,12 @@ class LoanPaymentNotification extends Notification
      *
      * @return void
      */
+    private $data;
 
      //pass the loan object to the constructor
-    public function __construct($dataToSend)
+    public function __construct($data)
     {
-        $this->data = $dataToSend;
+        $this->data = $data;
     }
 
 

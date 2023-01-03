@@ -32,8 +32,8 @@
                     </div>
                 </div>
             </div>
-            <div class="">
-                <table class="table table-responsive table-striped" id="customertable-2">
+            <div class="table-responsive">
+                <table class="table table-striped" id="customertable-2">
                   <thead>
                     <tr>
                       <th>
@@ -61,19 +61,14 @@
                         </div>
                       </td>
                       <td>{{ $row->first_name }}{{ $row->first_name }}</td>
-                      <td>
-                        {{ $row->email }}
-                      </td>
-                      <td>
-                        {{ $row->phone }}
-                      </td>
+                      <td>{{ $row->email }}</td>
+                      <td>{{ $row->phone }}</td>
                       <td>{{ $row->national_id }}</td>
                       <td>{{ $row->guarantor_first_name }}{{ $row->guarantor_last_name }}</td>
                       
-                      @if($row->status == 1)
+                      @if($row->status == 'active')
                       <td class="text-success">{{ __('Active') }}</td>
-                      @endif
-                      @if($row->status == 0)
+                      @else if ($row->status == 'in-active')
                       <td class="text-danger">{{ __('Inactive') }}</td>
                       @endif
                       <td>

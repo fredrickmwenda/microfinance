@@ -31,22 +31,22 @@
 						<div class="form row">
 							<div class="form-group col-md-6">
 								<label for="email">{{ __('Email') }}</label>
-								<input type="email" required class="form-control" name="email" placeholder="Enter email" >
+								<input type="email" required class="form-control" name="email" placeholder="Enter email"  value = "{{ old('email') }}">
 							</div>
 							<div class="form-group col-md-6">
 								<label for="phone">{{ __('Phone') }}</label>
-								<input type="text" required class="form-control" name="phone" placeholder="Enter phone" >
+								<input type="text" required class="form-control" name="phone" placeholder="Enter phone" value = "{{ old('phone') }}">
 							</div>
 						</div>
 
 						<div class="form row">
 							<div class="form-group col-md-6">
 							    <label for="email">{{ __('National Id') }}</label>
-								<input type="number" required class="form-control" name="national_id" placeholder="Enter national id" >
+								<input type="number" required class="form-control" name="national_id" placeholder="Enter national id" value = "{{ old('national_id') }}">
 							</div>
 							<div class="form-group col-md-6">
 								<label for="status">{{ __('Branch') }}</label>
-							    <select required name="branch_id" id="branch_id" class="form-control">
+							    <select required name="branch_id" id="branch_id" class="form-control" value = "{{ old('branch_id') }}">
 									<option value="">Select Branch</option>
 									@foreach ($branches as $branch)
 										<option value="{{ $branch->id }}">{{ $branch->name }}</option>
@@ -60,18 +60,30 @@
 						<div class="form row">
 							<div class="form-group col-md-6">
 								<label for="password">{{ __('Password') }}</label>
-								<input type="password" required class="form-control" name="password" placeholder="Enter password" >
+								<!-- <input type="password" required class="form-control" name="password" placeholder="Enter password" > -->
+								<div class="input-group" id="show_hide_password">
+									<input type="password" required class="form-control" name="password" placeholder="Enter password" >
+									<div class="input-group-append">
+										<span class="input-group-text toggle-password" id="basic-addon2" style="cursor: pointer;"><i class="fa fa-eye-slash" aria-hidden="true"></i></span>
+									</div>
+								</div>
 							</div>
 							<div class="form-group col-md-6">
 								<label for="password_confirmation">{{ __('Confirm Password') }}</label>
-								<input type="password" required class="form-control" name="password_confirmation" placeholder="Enter confirm password" >
+								<div class="input-group" id="show_hide_password">
+									<input type="password" required class="form-control" name="password_confirmation" placeholder="Enter confirm password" >
+									<div class="input-group-append">
+										<span class="input-group-text toggle-password" id="basic-addon2" style="cursor: pointer;"><i class="fa fa-eye-slash" aria-hidden="true"></i></span>
+									</div>
+								</div>
+								<!-- <input type="password" required class="form-control" name="password_confirmation" placeholder="Enter confirm password" > -->
 							</div>
 						</div>
                         
 						<div class="form row">
 							<div class="form-group col-md-6">
 								<label >{{ __('Assign Roles') }}</label>
-								<select required name="role_id" id="roles" class="form-control">
+								<select required name="role_id" id="roles" class="form-control" value = "{{ old('role_id') }}">
 									<option value="">Select Role</option>
 									@foreach ($roles as $role)
 										<option value="{{ $role->id }}">{{ $role->name }}</option>
@@ -82,7 +94,7 @@
 							<!--users status active or inactive-->
 							<div class="form-group col-md-6">
 								<label for="status">{{ __('Status') }}</label>
-								<select required name="status" id="status" class="form-control">
+								<select required name="status" id="status" class="form-control" value = "{{ old('status') }}">
 									<option value="">Select Status</option>
 									<option value="active">Active</option>
 									<option value="inactive">Inactive</option>
@@ -110,4 +122,19 @@
 @endsection
 @push('js')
 <script src="{{ asset('Backend/admin/assets/js/select2.min.js') }}"></script>
+<!-- on  click eye icon show password -->
+<script text="text/javascript">
+	$(document).ready(function(){
+        $(".toggle-password").click(function () {
+            event.preventDefault();
+            console.log('clicked');
+            $("#show_hide_password i").toggleClass("fa-eye fa-eye-slash");
+            if($("#show_hide_password input").attr("type") == "text"){
+                $("#show_hide_password input").attr("type", "password");
+            }else if($("#show_hide_password input").attr("type") == "password"){
+                $("#show_hide_password input").attr("type", "text");
+            }
+        });
+	});
+</script>
 @endpush

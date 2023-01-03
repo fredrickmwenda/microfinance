@@ -53,16 +53,20 @@
                         <label for="checkbox-all" class="custom-control-label">&nbsp;</label>
                       </div>
                     </th>
-                      <th>{{ __('Name') }}</th>
-                      <th>{{ __('Email') }}</th>
-                      <th>{{ __('Phone') }}</th>
-                      <th>{{ __('Created At') }}</th>
-                      <th>{{ __('Status') }}</th>
-                      <th>{{ __('View') }}</th>
+                    <tr>
+                        <th>{{ __('Transaction No') }}</th>
+                        <th>{{ __('Customer Name') }}</th>
+                        <th>{{ __('Amount') }}</th>
+                        <th>{{ __('Loan Amount') }}</th>
+                        <th>{{ __('Trx ID') }}</th>
+                        <th>{{ __('Balance') }}</th>
+                        <th>{{ __('Date') }}</th>
+                        <th>{{ __('Status') }}</th>
+                    </tr>
                     </tr>
                 </thead>
                 <tbody>
-                  @forelse($users as $user)
+                  @foreach($transactions as $transaction)
                   <tr>
                     <td>
                       <div class="custom-checkbox custom-control">
@@ -70,23 +74,31 @@
                         <label for="checkbox-1" class="custom-control-label">&nbsp;</label>
                       </div>
                     </td>
-                    <td>{{ $user->name }}</td>
-                    <td>{{ $user->email }}</td>
-                    <td>{{ $user->phone }}</td>
-                    <td>{{ date('d-m-Y', strtotime($user->created_at)) }}</td>
+                    <td>{{ $transaction->transaction_no }}</td>
+                    <td>{{ $transaction->customer->first_name }} {{ $transaction->customer->last_name }}</td>
+                    <td>{{ $transaction->amount }}</td>
+                    <td>{{ $transaction->loan_amount }}</td>
                     <td>
-                      {{ $user->status == 0 ? 'Inactive' : 'Active' }}
+                      {{ $transaction->trx_id }}
                     </td>
+                    <td>{{ $transaction->balance }}</td>
+                    <td>{{ date('d-m-Y', strtotime($transaction->created_at)) }}</td>
                     <td>
-                      <a class="btn btn-primary" href="{{ route('admin.users.show', $user->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
+                      @if($transaction->status == 1)
+                      <span class="badge badge-success">{{ __('Completed') }}</span>
+                      @else
+                      <span class="badge badge-danger">{{ __('Pending') }}</span>
+                      @endif
+
+                    <td>
+                      <!-- <a class="btn btn-primary" href=""><i class="fa fa-eye"></i>{{ __('View') }}</a> -->
                     </td>
                   </tr>
-                  @empty 
-                      <p>{{ __('No users!') }}</p>
-                  @endforelse
+              
+                  @endforeach
               </tbody>
             </table>
-          {{ $users->links('vendor.pagination.bootstrap-4') }}
+           
         </div>
       </div>
     </div>
