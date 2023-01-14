@@ -33,6 +33,7 @@
                       <th>{{ __('Interest') }}</th>
                       <th>{{ __('Loan Duration') }}</th>
                       <th>{{ __('Loan Status') }}</th>
+                      <th> {{ __('Disbursed Date') }}</th>
                       <th>{{ __('Created By')}} </th>
                       <th>{{ __('Action') }}</th>
                     </tr>
@@ -50,8 +51,13 @@
                       <td>
                       @if($loan->status == "active")
                         <span class="badge badge-warning">{{ $loan->status }}</span>
-                        @endif
+                      @elseif($loan->status == "disbursed")
+                        <span class="badge badge-success">{{ $loan->status }}</span>
+
+                      @endif
                       </td>
+                      <!-- disbursed_date column is a date type column so we can use the format method to format the date-->
+                      <td>{{ $loan->start_date }}</td>
                       <!--get the user who created the loan using created_by column-->
 
                       <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
@@ -89,9 +95,6 @@
 @endsection
 
 @push('js')
-<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
-@push('js')
-<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
 <script>
     $(document).ready(function() {
         $('#loanPendingTable-2').DataTable({
@@ -100,5 +103,4 @@
         });
     });
 </script>
-@endpush
 @endpush

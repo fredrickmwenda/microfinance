@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-
+use Termwind\Components\Dd;
 use Yajra\DataTables\DataTables;
 
 class LoanController extends Controller
@@ -29,11 +29,7 @@ class LoanController extends Controller
     public function index()
     {
         //get loan paginated and order by id in ascending order
-        $loans = Loan::select('*')->when(request()->type, function ($query) {
-            // loan status, customer name, customer phone, customer national id
-            // if (request()->type =='status') {
-            //     $query->where('status', request()->status);
-            // }
+        $loans = Loan::with('customer')->select('*')->when(request()->type, function ($query) {
             if(request()->type =='name') {
                 $query->whereHas('customer', function ($query) {
                     $name = explode(' ', request()->value);
@@ -70,11 +66,9 @@ class LoanController extends Controller
     {
         //get customers with no loans, or have payment_status as paid and those also status is not pending
         $customers = customer::whereDoesntHave('loans', function ($query) {
-            $query->where('payment_status', '!=', 'paid')->orWhere('status', '!=', 'pending');
+            $query->where('payment_status', '=", "paid')->orWhere('status', '!=", "pending"');
         })->get();
- 
-
-
+        // dd($customers);
         return view('loan.create', compact('customers'));
     }
 
@@ -206,15 +200,6 @@ class LoanController extends Controller
             return redirect()->back()->with('error', 'Loan payment type can only be one time payment or installment');
         }
 
-
-
-
-
-
-        // $loan = Loan::create($request->all());
-        // $loan_calculator = LoanCalculator::create($request->all());
-        // $loan->loan_calculator()->save($loan_calculator);
-
         return redirect()->route('loan.create')->with('success', 'Loan created successfully');
     }
 
@@ -232,7 +217,6 @@ class LoanController extends Controller
         $loan_payments = LoanPayment::where('loan_id', $id)->get();
         $loancollaterals = LoanPayment::where('loan_id', $id)->get();
         return view('loan.show', compact('loan', 'loan_payments', 'loancollaterals', 'loan_attachments'));
-        //
     }
 
     /**
@@ -600,17 +584,119 @@ class LoanController extends Controller
         $loans = Loan::where('status', 'overdue')->get();
         return view('loan.overdue', compact('loans'));
     }
+
+    public function dueTodayLoansPage() 
+    {
+        //first check if the loan has first payment date not null
+        $loan = Loan::where('status', 'active')->orWhere('status', 'disbursed')->get();
+        //get all loan created on 
+        $loan_array = [];
+        foreach ($loan as $loan) {
+            if (!is_null($loan->first_payment_date)) {
+                $loans = Loan::where('first_payment_date', Carbon::today())->get();
+                //foreach loan check if there is a loan payment with the same date
+                foreach ($loans as $loan) {
+                    //check if the firstpayment has been made
+                    $loan_payment = LoanPayment::where('loan_id', $loan->loan_id)->first();
+
+                    if (!is_null($loan_payment)) {
+                        //check for each week if there is a payment according to loan installment_date
+                        $loan_installments = LoanPayment::where('loan_id', $loan->loan_id)->get();
+                        $today = Carbon::today();
+                        foreach ($loan_installments as $loan_installment) {
+                            if ($loan_installment->installment_date == $today) {
+                                //do not show this loan in the due tomorrow loans page
+                            }else{
+                                //show this loan in the due tomorrow loans page
+                                //store the loan in an array
+                                $loan_array[] = $loan;
+                            }
+                        }
+                    }else{
+                    //show this loan in the due tomorrow loans page
+                    //store the loan in an array
+                    $loan_array[] = $loan;
+                    }
+                }
+            }else{
+                //get the loans that have taken a week since they were started
+                $loan_start_date = Carbon::parse($loan->start_date);
+                $loan_created_date = $loan_start_date->addWeek();
+                $today = Carbon::today();
+
+                if ($loan_created_date == $today) {
+                    //show this loan in the due tomorrow loans page
+                    //store the loan in an array
+                    $loan_array[] = $loan;
+                }
+                
+            }
+            dd($loan_array);
+        }
+        $loans = collect($loan_array);
+
+        return view('loan.due_today', compact('loans'));
+
+    }
+
     //loans expected to be paid tomorrow
     public function dueTomorrowLoansPage() {
-        $loans = Loan::where('end_date', Carbon::tomorrow())->get();
+        //first check if the loan has first payment date not null
+        $loan = Loan::where('status', 'active')->orWhere('status', 'disbursed')->get();
+        // dd($loan);
+        $loan_array = [];
+        foreach ($loan as $loan) {
+            if (!is_null($loan->first_payment_date)) {
+                $loans = Loan::where('first_payment_date', Carbon::tomorrow())->get();
+                //foreach loan check if there is a loan payment with the same date
+                foreach ($loans as $loan) {
+                    //check if the firstpayment has been made
+                    $loan_payment = LoanPayment::where('loan_id', $loan->loan_id)->first();
+
+                    if (!is_null($loan_payment)) {
+                        //check for each week if there is a payment according to loan installment_date
+                        $loan_installments = LoanPayment::where('loan_id', $loan->loan_id)->get();
+                        $tomorrow = Carbon::tomorrow();
+                        foreach ($loan_installments as $loan_installment) {
+                            if ($loan_installment->installment_date == $tomorrow) {
+                                //do not show this loan in the due tomorrow loans page
+                            }else{
+                                //show this loan in the due tomorrow loans page
+                                //store the loan in an array
+                                $loan_array[] = $loan;
+                            }
+                        }
+                    }
+                    else{
+                        //show this loan in the due tomorrow loans page
+                        //store the loan in an array
+                        $loan_array[] = $loan;
+                    }
+                }
+            }
+            else{
+                //get all 
+                $first_installment_date = Carbon::parse($loan->start_date)->addDays(7);
+                $tomorrow = Carbon::tomorrow();
+
+                //if the loan is in the first week
+                if ($first_installment_date == $tomorrow) {
+                    //show this loan in the due tomorrow loans page
+                    //store the loan in an array
+                    $loan_array[] = $loan;
+                }       
+            }
+        }
+        $loans = collect($loan_array);
+        // dd($loan_array);
         return view('loan.expected_tomorrow', compact('loans'));
+
+
     }
 
     //loans expected to be paid today
-    public function dueTodayLoansPage() {
-        $loans = Loan::where('end_date', Carbon::today())->get();
-        return view('loan.due_today', compact('loans'));
-    }
+
+    
 
     public function getPendingLoans(Request $request){
         if ($request->ajax()) {
@@ -627,7 +713,7 @@ class LoanController extends Controller
                     // })
                     ->addColumn('action', function($row){
                         $btn_view = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="'.route('loan.edit', $row->loan_id).'" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        $btn = '<a href="'.route('loan.edit', $row->loan_id).'" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
                         // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn_view.' '.$btn;
                     })
@@ -650,8 +736,8 @@ class LoanController extends Controller
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        $btn_view = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm viewLoan mb-2">View</a>';
-                        $btn = '<a href="'.route('loan.edit', $row->loan_id).'" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        $btn_view = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm viewLoan mb-2">View</a>';
+                        $btn = '<a href="'.route('loan.edit', $row->loan_id).'" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
                         // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn_view.' '.$btn;
                     })
@@ -672,9 +758,9 @@ class LoanController extends Controller
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        $btn = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-                        $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
+                        $btn = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
+                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn;
                     })
                     ->rawColumns(['action'])
@@ -693,9 +779,9 @@ class LoanController extends Controller
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        $btn = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-                        $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
+                        $btn = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
+                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn;
                     })
                     ->rawColumns(['action'])
@@ -714,8 +800,8 @@ class LoanController extends Controller
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        $btn_view = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        $btn_view = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
+                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
                         // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn_view.' '.$btn;
                     })
@@ -735,9 +821,9 @@ class LoanController extends Controller
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        $btn = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-                        $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
+                        $btn = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
+                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn;
                     })
                     ->rawColumns(['action'])
@@ -757,9 +843,9 @@ class LoanController extends Controller
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
-                        $btn = '<a href="'.route('loan.show', $row->id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-                        $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
+                        $btn = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
+                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn;
                     })
                     ->rawColumns(['action'])

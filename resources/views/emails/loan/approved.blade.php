@@ -48,7 +48,7 @@
                                         <!--loan amount from $details array-->
                                         Your loan amount of {{$details['loan_amount']}} has been approved. And will be disbursed to your account within 24 hours.
                                         <!--loan duration and total_payable from $details array-->
-                                        Your loan duration is {{$details['loan_duration']}} weeks and your total payable is {{$details['total_payable']}}.
+                                        Your loan duration is {{$details['loan_duration']}} weeks and your total payable is {{$details['loan_total_payable']}}.
                                         </p>
                                     </td>
                                 </tr>

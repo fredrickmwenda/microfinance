@@ -32,12 +32,6 @@ class ROController extends Controller
             $performance_rate_ro = ($total_payable_amount_overdue / $total_payable_amount) * 100;
            
         }
-
-        // $performance_rate_ro = ($total_processing_fee_ro + $total_interest_ro) / $total_clients_ro;
-
-
-
- 
        
        $all_pending_loans = Loan::where('status', 'pending')->where('created_by', Auth()->user()->id)->orderBy('created_at', 'desc')->paginate();  
        $all_approved_loans = Loan::where('status', 'approved')->where('created_by', Auth()->user()->id)->orderBy('created_at', 'desc')->paginate();

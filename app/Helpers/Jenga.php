@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Http;
 use App\Jobs\EquityTokenJob;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
+use Termwind\Components\Dd;
 
 class Jenga
 {
@@ -29,46 +30,14 @@ class Jenga
         $this->phone = config('app.equity_api_phone') ?? '';
         $this->account_number = config('app.equity_api_account_number') ?? '';
         $this->endpoint = config('app.equity_api_base_endpoint') ?? '';
-        $this->source_name = config('app.equity_api_source_name') ?? '';
+        $this->source_name = config('app.equity_api_alert_username') ?? '';
         // $this->token = $this->authenticate() ?? '';
         // $this->token = $this->getBearerToken()->accessToken ?? '';
     }
 
 
-
-    public function getBearerToken()
-    {
-        $url = 'https://uat.finserve.africa/authentication/api/v3/authenticate/merchant';
-        $headers = [
-            'Content-Type' => 'application/json',
-            'Accept' => 'application/json',
-            'Api-Key' => $this->api_key,
-            // 'Api-Key' =>env('EQUITY_API_KEY'),
-        ];
-        $body = [
-            // 'merchantCode' =>  env('EQUITY_MERCHANT_ID'),
-            // 'consumerSecret' => env('EQUITY_CONSUMER_SECRET'),
-            'merchantCode' =>  $this->username,
-            'consumerSecret' => $this->password,
-        ];
-        $response = Http::withHeaders($headers)->post($url, $body);
-
-        if ($response->successful()) {
-            $response = json_decode($response->getBody()->getContents());
-            return $response;
-            // return $response->accessToken;
-        }
-
-        return response()->json(['error' => 'true', 'message' => json_decode($response->getBody()->getContents())]);
-    }
-
-    // public function createToken(){
-
-    // }
-
     public static function jengaToken(){
-        $token = EquityToken::first();
-        
+        $token = EquityToken::first();     
         if (!$token) {
             dispatch(new EquityTokenJob());
             $token = EquityToken::first();
@@ -79,19 +48,19 @@ class Jenga
 
             return null;
        }
-    //Check if the token exixts and has expired. If it has, refresh the token.
-    if ($token && time() > $token->expires_in) {
-        dispatch(new EquityTokenJob());
+        //Check if the token exixts and has expired. If it has, refresh the token.
+        if ($token && time() > $token->expires_in) {
+            dispatch(new EquityTokenJob());
 
-        $token = EquityToken::first();
-        if ($token) {
-            return $token->access_token;
+            $token = EquityToken::first();
+            if ($token) {
+                return $token->access_token;
+            }
+
+            return null;
         }
-
-        return null;
+        return $token->access_token;
     }
-    return $token->access_token;
-}
 
 
 
@@ -100,41 +69,56 @@ class Jenga
     public function accountBalance()
     {
 
-        $token = $this->jengaToken();
+        // $token = $this->jengaToken();
+        $response = Http::withHeaders([
+            'Api-Key' => config('app.equity_api_key'),
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+        ])->post('https://api-finserve-prod.azure-api.net/authentication/api/v3/authenticate/merchant', [
+            'merchantCode' => config('app.equity_api_username'),
+            'consumerSecret' => config('app.equity_api_password'),
+        ]);
+        if ($response->successful()) {
+            $token  = $response->json()['accessToken'];
+            // dd($token);
+        
 
 
-        if (!$token) {
-            return response()->json(['error' => 'true', 'message' => 'Token not found']);
-        }
-        $params = [
-            'accountID' => $this->account_number,
-            'countryCode' => 'KE',
-        ];
-        $defaults = [
-            'accountID' => 127381,
-            'countryCode' => 'KE',
-            'date' => date('Y-m-d'),
-        ];
-        
-        
-        $params = array_merge($defaults, $params);
-       
-        // $token = $this->token;
-        try {
-            $client = new Client();
-            $request = $client->request('GET', 'https://uat.finserve.africa/v3-apis/account-api/v3.0/accounts/balances/'.$params['countryCode'].'/'.$params['accountID'], [
-                'headers' => [
-                'Content-type' => 'application/json',
-                'Accept' => 'application/json',
-                'Authorization' => 'Bearer '.$token,
-                'signature' =>  $this->generateSignature($params['countryCode']. $params['accountID']),
-                ],
-            ]);
-            $response = json_decode($request->getBody()->getContents());
+        // if (!$token) {
+        //     return response()->json(['error' => 'true', 'message' => 'Token not found']);
+        // }
+            $params = [
+                'accountID' => $this->account_number,
+                'countryCode' => 'KE',
+            ];
+            $defaults = [
+                'accountID' => $this->account_number,
+                'countryCode' => 'KE',
+                'date' => date('Y-m-d'),
+            ];
             
-            return $response;
-        } catch (RequestException $e) {
-            return (string) $e->getResponse()->getBody();
+            
+            $params = array_merge($defaults, $params);
+            // dd($params);
+        
+            // $token = $this->token;
+            try {
+                $client = new Client();
+                // https://uat.finserve.africa/v3-apis/v3.0/accounts/balances/{countryCode}/{accountId}
+                $request = $client->request('GET', 'https://uat.finserve.africa/v3-apis/v3.0/accounts/balances/'.$params['countryCode'].'/'.$params['accountID'], [
+                    'headers' => [
+                    'Content-type' => 'application/json',
+                    'Accept' => 'application/json',
+                    'Authorization' => 'Bearer '.$token,
+                    'signature' =>  $this->generateSignature($params['countryCode']. $params['accountID']),
+                    ],
+                ]);
+                $response = json_decode($request->getBody()->getContents());
+                
+                return $response;
+            } catch (RequestException $e) {
+                return (string) $e->getResponse()->getBody();
+            }
         }
     }
 
@@ -143,29 +127,14 @@ class Jenga
     {
         // dd($data);
         $plainText  = $data;
-        //get the private key from public folder in cpanel
-        $location = public_path('keys/private.pem');
-        //First, you need to use openssl_pkcs12_read to read the key file
-        $read = openssl_pkcs12_read(file_get_contents($location), $certs, env('EQUITY_PRIVATE_KEY_PASSWD'));
-        // dd($certs);
-        //Then, you can get the private key from the $certs array
-        $privateKey = $certs['pkey'];
-        // dd($privateKey);
-        // $privateKey = file_get_contents($location);
-        // $privateKey = openssl_pkey_get_private($privateKey, env('EQUITY_PRIVATE_KEY_PASSWD'));
-        // dd($privateKey);
-        //sign the data
-        openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-
-
-
-
-        $try = file_get_contents($location);
+        $try = file_get_contents(storage_path('app/keys/private.pem'));
+        // dd($try);
         $privateKey = openssl_pkey_get_private($try, env('EQUITY_PRIVATE_KEY_PASSWD'));
+        // dd($privateKey);
         openssl_sign($plainText, $signature, $privateKey, OPENSSL_ALGO_SHA256);
         // dd(base64_encode($signature));
         return base64_encode($signature);
-    }   
+    }  
 
 
     public function sendMoney($params)
@@ -189,10 +158,11 @@ class Jenga
             'description' => 'Test',
         ];
         $params = array_merge($defaults, $params);
+        dd($params);
 
         if ($params['type'] != null && $params['type'] == 'MobileWallet') {
             
-            return $this->sendMobileMoney($params);
+            return $this->sendMobileMoney($params = null);
         }
 
         if ($params['transfer_type'] == null) {
@@ -222,15 +192,15 @@ class Jenga
             'description' => 'Test',
         ];
         $params = array_merge($defaults, $params);
-// 
-        $token =  $this->jengaToken();
+        // dd($params['amount'].$params['currencyCode'].$params['reference'].$params['source_accountNumber']);
+        $token = $this->jengaToken();
 
         if (!$token) {
             return response()->json(['error' => 'true', 'message' => 'Token not found', 'status' => 401]);
         }
         try {
             $client = new Client();
-            $request = $client->request('POST', 'https://uat.finserve.africa/v3-apis/transaction-api/v3.0/remittance/sendmobile', [
+            $request = $client->request('POST', 'https://api.finserve.africa/v3-apis/transaction-api/v3.0/remittance/sendmobile', [
                 'headers' => [
                 'Content-type' => 'application/json',
                 'Accept' => 'application/json',
@@ -264,7 +234,10 @@ class Jenga
             );
 
             $response = json_decode($request->getBody()->getContents());
-            Log::info('Send Mobile Money: '.$response);
+            //response is in stdClass format, therefore throwing this error Object of class stdClass could not be converted to string when trying to log the response
+            //so we have to convert it to json format
+            $logged_data = json_encode($response);
+            Log::info($logged_data);
             // dd($response);
             return $response;
         } catch (RequestException $e) {

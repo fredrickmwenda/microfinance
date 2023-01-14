@@ -323,23 +323,41 @@ class TransactionController extends Controller
     //above is the sample webhook response from jenga api
     public function webhook(Request $request)
     {
+        //the data is protectected with username and password
+        //set the username and password in the .env file
+
+        // $username = env('EQUITY_ALERT_USERNAME');
+        // $password = env('EQUITY_ALERT_PASSWORD');
+
+        // //use the username and password to authenticate the webhook
+        // if($request->username != $username || $request->password != $password){
+        //     return response()->json(['message' => 'Invalid username or password'], 401);
+        // }
+
+
+
+        //check if the username and password are correct
+
+
         Log::info($request->all());
-        //get the transaction details from the webhook
+
         $transaction = $request->transaction;
         $transaction_reference = $transaction['reference'];
         $transaction_amount = $transaction['amount'];
         $transaction_status = $transaction['status'];
         $transaction_date = $transaction['date'];
-        $transaction_code = $transaction['additionalInfo'];
+        $transaction_details = $transaction['additionalInfo'];
         $transaction_type = $transaction['paymentMode'];
         $transaction_bill_number = $transaction['billNumber'];
         $transaction_order_amount = $transaction['orderAmount'];
         $transaction_service_charge = $transaction['serviceCharge'];
+        $transaction_served_by = $transaction['servedBy'];
+        $transaction_remarks = $transaction['remarks'];
 
         //get the customer details from the webhook
         $customer = $request->customer;
         $customer_name = $customer['name'];
-        $customer_mobile_number = $customer['mobileNumber'];
+        $customer_phone = $customer['mobileNumber'];
         $customer_reference = $customer['reference'];
 
         //get the bank details from the webhook
@@ -348,118 +366,156 @@ class TransactionController extends Controller
         $bank_transaction_type = $bank['transactionType'];
         $bank_account = $bank['account'];
 
+
+        //get the callback type from the webhook
+        $callback_type = $request->callbackType;
+
+
         if($transaction_status == 'SUCCESS'){
             //get customerphone number from the webhook, and check if the customer exists
-            $customer = Customer::where('phone', $customer_mobile_number)->first();
+            $customer = Customer::where('phone', $customer_phone)->first();
             if($customer){
                 //if the customer exists, check if the loan exists
-                $loan = Loan::where('customer_id', $customer->id)->first();
+                $loan = Loan::where('customer_id', $customer->id)->where('status', 'disbursed')->orWhere('status', 'active')->first();
                 if($loan){
                     //if the loan exists, check if the transaction exists
                     $transaction = Transaction::where('transaction_reference', $request->transaction->reference)->first();
-                    if($transaction){
-                        //if the transaction exists, update the transaction status to success
-                        $transaction->transaction_status = 'success';
-                        $transaction->save();
-                        return response()->json(['success' => 'Transaction updated successfully']);
-                    }else{
+                    if(!$transaction){
                         $loan->remaining_balance = $loan->remaining_balance - $transaction_amount;
+                        if ($loan->first_payment_date == null) {
+                            //if the first installment payment date is null, set the first installment payment date to the current date
+                            $loan->first_payment_date = $transaction_date;
+                            $loan->save();
+                            $loan_fist_payment_date = $loan->first_payment_date;
+                        }
+                        else{
+                            //check if there is another loan payment in the loan payment table first the first one has installment date
+                            if (LoanPayment::where('loan_id', $loan->id)->exists()) {
+                                //if there is, get the last installment date
+                                $last_installment_date = LoanPayment::where('loan_id', $loan->id)->max('installment_date');
+                                //add a week to the last installment date
+                                $loan_fist_payment_date = $last_installment_date->addWeek();
+                            } else {
+                                //if there is no other loan payment in the loan payment table, add a week to the first installment payment date
+                                $loan_fist_payment_date = $loan->first_payment_date;
+                            }
+                        }
 
-                        //if the remaining balance is 0, update the loan status to paid
-                        if($loan->remaining_balance == 0){
-                            $loan->status = 'paid';
+                        //if the remaining balance is 0 or has dropped below 0, set the loan status to closed
+                        if($loan->remaining_balance <= 0){
+                            $loan->status = 'closed';
                             $loan->payment_status = 'paid';
                             $loan->remaining_balance = 0;
                             $loan->save();
 
                             LoanPayment::create([
+                                'paid_by' => $customer->id,
                                 'loan_id' => $loan->id,
                                 'amount' => $transaction_amount,
                                 'payment_date' => $transaction_date,
+                                // 'installment_date' => $loan_fist_payment_date,
                                 'payment_method' => 'mpesa',
                                 'payment_reference' => $transaction_reference,
                                 'payment_status' => 'paid',
-                                'user_id' => auth()->user()->id,
                             ]);
 
                             //if the loan is paid, create a transaction
                             Transaction::create([
                                 'customer_id' => $customer->id,
                                 'customer_name' => $customer_name,
+                                'customer_phone' => $customer_phone,
+                                'customer_reference' => $customer_reference,
                                 'loan_id' => $loan->id,
+                                'transaction_code' =>  'TMEL'.time(),
                                 'transaction_type' => $transaction_type,
-                                'transaction_status' => 'success',
+                                'transaction_status' => $transaction_status,
+                                'remaining_balance' => $loan->remaining_balance,
+                                'transaction_details' => $transaction_details,
                                 'transaction_reference' => $transaction_reference,
                                 'transaction_date' => $transaction_date,
-                                'transaction_code' => $transaction_code,
                                 'transaction_amount' => $transaction_amount,
+                                'transaction_bill_number' => $transaction_bill_number,
+                                'transaction_order_amount' => $transaction_order_amount,
+                                'transaction_service_charge' => $transaction_service_charge,
+                                'transaction_served_by' => $transaction_served_by,
+                                'transaction_remarks' => $transaction_remarks,
                                 //bank details
                                 'bank_reference' => $bank_reference,
                                 'bank_transaction_type' => $bank_transaction_type,
                                 'bank_account' => $bank_account,
-                                'user_id' => auth()->user()->id,
+                                'callback_type' => $callback_type,
                             ]);
-                        }else if ($loan->remaining_balance > 0){
+                        }
+                        else if ($loan->remaining_balance > 0){
                             $loan->status = 'active';
                             $loan->payment_status = 'in_repayment';
                             $loan->remaining_balance = $loan->remaining_balance;
                             $loan->save();
 
                             LoanPayment::create([
-                                'customer_id' => $customer->id,
+                                'paid_by' => $customer->id,
                                 'loan_id' => $loan->id,
                                 'amount' => $transaction_amount,
                                 'payment_date' => $transaction_date,
                                 'payment_method' => 'mpesa',
+                                'installment_date' => $loan_fist_payment_date,
                                 'payment_reference' => $transaction_reference,
-                                'payment_status' => 'paid',
-                                'user_id' => auth()->user()->id,
+                                'payment_status' => 'in_repayment',
                             ]);
 
                             //create the transaction
                             $transaction = Transaction::create([
                                 'customer_id' => $customer->id,
-                                'total_amount' => $request->amount,
-                                'payment_gateway_id' => $request->gateway,
+                                'customer_name' => $customer_name,
+                                'customer_phone' => $customer_phone,
+                                'customer_reference' => $customer_reference,
                                 'loan_id' => $loan->id,
-                                'transaction_type' => 'loan',
-                                'transaction_status' => $request->status,
-                                'transaction_reference' => $request->reference,
-                                'transaction_date' => $request->date,
-                                'transaction_code' => $request->reference,
-                                'transaction_amount' => $request->amount,
+                                'transaction_code' =>  'TMEL'.time(),
+                                'transaction_type' => $transaction_type,
+                                'transaction_status' => $transaction_status,
+                                'remaining_balance' => $loan->remaining_balance,
+                                'transaction_details' => $transaction_details,
+                                'transaction_reference' => $transaction_reference,
+                                'transaction_date' => $transaction_date,
+                                'transaction_amount' => $transaction_amount,
+                                'transaction_bill_number' => $transaction_bill_number,
+                                'transaction_order_amount' => $transaction_order_amount,
+                                'transaction_service_charge' => $transaction_service_charge,
+                                'transaction_served_by' => $transaction_served_by,
+                                'transaction_remarks' => $transaction_remarks,
                                 //bank details
                                 'bank_reference' => $bank_reference,
                                 'bank_transaction_type' => $bank_transaction_type,
                                 'bank_account' => $bank_account,
+                                'callback_type' => $callback_type,
                             ]);
 
-                            $dataToSend = [
-                                'name' => $customer->name,
-                                'loan_id' => $loan->id,
-                                'amount' => $transaction_amount,
-                                'transaction_reference' => $transaction_reference,
-                                'transaction_date' => $transaction_date,
-                                'transaction_code' => $transaction_code,
-                                'balance' => $loan->remaining_balance,
-                            ];
+
                             //send in-app notification to the admin that a loan has been paid, or is in repayment
-                            $admins = User::where('role_id', 1)->get();
-                            foreach($admins as $admin){
-                                $admin->notify(new LoanPaymentNotification($dataToSend));
-                            }
+                        }
+                        else{
+                            return response()->json(['error' => 'Transaction failed']);
+                        }
+                        //send in-app notification to the admin that a loan has been paid, or is in repayment
 
+                        $dataToSend = [
+                            'name' => $customer->name,
+                            'loan_id' => $loan->id,
+                            'amount' => $transaction_amount,
+                            'transaction_reference' => $transaction_reference,
+                            'transaction_date' => $transaction_date,
+                            'transaction_code' => $transaction_reference,
+                            'balance' => $loan->remaining_balance,
+                        ];
 
-
-                            return response()->json(['success' => 'Transaction created successfully']);
-
-                        }else{
-                            return response()->json(['error' => 'Transaction is more than the loan amount']);
+                        $admins = User::where('role_id', 1)->get();
+                        foreach($admins as $admin){
+                            $admin->notify(new LoanPaymentNotification($dataToSend));
                         }
 
-                        //send in-app notification to the admin that a loan has been paid, or is in repayment
-                        // $user = User::where('id', 1)->first();
-                        // $user->notify(new LoanPaymentNotification($loan));
+
+                        return response()->json(['success' => 'Transaction created successfully']);
+
                     }
                 }
             }

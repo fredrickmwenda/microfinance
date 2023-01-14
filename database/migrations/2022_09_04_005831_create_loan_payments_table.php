@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
+    /** 
      * Run the migrations.
      *
      * @return void
@@ -19,11 +19,10 @@ return new class extends Migration
             $table->integer('amount');
             $table->integer('balance');
             $table->integer('paid_by');
-            $table->string('payment_method');
-            $table->string('payment_reference');
+            $table->string('payment_method')->nullable();
+            $table->string('payment_reference')->nullable();
             $table->string('payment_date');
-            
-
+            $table->enum('payment_status', ['paid', 'in_repayment', 'overdue', 'defaulted']);
             $table->timestamps();
         });
     }

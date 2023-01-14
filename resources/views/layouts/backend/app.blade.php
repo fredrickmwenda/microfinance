@@ -72,9 +72,12 @@
   <!--select2-->
   <script src="{{ asset('assets/backend/admin/assets/js/select2.min.js') }}"></script>
 
-  <script src="{{ asset('assets/backend/admin/assets/js/datatables.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/dataTables.min.js') }}"></script>
   <!--datatables bootstrap-->
-  <script src="{{ asset('assets/backend/admin/assets/js/datatables.bootstrap4.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/dataTables.bootstrap4.min.js') }}"></script>
+
+  <!--pusher-->
+ <script src="{{ asset('assets/backend/admin/assets/js/pusher/pusher.min.js') }}"></script>
 
 
 
@@ -151,8 +154,7 @@
 
 </script>
 
-  @if (isset($errors) && $errors->any())
-  
+  @if (isset($errors) && $errors->any()) 
     @foreach ($errors->all() as $error)
     <script>
       $(document).ready(function() {
@@ -182,6 +184,17 @@
         <script>
             $(document).ready(function() {
                 toastr.success('{{ session('success') }}', 'Success!', {
+                    closeButton: true,
+                    // progressBar: true,
+                });
+            });
+        </script>
+  @endif
+
+  @if (session('error'))
+        <script>
+            $(document).ready(function() {
+                toastr.error('{{ session('error') }}', 'Error!', {
                     closeButton: true,
                     // progressBar: true,
                 });

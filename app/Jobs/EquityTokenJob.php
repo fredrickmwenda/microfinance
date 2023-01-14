@@ -39,7 +39,7 @@ class EquityTokenJob implements ShouldQueue
         // $this->consumer_secret = config('app.equity_api_password');
         // $this->merchant_code = config('app.equity_api_username');
         // $this->api_key = config('app.equity_api_key');
-        $this->url = 'https://uat.finserve.africa/authentication/api/v3/authenticate/merchant';
+        $this->url = 'https://api-finserve-prod.azure-api.net/authentication/api/v3/authenticate/merchant';
         $this->headers = [
             'Api-Key' => config('app.equity_api_key'),
             'Content-Type' => 'application/json',
@@ -68,8 +68,20 @@ class EquityTokenJob implements ShouldQueue
                 'merchantCode' => config('app.equity_api_username'),
                 'consumerSecret' => config('app.equity_api_password'),
             ]);
+            if ($response->successful()) {
+                $response = json_decode($response->getBody()->getContents());
+                $jengaToken = new EquityToken();
+                $jengaToken->merchant_code = config('app.equity_api_username');
+                $jengaToken->access_token = $response->accessToken;
+                $jengaToken->refresh_token = $response->refreshToken;
+                $jengaToken->expires_in = strtotime($response->expiresIn);
+                $jengaToken->issued_at = strtotime($response->issuedAt);
+                $jengaToken->token_type = $response->tokenType;
+                $jengaToken->save();
+            }
+            $this->release();
             // $response = Http::withHeaders($this->headers)->post($this->url, $this->body);
-            dd($response->json(), $this->url, $this->headers, $this->body);
+            // dd($response->json(), $this->url, $this->headers, $this->body);
            // dd($this->url, $this->headers, $this->body);
 
         } else {

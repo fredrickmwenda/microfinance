@@ -66,18 +66,19 @@
                       <td>{{ $key+1 }}</td>
                       <td>{{ $row->transaction_code }}</td>
                       <td>
-                        <a href="{{ route('admin.users.show', $row->user->id) }}">{{ $row->customer->first_name }} {{ $row->customer->last_name }}</a>
+                        <a href="#">{{ $row->customer->first_name }} {{ $row->customer->last_name }}</a>
                       </td>
                       <td>
-                        {{ $row->amount }}  
+                        {{ $row->transaction_amount }}
                       </td>
                       <td>
                         {{ $row->loan->amount }}
                       </td>
-                      <td>{{ $row->balance }}</td>
-                      <td>{{ date('d-m-Y', strtotime($row->created_at)) }}</td>
+                      <td>{{ $row->remaining_balance }}</td>
+                      <!-- get date  from transaction_date field  which is a string in this format 2018-11-27 00:00:00.0 -->
+                      <td>{{ date('d-m-Y', strtotime($row->transaction_date)) }}</td>
                       <td>
-                          <span class="badge badge-success">{{ $row->status }}</span>
+                          <span class="badge badge-success">{{ $row->transaction_status }}</span>
 
                       </td>
                       <td>  

@@ -33,7 +33,6 @@ Route::get('/', function () {
         } elseif ($role == 2 ) {
             return redirect()->route('agent.dashboard');
         }
-        // return redirect()->route('dashboard');
     }
     return view('auth.login');
 });
@@ -101,14 +100,6 @@ Route::group(['middleware' => ['auth']], function () {
         // Route::get('notifications/delete', [App\Http\Controllers\NotificationController::class, 'delete'])->name('notifications.delete');
         Route::get('notifications/mark-all-as-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.mark_all_as_read');
         Route::get('notifications/mark-as-read/{id}', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
-        // Route::get('notifications/mark-as-unread/{id}', [App\Http\Controllers\NotificationController::class, 'markAsUnread'])->name('notifications.mark_as_unread');
-        // Route::get('notifications/mark-all-as-unread', [App\Http\Controllers\NotificationController::class, 'markAllAsUnread'])->name('notifications.mark_all_as_unread');
-        // Route::get('notifications/mark-as-read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.mark_as_read');
-
-
-        
-
-
     });
 
     //transaction resource
