@@ -61,6 +61,7 @@
                         <th>#</th>
                         <th>{{ __('Transaction No') }}</th>
                         <th>{{ __('Customer Name') }}</th>
+                        <th>{{ __('Customer Phone') }}</th>
                         <th>{{ __('Amount Disbursed') }}</th>
                         <th>{{ __('Disburser') }}</th>
                         <th>{{ __('Date Disbursed') }}</th>
@@ -76,6 +77,7 @@
                       <td>
                         <a href="">{{ $row->disbursedTo->first_name }} {{ $row->disbursedTo->last_name }}</a>
                       </td>
+                      <td>{{ $row->disbursedTo->phone }}</td>
                       <td>
                         {{ $row->disbursement_amount }}
                         

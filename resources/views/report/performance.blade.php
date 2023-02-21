@@ -36,6 +36,17 @@
                     </div>
                   </div>
                 </div>
+                <!--field to enter the ro name-->
+                <div class="col-lg-2">
+                  <div class="form-group row">
+                    <div class="col-lg-12">
+                      <div class="input-group">
+                        <input type="text" class="form-control" name="ro_name" placeholder="Enter RO Name">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 
 
                 <div class="col-lg-4">
@@ -112,19 +123,55 @@
 </div>
 @endsection
 @push('js')
-<script src="{{ asset('assets/backend/js/datatables.min.js') }}"></script>
-<script src="{{ asset('assets/backend/js/bootstrap-datepicker.min.js') }}"></script>
+<!-- <script src="{{ asset('assets/backend/js/datatables.min.js') }}"></script> -->
+<!-- <script src="{{ asset('assets/backend/js/bootstrap-datepicker.min.js') }}"></script> -->
+<script src="{{ asset('assets/backend/admin/assets/js/datatables/dataTables.buttons.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.bootstrap4.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/jszip/jszip.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/pdfmake/pdfmake.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/pdfmake/vfs_fonts.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.html5.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.print.min.js') }}"></script>
+  <script src="{{ asset('assets/backend/admin/assets/js/datatables/buttons.colVis.min.js') }}"></script>
 <script>
     $(document).ready(function() {
-        $('#basic-datatable').DataTable();
+        $('#basic-datatable').DataTable({
+          dom: "Bfrtip",
+          buttons: [
+            {
+              extend: "copy",
+              title: 'Performance Report'
+            },
+            {
+              extend: "csv",
+              title: 'Performance Report'
+            },
+            {
+              extend: "excel",
+              title: 'Performance Report'
+            },
+            {
+              extend: "pdfHtml5",
+              title: 'Performance Report'
+            },
+            {
+              extend: "print",
+              title: 'Performance Report'
+
+            },
+          ],
+          responsive: true,
+          language: {
+            searchPlaceholder: "Search records",
+          }
+    });
     });
 
-    $('.datepicker').datepicker({
-        format: 'yyyy-mm-dd',
-        autoclose: true,
-        todayHighlight: true,
-    });
+    // $('.datepicker').datepicker({
+    //     format: 'yyyy-mm-dd',
+    //     autoclose: true,
+    //     todayHighlight: true,
+    // });
 </script>
 
 @endpush
-

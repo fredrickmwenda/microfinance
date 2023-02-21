@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\TransactionMail;
 use App\Helpers\LoanHelper;
+use App\Models\Loan;
 use Termwind\Components\Dd;
 
 class CustomerController extends Controller
@@ -140,18 +141,17 @@ class CustomerController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show($id)  {
-        if (!Auth()->user()->can('user.show')) {
-            return abort(401);
-        }
+
         
         
-        $customer_id = $id;
-        $user_transactions = customer::find($customer_id);
+        $customer = customer::find($id);
+
+        $loans = Loan::where('customer_id', $id)->get();
 
         // dd($user_transactions);
 
 
-        return view('customer.view', compact('customer_id', 'user_transactions'));
+        return view('customer.show', compact('customer', 'loans'));
     }
 
     /**

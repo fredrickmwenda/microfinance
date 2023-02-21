@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Helpers\DatesValidator;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Termwind\Components\Dd;
 
 class ReportController extends Controller
@@ -20,29 +21,7 @@ class ReportController extends Controller
         $this->middleware('auth');
     }
     //transanction report
-    public function transactionReport(Request $request)
-    {
-       
-            $user = auth()->user();
-            $transactions = Transaction::with('user', 'loan', 'customer')->get();
-            $total_transactions = $transactions->count();
 
-            if (isset($request->from_date) && isset($request->to_date)) {
-                $from_date = $request->from_date;
-                $to_date = $request->to_date;
-                $res  = DatesValidator::validate($from_date, $to_date);
-                
-                if ($res != 'success') {
-                    # code...
-                    return redirect()->back()->with('error', $res);
-                }
-                $transactions = Transaction::with( 'user', 'customer', 'loan')->whereBetween('created_at', [$from_date, $to_date])->paginate(100);
-                $total_transactions = $transactions->count();
-            }
-            
-            return view('report.transaction', compact('transactions', 'total_transactions'));
-
-    }
 
     //disburse report
     public function disburseReport(Request $request)
@@ -106,7 +85,10 @@ class ReportController extends Controller
 
 
         $loans = Loan::with('creator', 'customer', 'disburse')->whereIn('status', ['approved', 'disbursed', 'paid'])->get();
-        $ros = User::where('role_id', 2)->get();
+        //role_id = 2 is the role of the ro or role_4 which is a mix of branch manager and ro so we use query builder
+        $ros = User::where(function($query){
+            $query->where('role_id', 2)->orWhere('role_id', 4);
+        })->get();
  
         $performance = [];
         $total_loan_amount = [];
@@ -122,109 +104,189 @@ class ReportController extends Controller
                 # code...
                 return redirect()->back()->with('error', $res);
             }
-    
-            foreach ($ros as $ro) {
-               // performance is processing fee +loan_interest / amount
-                $processing_fee = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('processing_fee');
-                $loan_interest = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('interest');
-                $total_amount = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('amount');
-                $total_payable_amount = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('total_payable');
-                $total_overdue_loans = Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable');
+            //check if the ro_name is set
+            if (isset($request->ro_name)) {
+                $ro_name = $request->ro_name;
+                //search by first_name or last_name
+                $ros = User::where(function ($query){
+                    $query->where('role_id', 2)->orWhere('role_id', 4);
+                })->where('first_name', 'like', '%'.$ro_name.'%')->orWhere('last_name', 'like', '%'.$ro_name.'%')->get();
+                // since its a collection, we need to get the first element
 
-                
-                if ($total_overdue_loans == 0 ) {
+                $ro_id = $ros->first()->id;
+                $total_amount = Loan::where('created_by', $ro_id)->whereBetween('created_at', [$from_date, $to_date])->sum('amount');
+                $total_payable_amount = Loan::where('created_by', $ro_id)->whereBetween('created_at', [$from_date, $to_date])->sum('total_payable');
+                $total_overdue_loans = Loan::where('created_by', $ro_id)->whereBetween('created_at', [$from_date, $to_date])->where('status', 'overdue')->count();
+                if ($total_overdue_loans == 0) {
                     $performancey = 0;
-                }else{
-                    $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
+                }
+                else{
+                    $performancey = ($total_payable_amount / $total_amount) * 100;
                 }
 
-                // $performancey = number_format($performancey, 2);
-                //turn $ro->id to string
-                $ro_id = (string)$ro->id;
+                // $ro_id = (string)$ros->id;
 
-                array_push($performance, [
+                array_push($performance,[
                     'ro_id' => $ro_id,
                     'performance' => $performancey
                 ]);
 
-                $data =[
+                $data = [
                     'ro_id' => $ro_id,
-                    'total_loans' => Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->count(),
+                    'total_loans' => Loan::where('created_by', $ro_id)->whereBetween('created_at', [$from_date, $to_date])->count(),
                     'total_amount' => $total_amount,
                     'total_payable' => $total_payable_amount,
-                    'total_active_loans' => Loan::where('created_by', $ro->id)->where('status', 'active')->count(),
-                    'total_overdue_loans' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->count(),
-                    'total_overdue_amount' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('amount'),
+                    'total_active_loans' => Loan::where('created_by', $ro_id)->where('status', 'active')->count(),
+                    'total_overdue_loans' =>Loan::where('created_by', $ro_id)->where('status', 'overdue')->count(),
+                    'total_overdue_amount' => Loan::where('created_by', $ro_id)->where('status', 'overdue')->sum('total_payable'),
                 ];
-    
+
                 array_push($total_loan_amount, $data);
 
                 
             }
+            else{
+                foreach ($ros as $ro) {
+                    // performance is processing fee +loan_interest / amount
+                    //  $processing_fee = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('processing_fee');
+                    //  $loan_interest = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('interest');
+                     $total_amount = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('amount');
+                     $total_payable_amount = Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->sum('total_payable');
+                     $total_overdue_loans = Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable');
+     
+                     
+                     if ($total_overdue_loans == 0 ) {
+                         $performancey = 0;
+                     }else{
+                         $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
+                     }
+     
+                     // $performancey = number_format($performancey, 2);
+                     //turn $ro->id to string
+                     $ro_id = (string)$ro->id;
+     
+                     array_push($performance, [
+                         'ro_id' => $ro_id,
+                         'performance' => $performancey
+                     ]);
+     
+                     $data =[
+                         'ro_id' => $ro_id,
+                         'total_loans' => Loan::where('created_by', $ro->id)->whereBetween('created_at', [$from_date, $to_date])->count(),
+                         'total_amount' => $total_amount,
+                         'total_payable' => $total_payable_amount,
+                         'total_active_loans' => Loan::where('created_by', $ro->id)->where('status', 'active')->count(),
+                         'total_overdue_loans' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->count(),
+                         'total_overdue_amount' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable'),
+                     ];
+         
+                     array_push($total_loan_amount, $data);
+     
+                     
+                }
+            }
            
             //in $performance, set ro_id as key and performance as value
             $performance = array_column($performance, 'performance', 'ro_id');
-           
-
+        
         }
         else{
+            if (isset($request->ro_name)){
+                
+                $ro_name = $request->ro_name;
+                
+                //search by first_name or last_name
+                $ros = User::where(function ($query){
+                    $query->where('role_id', 2)->orWhere('role_id', 4);
+                })->where('first_name', 'like', '%'.$ro_name.'%')->orWhere('last_name', 'like', '%'.$ro_name.'%')->get();
+                //get ro_id from the collection
+                $ro_id = $ros[0]->id;
+                // dd($ro_id);
+                $total_amount = Loan::where('created_by', $ro_id)->sum('amount');
+                $total_payable_amount = Loan::where('created_by', $ro_id)->sum('total_payable');
+                $total_overdue_loans = Loan::where('created_by', $ro_id)->where('status', 'overdue')->count();
+                if ($total_overdue_loans == 0) {
+                    $performancey = 0;
+                }
+                else{
+                    $performancey = ($total_payable_amount / $total_amount) * 100;
+                }
+                $performancey = number_format($performancey, 2);
 
-            
 
+                array_push($performance,[
+                    'ro_id' => $ro_id,
+                    'performance' => $performancey
+                ]);
 
-        //loop through ROS and get their total registered loans, total paid loans, total disbursed amount, total collected amount, total profit and performance
+                $data = [
+                    'ro_id' => $ro_id,
+                    'total_loans' => Loan::where('created_by', $ro_id)->count(),
+                    'total_amount' => $total_amount,
+                    'total_payable' => $total_payable_amount,
+                    'total_active_loans' => Loan::where('created_by', $ro_id)->where('status', 'active')->count(),
+                    'total_overdue_loans' =>Loan::where('created_by', $ro_id)->where('status', 'overdue')->count(),
+                    'total_overdue_amount' => Loan::where('created_by', $ro_id)->where('status', 'overdue')->sum('total_payable'),
+                ];
 
-        foreach ($ros as $ro) {
-            //get loans for this RO, using the created_by field
-            $total_registered_loans = Loan::where('created_by', $ro->id)->count();
-            $total__loans = Loan::where('created_by', $ro->id)->where('status', 'paid')->count();
-          
-           // performance is processing fee +loan_interest / amount
-            $processing_fee = Loan::where('created_by', $ro->id)->sum('processing_fee');
-            $loan_interest = Loan::where('created_by', $ro->id)->sum('interest');
-            $total_amount = Loan::where('created_by', $ro->id)->sum('amount');
-            $total_payable_amount = Loan::where('created_by', $ro->id)->sum('total_payable');
-
-            $total_overdue_loans = Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable');
+                array_push($total_loan_amount, $data);
 
                 
-                if ($total_overdue_loans == 0 ) {
-                    $performancey = 0;
-                }else{
-                    $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
-                }
-            // $performancey= ($total_profit / $total_amount) * 100;
 
-            $performancey = number_format($performancey, 2);
-            //turn $ro->id to string
-            $ro_id = (string)$ro->id;
-
-
-            //array push
-            array_push($performance, [
-                'ro_id' => $ro_id,
-                'performance' => $performancey
-            ]);
-
-            $data =[
-                'ro_id' => $ro_id,
-                'total_loans' => $total_registered_loans,
-                'total_amount' => $total_amount,
-                'total_payable' => $total_payable_amount,
-                'total_active_loans' => Loan::where('created_by', $ro->id)->where('status', 'active')->count(),
-                'total_overdue_loans' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->count(),
-                'total_overdue_amount' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('amount'),
-            ];
-
-            array_push($total_loan_amount, $data);
-
-
-        }
-        
-         //in $performance, set ro_id as key and performance as value
-        $performance = array_column($performance, 'performance', 'ro_id');
-
+            }
             
+            else{
+                //loop through ROS and get their total registered loans, total paid loans, total disbursed amount, total collected amount, total profit and performance
+                foreach ($ros as $ro) {
+                    //get loans for this RO, using the created_by field
+                    $total_registered_loans = Loan::where('created_by', $ro->id)->count();
+                    $total__loans = Loan::where('created_by', $ro->id)->where('status', 'paid')->count();
+                
+                    // performance is processing fee +loan_interest / amount
+                    $processing_fee = Loan::where('created_by', $ro->id)->sum('processing_fee');
+                    $loan_interest = Loan::where('created_by', $ro->id)->sum('interest');
+                    $total_amount = Loan::where('created_by', $ro->id)->sum('amount');
+                    $total_payable_amount = Loan::where('created_by', $ro->id)->sum('total_payable');
+
+                    $total_overdue_loans = Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('total_payable');
+
+                        
+                        if ($total_overdue_loans == 0 ) {
+                            $performancey = 0;
+                        }else{
+                            $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
+                        }
+                    // $performancey= ($total_profit / $total_amount) * 100;
+
+                    $performancey = number_format($performancey, 2);
+                    //turn $ro->id to string
+                    $ro_id = (string)$ro->id;
+
+
+                    //array push
+                    array_push($performance, [
+                        'ro_id' => $ro_id,
+                        'performance' => $performancey
+                    ]);
+
+                    $data =[
+                        'ro_id' => $ro_id,
+                        'total_loans' => $total_registered_loans,
+                        'total_amount' => $total_amount,
+                        'total_payable' => $total_payable_amount,
+                        'total_active_loans' => Loan::where('created_by', $ro->id)->where('status', 'active')->count(),
+                        'total_overdue_loans' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->count(),
+                        'total_overdue_amount' => Loan::where('created_by', $ro->id)->where('status', 'overdue')->sum('amount'),
+                    ];
+
+                    array_push($total_loan_amount, $data);
+
+
+                }
+            }
+            
+            //in $performance, set ro_id as key and performance as value
+            $performance = array_column($performance, 'performance', 'ro_id');  
         }
 
 
@@ -284,46 +346,35 @@ class ReportController extends Controller
             
 
 
-            
-        // }
-        // else{
-            
-        
-        //     $customers = customer::select("*")->where('created_by', $user->id)
-        //     ->when($request->status, function ($query) use ($request) {
-        //         //check if the request is active or inactive, if it is active search status = 1, if it is inactive search status = 0
-        //         if ($request->status == 'active'){
-        //             $status = 1;
-        //         }
-        //         else{
-        //             $status = 0;
-        //         }
-        //         return $query->where('status', $status);
-        //     })
-            
-        //     ->when($request->from_date, function ($query) use ($request) {
-        //         return $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
-        //     })->with('user')->paginate(100);
 
-        //     $total_customers = customer::select("*")->where('created_by', $user->id)->when($request->status, function ($query) use ($request) {
-        //         //check if the request is active or inactive, if it is active search status = 1, if it is inactive search status = 0
-        //         if ($request->status == 'active'){
-        //             $status = 1;
-        //         }
-        //         else{
-        //             $status = 0;
-        //         }
-        //         return $query->where('status', $status);
-        //     })
-        //     ->when($request->from_date, function ($query) use ($request) {
-        //         return $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
-        //     })->count();
-        //     //get all customers
-
-
-            
-        // }
         return view('report.customer', compact( 'customers', 'total_customers'));
+    }
+
+    public function transactionReport(Request $request)
+    {      
+        $user = auth()->user();
+        $from_date = $request->from_date;
+        $to_date = $request->to_date;
+        $res  = DatesValidator::validate($from_date, $to_date);
+                   
+        if ($res != 'success') {
+            return redirect()->back()->with('error', $res);
+        }
+        // also check if $request->customer_phone is set
+        $transactions = Transaction::select("*")->when($request->from_date, function ($query) use ($request) {
+            return $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
+        })->when($request->customer_phone, function ($query) use ($request) {
+            return $query->where('customer_phone', $request->customer_phone);
+        })->with('customer', 'loan')->paginate(20);
+
+        $total_transactions = Transaction::select("*")->when($request->from_date, function ($query) use ($request) {
+            return $query->whereBetween('created_at', [$request->from_date, $request->to_date]);
+        })->when($request->customer_phone, function ($query) use ($request) {
+            return $query->where('customer_phone', $request->customer_phone);
+        })->count();
+
+        return view('report.transaction', compact('transactions', 'total_transactions'));
+
     }
 
 

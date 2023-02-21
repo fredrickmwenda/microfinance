@@ -9,7 +9,7 @@
 	<div class="col-lg-9">      
 		<div class="card">
 			<div class="card-body">
-				<h4>{{ __('Add Admin') }}</h4>
+			<h4>{{ __('Add System User') }}</h4>
 				<form method="post" action="{{ route('admin.users.store') }}" class="basicform_with_reset">
 					@csrf
 					<div class="pt-20">

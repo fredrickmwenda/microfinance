@@ -25,18 +25,24 @@
                             @foreach ($notifications as $key => $notification)
                             <tr>
                                 <td>{{ $key + 1 }}</td>
-                                <td>{{ $notification->title }}</td>
-                                <td>{{ $notification->message }}</td>
+
+                                <td>{{ $notification->title ? $notification->title : 'Loan Payment' }}</td>
+
+                                 @php
+                                 <!--  -the data column is dispayed as {"customer_name":null,"amount":300,"loan_id":18,"transaction_date":"2023-01-21","transaction_reference":"RAL8UQH5J6","balance":6000}
+                                    -we need to get the loan_id from the data column -->
+                                    <!-- so it is an array, so we can access it like an array -->
+                                    $loan = App\Models\Loan::find($notification->data['loan_id']);
+                                    $customer_name = $loan->customer->first_name . ' ' . $loan->customer->last_name;
+                                 @endphp
+                                <td>{{ $customer_name }} paid {{ $notification->data->amount }} on {{ $notification->data->transaction_date }}</td>
                                 <td>{{ $notification->created_at->diffForHumans() }}</td>
                                 <td>
-                                    <a href="{{ route('admin.notifications.show', $notification->id) }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i> {{ __('View') }}</a>
+                                    <!-- <a href="{{ route('admin.notifications.show', $notification->id) }}" class="btn btn-primary btn-sm"><i class="fas fa-eye"></i> {{ __('View') }}</a>
                                     <button class="btn btn-danger btn-sm" type="button" onclick="deleteData({{ $notification->id }})">
                                         <i class="fas fa-trash"></i> {{ __('Delete') }}
-                                    </button>
-                                    <form id="delete-form-{{ $notification->id }}" action="{{ route('admin.notification.destroy', $notification->id) }}" method="POST" style="display: none;">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
+                                    </button> -->
+                                    <!-- {"customer_name":null,"amount":300,"loan_id":18,"transaction_date":"2023-01-21","transaction_reference":"RAL8UQH5J6","balance":6000} -->
                                 </td>
                             </tr>
                             @endforeach

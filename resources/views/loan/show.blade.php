@@ -187,32 +187,59 @@
                         </tr>
                      </thead>
                      <tbody>
-                        @if(!isset($loan_payments))
-                        @foreach($loan_payments as $repayment)
-                        <tr>
-                           <td>{{ $repayment->repayment_date }}</td>
-                           <td class="text-right">
-                              {{ $repayment['amount'] }}
-                           </td>
-                           <td class="text-right">
-                              <!--repayment['penalty'], }} -->
-                           </td>
-                           <td class="text-right">
-                              {{ $repayment ['amount']   }}
-                           </td>
-                           <td class="text-right">
-                              <!-- / decimalPlace(repayment['interest']))  -->
-                           </td>
-                           <td class="text-right">
-                              {{ $repayment['balance'] }}
-                           </td>
-                           <td class="text-center">
-                              {!! $repayment['status'] == 1 ?
-                              show_status(__('Paid'),'success') :
-                              show_status(__('Unpaid'),'danger') !!}
-                           </td>
-                        </tr>
-                        @endforeach
+                        @if ($loan->status === 'active' || $loan->status === 'closed' || $loan->status === 'disbursed')
+                           @php
+                              $duration = $loan->duration;
+                              $weeks = floor($duration / 7);
+                              $extra_days = $duration % 7;
+                              $amount_to_pay = $loan->total_payable / ($weeks + ($extra_days > 0 ? 1 : 0));
+                              $interest = $loan->interest / ($weeks + ($extra_days > 0 ? 1 : 0));
+                              $principal_amount = $amount_to_pay - $interest;
+                              $balance = $loan->remaining_balance;
+                              $start_date = \Carbon\Carbon::parse($loan->start_date);
+                              $end_date = $start_date;
+                           @endphp
+                           <tr>
+                           <!-- date("Y-m-d", $start_date) -->
+                              <td>{{ $start_date->format('Y-m-d') }}</td>
+                              <td>{{ $loan->total_payable }}</td>
+                              <td>0</td>
+                              <td>0</td>
+                              <td>0</td>
+                              <td>{{ $balance }}</td>
+                              <td>Disbursement Week</td>
+                           </tr>
+
+                           @for ($i = 0; $i < $weeks; $i++)
+                              @php
+                                 $end_date->addDays(7);
+                                 $balance -= $amount_to_pay;
+                              @endphp
+                              <tr>
+                                 <td>{{ $end_date->format('Y-m-d') }}</td>
+                                 <td>{{ $amount_to_pay }}</td>
+                                 <td>0</td>
+                                 <td>{{ $principal_amount }}</td>
+                                 <td>{{ $loan->interest / ($weeks + ($extra_days > 0 ? 1 : 0)) }}</td>
+                                 <td>{{ $balance }}</td>
+                                 <td>{{$loan->status}}</td>
+                              </tr>
+                           @endfor
+                           @if ($extra_days > 0)
+                              @php
+                                 $end_date->addDays($extra_days);
+                                 $balance -= $amount_to_pay;
+                              @endphp
+                              <tr>
+                                 <td>{{ $end_date->format('Y-m-d') }}</td>
+                                 <td>{{ $amount_to_pay }}</td>
+                                 <td>0</td>
+                                 <td>{{ $principal_amount }}</td>
+                                 <td>{{ $loan->interest / ($weeks + ($extra_days > 0 ? 1 : 0)) }}</td>
+                                 <td>{{ $balance }}</td>
+                                 <td>{{$loan->status}}</td>
+                              </tr>
+                           @endif
                         @endif
                      </tbody>
                   </table>
@@ -221,28 +248,29 @@
                   <table class="table table-bordered data-table">
                      <thead>
                         <tr>
-                           <th>{{ __("Date") }}</th>
-                           <th class="text-right">{{ ("Principal Amount") }}</th>
-                           <th class="text-right">{{ __("Interest") }}</th>
-                           <th class="text-right">{{ __("Late Penalty") }}</th>
-                           <th class="text-right">{{ __("Total Amount") }}</th>
+                           <th>{{ __("Loan ID") }}</th>
+                           <th class="text-right">{{ ("Customer Name") }}</th>
+                           <th class="text-right">{{ __("Amount Paid ") }}</th>
+                           <th class="text-right">{{ __("Remaining Balance") }}</th>
+                           <th class="text-right">{{ __("Payment Date") }}</th>
                         </tr>
                      </thead>
                      <tbody>
                         @foreach($loan_payments as $payment)
                         <tr>
-                           <td>{{ $payment->paid_at }}</td>
+                           <td>{{ $payment->loan_id }}</td>
                            <td class="text-right">
-                              {{ $payment['amount_to_pay'] - $payment['interest'] }}
+                              {{ $payment->loan->customer->first_name }} {{ $payment->loan->customer->last_name }}
                            </td>
                            <td class="text-right">
-                              {{ $payment['interest'] }}
+                              {{ $payment['amount'] }}
                            </td>
                            <td class="text-right">
-                              {{ $payment['late_penalties'] }}
+                              {{ $payment['balance'] }}
                            </td>
                            <td class="text-right">
-                              {{ $payment['amount_to_pay'] + $payment['late_penalties'] }}
+                              <!-- payment_date is a string, so we need to convert it to a date -->
+                              {{ date('d-m-Y', strtotime($payment['payment_date'])) }}
                            </td>
                         </tr>
                         @endforeach

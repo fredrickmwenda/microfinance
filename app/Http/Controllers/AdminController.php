@@ -98,11 +98,11 @@ class AdminController extends Controller
         if (Auth()->user()->can( 'user.edit')) {
             $user = User::find($id);
             $roles = Role::all();
-            return view('administrator.edit', compact('user', 'roles'));
+            $branches = branch::where('status', 'active')->get();
+            return view('administrator.edit', compact('user', 'roles', 'branches'));
+        } else {
+            return redirect()->route('admin.users.index')->with('error', 'You are not authorized to perform this action');
         }
-        // $user = ModelsUser::find($id);
-        // $roles = Role::all();
-        // return view('administrator.edit', compact('user'));
     }
     /**
      * Update the specified resource in storage.
@@ -113,23 +113,36 @@ class AdminController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        // dd($request->all());
         $this->validate($request, [
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email,'.$id,
-            'password' => 'sometimes|string|min:6|confirmed',
-            'role_id' => 'required|integer|exists:roles,id',
-            'branch_id' => 'required|integer|exists:branches,id',
+            // 'password' => 'sometimes|string|min:6|confirmed',
+            // 'role_id' => 'required|integer|exists:roles,id',
+            // 'branch_id' => 'required|integer|exists:branches,id',
             // 'is_active' => 'required|integer|max:1',
         ]);
         $user = ModelsUser::find($id);
-        $user->name = $request->name;
+        $user->first_name = $request->first_name;
+        $user->last_name = $request->last_name;
         $user->email = $request->email;
         if($request->password) {
             $user->password = Hash::make($request->password);
         }
+
+        //detach all  user previous roles and assign new roles
+        $user->roles()->detach();
+        $role = Role::find($request->role_id);
+        // dd($request->role_id);
+        $user->assignRole($role->name);
+    
+        $user->status = $request->status;
+
+        $user->role_id = $request->role_id;
+        $user->branch_id = $request->branch_id;
         $user->save();
+        
         return redirect()->route('admin.users.index')->with('success', 'User updated successfully!');
     }
 

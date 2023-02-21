@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Termwind\Components\Dd;
 use Yajra\DataTables\DataTables;
@@ -61,7 +62,10 @@ class HomeController extends Controller
         $all_defaulted_loans = Loan::where('status', 'defaulted')->orderBy('created_at', 'desc')->paginate(10);
 
         //get Total interest earned from closed loans
-        $total_interest_earned = Loan::where('status', 'closed')->sum('interest');
+        $total_interest_earned = Loan::where(function ($query) {
+            $query->where('status', 'closed')
+                ->orWhere('status', 'active');
+        })->sum('interest');
         $profit = $total_interest_earned;
 
         //total disbursed amount
@@ -102,7 +106,7 @@ class HomeController extends Controller
 
         //performance of ro officers according to the number of loans they have created which are approved, disbursed, closed or written off
         // $ro_officers = User::where('role', 'ro')->get();
-        $ro_officers = User::where('role_id', 2)->get();
+        $ro_officers = User::where(function($query){$query->where('role_id', 2)->orWhere('role_id', 4);})->get();
 
         
         $months = [
@@ -110,6 +114,75 @@ class HomeController extends Controller
         ];
 
         //per
+        // $roData = DB::table('users')
+        //     ->select('users.first_name', DB::raw('YEAR(loans.updated_at) as year'), DB::raw('MONTH(loans.updated_at) as month'),
+        //              DB::raw('SUM(loans.total_payable) as total_payable_amount'),
+        //              DB::raw('SUM(CASE WHEN loans.status = "overdue" THEN loans.total_payable ELSE 0 END) as total_overdue_loans'))
+        //     ->join('loans', 'users.id', '=', 'loans.created_by')
+        //     ->whereIn('users.role_id', [2, 4])
+        //     ->whereIn('loans.status', ['disbursed', 'approved', 'closed', 'written_off', 'overdue'])
+        //     ->groupBy('users.first_name', 'year', 'month')
+        //     ->orderBy('year')
+        //     ->orderBy('month')
+        //     ->get();
+
+        // $roData = DB::table('users')
+        //     ->select('users.first_name', DB::raw('YEAR(loans.updated_at) as year'), DB::raw('MONTHNAME(loans.updated_at) as month'),
+        //             DB::raw('SUM(loans.total_payable) as total_payable_amount'),
+        //             DB::raw('SUM(CASE WHEN loans.status = "overdue" THEN loans.total_payable ELSE 0 END) as total_overdue_loans'))
+        //     ->join('loans', 'users.id', '=', 'loans.created_by')
+        //     ->whereIn('users.role_id', [2, 4])
+        //     ->whereIn('loans.status', ['disbursed', 'approved', 'closed', 'written_off', 'overdue'])
+        //     ->groupBy('users.first_name', 'year', 'month')
+        //     ->orderBy('year')
+        //     ->orderBy(DB::raw('MONTH(loans.updated_at)'))
+        //     ->get();
+
+        // $roData = DB::table('users')
+        //     ->select('users.first_name', DB::raw('YEAR(loans.updated_at) as year'), DB::raw('DATE_FORMAT(loans.updated_at, "%b") as month'),
+        //             DB::raw('SUM(loans.total_payable) as total_payable_amount'),
+        //             DB::raw('SUM(CASE WHEN loans.status = "overdue" THEN loans.total_payable ELSE 0 END) as total_overdue_loans'))
+        //     ->join('loans', 'users.id', '=', 'loans.created_by')
+        //     ->whereIn('users.role_id', [2, 4])
+        //     ->whereIn('loans.status', ['disbursed', 'approved', 'closed', 'written_off', 'overdue'])
+        //     ->groupBy('users.first_name', 'year', 'month')
+        //     ->orderBy('year')
+        //     ->orderBy(DB::raw('MONTH(loans.updated_at)'))
+        //     ->get();
+        
+        $currentYear = date('Y');      
+        $roData = DB::table('users')
+            ->select('users.first_name', DB::raw('DATE_FORMAT(loans.updated_at, "%b") as month'),
+                    DB::raw('SUM(loans.total_payable) as total_payable_amount'),
+                    DB::raw('SUM(CASE WHEN loans.status = "overdue" THEN loans.total_payable ELSE 0 END) as total_overdue_loans'))
+            ->join('loans', 'users.id', '=', 'loans.created_by')
+            ->whereIn('users.role_id', [2, 4])
+            ->whereIn('loans.status', ['disbursed', 'approved', 'closed', 'written_off', 'overdue'])
+            ->whereYear('loans.updated_at', $currentYear)
+            ->groupBy('users.first_name', 'month')
+            ->orderBy(DB::raw('MONTH(loans.updated_at)'))
+            ->get();
+        $roDataByRO = collect($roData)->groupBy('first_name');
+        $roPerformanceByMonth = collect();
+
+        foreach ($roDataByRO as $roName => $roData) {
+            $roPerformance = collect();
+
+            foreach ($roData as $data) {
+                $performance = ($data->total_overdue_loans / $data->total_payable_amount) * 100;
+                $roPerformance->put($data->month, $performance);
+                // $roPerformance->put($data->year . '-' . $data->month, $performance);
+            }
+
+            $roPerformanceByMonth->put($roName, $roPerformance);
+        }
+
+        // dd($roPerformanceByMonth);
+
+   
+
+
+
 
         $ro_officers_performance = [];
         $performance = [];
@@ -121,7 +194,7 @@ class HomeController extends Controller
             if(count($loans) > 0){
                 
                 $loansRO = Loan::where('created_by', $ro_officer->id)->whereIn('status', ['approved', 'disbursed', 'closed', 'written_off'])->get()->groupBy(function($date) {
-                    return Carbon::parse($date->updated_at)->format('M'); // grouping by months
+                    return Carbon::parse($date->updated_at)->format('M');  
                 });            
                 foreach($months as $month){
                     //get the loans created by the ro officer in the month
@@ -150,13 +223,7 @@ class HomeController extends Controller
                                 array_push($ro_officers_performance, [
                                     'usernames' => $ro_username,
                                     'month' => $month,
-                                    // 'total_loans' => $total_monthly_loans,
-                                    // 'total_processing_fee' => $total_processing_fee,
-                                    // 'total_loan_interest' => $total_loan_interest,
-                                    // 'total_total_payable' => $total_total_payable,
-                                    // 'performance' => $performance,
                                     'performance' => $performancePerc
-                                    // $month  => $performancePerc,
                                 ]);
 
                             }
@@ -167,6 +234,10 @@ class HomeController extends Controller
             
             }
         }
+        //check for duplicates in $ro_officers_performance
+        $ro_officers_performance = array_map("unserialize", array_unique(array_map("serialize", $ro_officers_performance)));
+        //encode to json
+        
        
 
 
@@ -224,7 +295,7 @@ class HomeController extends Controller
 
         
 
-         return view('dashboard',compact('total_users','total_customers','all_pending_loans','all_approved_loans','all_rejected_loans','all_disbursed_loans','all_closed_loans','all_written_off_loans','all_recovered_loans','all_overdue_loans','all_defaulted_loans','total_loans','total_pending_loans','total_approved_loans','total_rejected_loans','total_disbursed_loans','total_closed_loans','total_written_off_loans','total_recovered_loans','total_overdue_loans','total_defaulted_loans','total_amount_pending_loans','total_amount_approved_loans','total_amount_rejected_loans','total_amount_closed_loans','total_interest_earned','profit','total_amount_pending_loans','total_amount_approved_loans','total_amount_rejected_loans','total_amount_disbursed_loans','total_amount_closed_loans','total_amount_written_off_loans','total_amount_recovered_loans','total_amount_overdue_loans','total_amount_defaulted_loans', 'expenditure', 'profit', 'total_loans', 'total_disbursed', 'total_disbursed_amount', 'total_amount_loans', 'loanData', 'activeLoanData', 'pendingLoanData', 'overDueLoanData','transactionData', 'disbursementData', 'ROPerformanceData' ));
+         return view('dashboard',compact('total_users','total_customers','all_pending_loans','all_approved_loans','all_rejected_loans','all_disbursed_loans','all_closed_loans','all_written_off_loans','all_recovered_loans','all_overdue_loans','all_defaulted_loans','total_loans','total_pending_loans','total_approved_loans','total_rejected_loans','total_disbursed_loans','total_closed_loans','total_written_off_loans','total_recovered_loans','total_overdue_loans','total_defaulted_loans','total_amount_pending_loans','total_amount_approved_loans','total_amount_rejected_loans','total_amount_closed_loans','total_interest_earned','profit','total_amount_pending_loans','total_amount_approved_loans','total_amount_rejected_loans','total_amount_disbursed_loans','total_amount_closed_loans','total_amount_written_off_loans','total_amount_recovered_loans','total_amount_overdue_loans','total_amount_defaulted_loans', 'expenditure', 'profit', 'total_loans', 'total_disbursed', 'total_disbursed_amount', 'total_amount_loans', 'loanData', 'activeLoanData', 'pendingLoanData', 'overDueLoanData','transactionData', 'disbursementData', 'ROPerformanceData', 'roPerformanceByMonth' ));
     }
 
 
@@ -241,7 +312,10 @@ class HomeController extends Controller
             $expenditure = Disburse::whereDate('created_at', $start_date)->sum('disbursement_amount');
 
             //get Total interest earned from closed loans
-            $profit = Loan::where('status', 'closed')->whereDate('updated_at', $start_date )->sum('interest');
+            $profit = Loan::where(function($query){
+                $query->where('status', 'closed')
+                ->orWhere('status', 'active');
+            })->whereDate('updated_at', $start_date )->sum('interest');
 
             
             $total_pending_loans = Loan::whereDate('updated_at', $start_date)->where('status', 'pending')->count();
@@ -278,9 +352,11 @@ class HomeController extends Controller
             //get Total disbursed loans
             $expenditure = Disburse::where('created_at', '>=', Carbon::parse($start_date)->startOfDay())->where('created_at', '<=', Carbon::parse($end_date)->endOfDay())->sum('disbursement_amount');
 
-
             //get Total interest earned from closed loans
-            $profit = Loan::where('status', 'closed')->where('updated_at', '>=', Carbon::parse($start_date)->startOfDay())->where('updated_at', '<=', Carbon::parse($end_date)->endOfDay())->sum('interest');
+            $profit = Loan::where(function($query){
+                $query->where('status', 'closed')
+                ->orWhere('status', 'active');
+            })->where('updated_at', '>=', Carbon::parse($start_date)->startOfDay())->where('updated_at', '<=', Carbon::parse($end_date)->endOfDay())->sum('interest');
 
             
             $total_pending_loans = Loan::where('status', 'pending')->where('updated_at', '>=', Carbon::parse($start_date)->startOfDay())->where('updated_at', '<=', Carbon::parse($end_date)->endOfDay())->count();
@@ -317,7 +393,10 @@ class HomeController extends Controller
         $expenditure = Disburse::whereBetween('created_at', [$start_date, $end_date])->sum('disbursement_amount');
 
         //get Total interest earned from closed loans
-        $profit = Loan::where('status', 'closed')->whereBetween('updated_at', [$start_date, $end_date])->sum('interest');
+        $profit = Loan::where(function($query){
+            $query->where('status', 'closed')
+            ->orWhere('status', 'active');
+        })->whereBetween('updated_at', [$start_date, $end_date])->sum('interest');
         $total_pending_loans = Loan::where('status', 'pending')->whereBetween('updated_at', [$start_date, $end_date])->count();
         $total_approved_loans = Loan::where('status', 'approved')->whereBetween('updated_at', [$start_date, $end_date])->count();
         $total_rejected_loans = Loan::where('status', 'rejected')->whereBetween('updated_at', [$start_date, $end_date])->count();
@@ -655,7 +734,8 @@ class HomeController extends Controller
     //the parameter are this week, this month, 3 months, 6 months and 1 year
     public function filterPerformanceOfUsers(Request $request){
         $user = Auth::user();
-        $users = User::where('role_id', 2)->get();
+        $users = User::where(function($query){$query->where('role_id', 2)->orWhere('role_id', 4);})->get();
+        
         $userPerformance = [];
         $userPerformanceData = [];
         $filter = $request->filter;
@@ -770,43 +850,6 @@ class HomeController extends Controller
 
     
 
-    // get performance of users
-    // public function getPerformanceOfUsers(){
-    //     $user = Auth::user();
-    //     $months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    //     $sortedData = [];
-    //     //get users with loans, where the status is active, disburded , completed 
-    //     $users = User::with('loans')->whereHas('loans', function($query){
-    //         $query->where('status', 'active')
-    //         ->orWhere('status', 'disbursed')
-    //         ->orWhere('status', 'completed');
-    //     })->get();
-    //     dd($users);
-    //     $usersByMonth = $users->groupBy(function($date) {
-    //         return Carbon::parse($date->created_at)->format('F'); // grouping by months
-    //     });
-
-    //     // get the current month
-    //     foreach($months as $month){
-    //         // users by month
-    //         if(array_key_exists($month, $usersByMonth->toArray())){
-    //             foreach($usersByMonth as $user => $value){
-    //                 if($user == $month){
-    //                     $monthlyUniqueUsers = $value;
-    //                     $monthlyUsersCount = count($monthlyUniqueUsers->toArray());
-    //                     $monthh = $month;
-    //                     $type = 'all';
-
-    //                     array_push($sortedData, ['month' => $monthh, 'users' => $monthlyUsersCount, 'type' => $type]);
-
-    //                     break;
-    //                 }
-                  
-    //             }
-    //         }
-    //     }
-
-    //     return response()->json($sortedData, 200);
-    // }
+ 
 
 }

@@ -9,14 +9,13 @@
 	<div class="col-lg-9">      
 		<div class="card">
 			<div class="card-body">
-				<h4>{{ __('Edit Admin') }}</h4>
+				<h4>{{ __('Edit System Users') }}</h4>
 				<form method="post" action="{{ route('admin.users.update',$user->id) }}" class="basicform">
                     @csrf
-                    @method('PUT')
 					<div class="pt-20">
 						<div class="form-group">
 							<label for="name">{{ __('First Name') }}</label>
-							<input type="text" value="{{ $user->first_name }}" required class="form-control" name="name" placeholder="{{ __('Enter admin name') }}" >
+							<input type="text" value="{{ $user->first_name }}" required class="form-control" name="first_name" placeholder="{{ __('Enter admin name') }}" >
 						</div>
 
 						<div class="form-group">
@@ -45,19 +44,38 @@
 						
                         <div class="form-group">
                             <label for="roles">{{ __('Assign Roles') }}</label>
-                                <select required name="role" id="role" class="form-control select2" >
-									<!--get active role for this user-->
-									@foreach($roles as $role)
-									   @if($role->id == $user->role_id)
-										<option value="{{ $role->id }}" selected>{{ $role->name }}</option>
-									   @else
-										<option value="{{ $role->id }}">{{ $role->name }}</option>
-									   @endif
-									@endforeach
-                                </select>
-                            </div>
+							<select required name="role_id" id="role" class="form-control select2" >
+								<!--get active role for this user-->
+								@foreach($roles as $role)
+									@if($role->id == $user->role_id)
+									<option value="{{ $role->id }}" selected>{{ $role->name }}</option>
+									@else
+									<option value="{{ $role->id }}">{{ $role->name }}</option>
+									@endif
+								@endforeach
+							</select>
+                        </div>
+
+						<!--branch-->
+						<div class="form-group">
+							<label for="roles">{{ __('Assign Branch') }}</label>
+							<select required name="branch_id" id="branch" class="form-control select2" >
+								<!--get active branch for this user-->
+								@foreach($branches as $branch)
+									@if($branch->id == $user->branch_id)
+									<option value="{{ $branch->id }}" selected>{{ $branch->name }}</option>
+									@else
+									<option value="{{ $branch->id }}">{{ $branch->name }}</option>
+									@endif
+								@endforeach
+							</select>
+						</div>
+
+
+
                         <div class="form-group">
-                        <label>{{ __('Status') }}</label>
+
+                            <label>{{ __('Status') }}</label>
 							<select name="status" class="form-control">
 								<option value="active" {{ $user->status == 'active' ? 'selected' : '' }}>{{ __('Active') }}</option>
 								<option value="inactive" {{ $user->status == 'inactive' ? 'selected' : '' }}>{{ __('Inactive') }}</option>

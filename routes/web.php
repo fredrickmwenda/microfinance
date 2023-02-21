@@ -28,7 +28,7 @@ Route::get('/', function () {
         //get role id
         $role = Auth::user()->role_id;
         //if role is admin, redirect to admin dashboard
-        if ($role == 1 || $role == 3) {
+        if ($role == 1 || $role == 3 || $role == 4) {
             return redirect()->route('admin.dashboard');
         } elseif ($role == 2 ) {
             return redirect()->route('agent.dashboard');

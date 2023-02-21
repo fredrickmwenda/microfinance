@@ -18,14 +18,14 @@
                   </ul>
               </div>
             @endif
-            <form method="POST" action="" class="basicform_with_reset">
+            <form method="POST" action="{{ route('transaction.store') }}" enctype="multipart/form-data">
               @csrf
               <div class="card-body">
                 <div class="form-row">
                   <div class="form-group col-md-6">
                     <label>{{ __('Customer Name') }}</label>
                     <!--select2-->
-                    <select class="form-control select2" name="customer_transaction_id" id="customer_transaction_id">
+                    <select class="form-control select2" name="customer_id" id="customer_id">
                       <option value="">{{ __('Select Customer') }}</option>
                       @foreach ($customers as $customer)
                         <option value="{{ $customer->id }}">{{ $customer->first_name }} {{ $customer->last_name }}</option>
@@ -41,6 +41,7 @@
                     </div>
                   </div>
                 </div>
+                <input type="hidden" name="loan_id" id="loan_id" value="">
                 <div class="form-row">
                     <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
@@ -51,13 +52,15 @@
                     <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
                            <!--customer phone number-->
-                            <label>{{ __('Branch Name ') }}</label>
-                            <select class="form-control select2" name="branch_id" id="branch_id">
-                                <option value="">{{ __('Select Branch') }}</option>
-                                @foreach ($branches as $branch)
-                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
-                                @endforeach
-                            </select>
+                           <label for="payment_method">{{ __('Payment Method') }}</label>
+                          <select class="form-control" id="payment_method" name="payment_gateway_id" required>
+                              <option value="">{{ __('Select Payment Method') }}</option>
+                              <!--option is mpesa, visa, mastercard, paypal, etc-->
+                              <option value="mpesa">{{ __('Mpesa') }}</option>
+                              <option value="visa">{{ __('Visa') }}</option>
+                              <option value="mastercard">{{ __('Mastercard') }}</option>
+                              <option value="paypal">{{ __('Paypal') }}</option>
+                          </select>
                         </div>
                     </div>
                   </div>
@@ -68,29 +71,22 @@
                 <div class="form-row">
                   <div class="col-lg-6 col-md-6 col-sm-12">
                     <div class="form-group ">
-                        <label for="payment_method">{{ __('Payment Method') }}</label>
-                        <select class="form-control" id="payment_method" name="payment_method" required>
-                            <option value="">{{ __('Select Payment Method') }}</option>
-                            <!--option is mpesa, visa, mastercard, paypal, etc-->
-                            <option value="mpesa">{{ __('Mpesa') }}</option>
-                            <option value="visa">{{ __('Visa') }}</option>
-                            <option value="mastercard">{{ __('Mastercard') }}</option>
-                            <option value="paypal">{{ __('Paypal') }}</option>
-                        </select>
+                        <label for="disburse_amount">{{ __('Paid Amount') }}</label>
+                        <input type="text" class="form-control" id="paid_amount" name="transaction_amount" value="" required>
                     </div>
                   </div>
 
                   <div class="col-lg-6 col-md-6 col-sm-12">
                     <div class="form-group ">
-                        <label for="disburse_amount">{{ __('Paid Amount') }}</label>
-                        <input type="text" class="form-control" id="paid_amount" name="transaction_amount" value="" required>
+                        <label for="disburse_amount">{{ __('Transaction Reference') }}</label>
+                        <input type="text" class="form-control" id="transaction_reference" name="transaction_reference" value="" required>
                     </div>
                   </div>                   
                 </div>
                 <div class="form-row">
                   <div class="col-lg-6 col-md-6 col-sm-12">
                     <div class="form-group ">
-                        <label for="payment_method">{{ __('Transaction Code') }}</label>
+                        <label for="payment_method">{{ __('Transaction Code *Unique for each transaction') }}</label>
                         <input type="text" class="form-control" id="transaction_code" name="transaction_code" value="" required>
                     </div>
                   </div>
@@ -190,7 +186,7 @@
         // });
     });
 
-    $('#customer_transaction_id').on('change', function() {
+    $('#customer_id').on('change', function() {
         console.log('changed');
         //get the customer id
         var customer_id = $(this).val();
@@ -209,8 +205,9 @@
             dataType:'json',
             // admin.loan.getCustomerDetails
             success: function(data) {
-              $('input[name="loan_amounted"]').val(data.data.total_payable);
+              $('input[name="total_amount"]').val(data.data.total_payable);
               $('input[name="phone"]').val(data.data.customer.phone);
+              $('input[name="loan_id"]').val(data.data.loan_id);
             }
           });
         }

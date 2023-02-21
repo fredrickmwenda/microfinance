@@ -18,9 +18,10 @@
       <a href="#" data-toggle="dropdown" class="nav-link nav-link-lg message-toggle beep">
         <!--add badge to the icon for only unread notifications-->
         <i class="far fa-bell"></i>
-        @if($notifications->count() > 0)
+        <!-- if they are unread notifications by the user, show the badge -->
+      @if(Auth::user()->unreadNotifications->count() > 0 )
 
-        <span class="badge badge-danger badge-pill">{{ $notifications->count() }}</span>
+        <span class="badge badge-danger badge-pill">{{ Auth::user()->unreadNotifications->count() }}</span>
         @endif
       </a>
         <!-- <i class="far fa-bell"></i></a> -->
@@ -33,7 +34,7 @@
         <div class="dropdown-list-content dropdown-list-icons">
           <!--only take 5 notifications-->
           @foreach (Auth::user()->unreadNotifications->take(5) as $notification)
-          <a href="#" class="dropdown-item dropdown-item-unread">
+          <a href="#" class="dropdown-item dropdown-item-unread" id="header_view">
             <div class="dropdown-item-icon bg-primary text-white">
               <i class="fas fa-code"></i>
             </div>
@@ -70,4 +71,6 @@
     </li>
   </ul>
 </nav>
+
+
 

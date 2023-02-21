@@ -97,9 +97,9 @@
                             {{ __('Action') }}
                           </button>
                           <div class="dropdown-menu">
-                            @can('customer.view')
+
                             <a class="dropdown-item has-icon" href="{{ route('customer.show', $customer->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
-                            @endcan
+                          
                             @can('customer.edit')
                             <a class="dropdown-item has-icon" href="{{ route('customer.edit', $customer->id) }}"><i class="fa fa-edit"></i>{{ __('Edit') }}</a>
                             @endcan

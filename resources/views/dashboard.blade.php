@@ -50,7 +50,7 @@
   <!-- <div class="container-fluid"> -->
     <div class="col-md-12">
       <div class="brand-text float-left mt-4">
-          <h3>Welcome <span>admin</span> </h3>
+          <h3>Welcome <span>{{Auth::user()->first_name}}</span> </h3>
       </div>
       <div class="filter-toggle btn-group">
         <button class="btn btn-secondary date-btn " data-start_date="{{date('Y-m-d')}}" data-end_date="{{date('Y-m-d')}}">Today</button>
@@ -136,7 +136,7 @@
                     </div>
                     <div class="card-wrap position-relative">
                       <div class="card-header">
-                        <h4>{{ __('Profit') }}</h4>
+                        <h4>{{ __('Interest') }}</h4>
                       </div>
                       <div class="card-body" id="phone_verified">
                         <span>
@@ -399,7 +399,8 @@
       </div>
       <div class="card-body">
         <div class="chart-container">
-          <canvas id="roPerformanceChart" height="280"></canvas>
+           
+          <canvas id="ro-performance-chart" height="280"></canvas>
         </div>
       </div>
     </div>
@@ -436,7 +437,7 @@
               <tr>
                 <td colspan="2" class="text-center">
                   <span class="loader">
-                    <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
+                    <!--<img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>-->
                   </span>
                 </td>
               </tr>
@@ -548,6 +549,7 @@
           <table class="table table-striped" id="activeLoanTable">
             <thead>
               <tr>
+                <th> {{ __('ID') }} </th>
                 <th> {{ __('Loan ID') }} </th>
                 <th> {{ __('Customer Name') }} </th>
                 <th>{{ __('Loan Amount') }}</th>
@@ -557,16 +559,10 @@
                 <th>{{ __('RO officer') }}</th>
                 <th>{{ __('Due Date') }}</th>
                 <th>{{ __('Loan Status') }}</th>
+                <th>{{ __('Actions') }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colspan="2" class="text-center">
-                  <span class="loader">
-                    <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-                  </span>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -584,7 +580,7 @@
           <table class="table table-striped" id="completeLoanTable">
             <thead>
               <tr>
-
+                <th> {{ __('ID') }} </th>
                 <th> {{ __('Loan ID') }} </th>
                 <th> {{ __('Customer Name') }} </th>
                 <th>{{ __('Loan Amount') }}</th>
@@ -593,16 +589,10 @@
                 <th>{{ __('RO officer') }}</th>
                 <th>{{ __('Due Date') }}</th>
                 <th>{{ __('Loan Status') }}</th>
+                <th>{{ __('Actions') }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td colspan="2" class="text-center">
-                  <span class="loader">
-                    <img src="{{ asset('frontend/assets/img/loader.gif') }}" alt="" width=50>
-                  </span>
-                </td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -742,6 +732,43 @@
     });
 
   });
+  
+  $(function(){
+  var table = $('#activeLoanTable'). DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: "{{ route('loans.active.get') }}",
+    columns: [
+      {data: 'id', name: 'id'},
+      {data: 'loan_id', name: 'loan_id'},
+      //from customer_id in loans table, get customer first name and last name
+      //return the first name and last name as a string
+      {data: 'customer', name: 'customer', render: function(data, type, row){
+        return data.first_name + ' ' + data.last_name;
+      }},
+      {data: 'amount', name: 'loan_amount'},
+      {data: 'total_payable', name: 'total_loan'},
+      //remaining balance
+      {data: 'remaining_balance', name: 'remaining_balance'},
+      {data: 'duration', name: 'loan_duration'},
+      {data: 'creator', name: 'creator', render: function(data, type, row){
+        return data.first_name + ' ' + data.last_name;
+      }},
+      //loan end date set it in carbon
+      // {data: 'start_date', name: 'loan_start_date'},
+      {data: 'end_date', name: 'loan_end_date'},
+      {data: 'status', name: 'loan_status'},
+      {
+        data: 'action', 
+        name: 'action', 
+        orderable: true, 
+        searchable: true
+      },
+
+    ]
+  });
+
+  });
 
 
   // get id of loanchart
@@ -776,7 +803,7 @@ console.log(loanData, activeloanData, pendingloanData, overdueLoanData, transact
 
   var transactionCtx = document.getElementById('transactionsChart').getContext('2d');
 
-  var performanceCtx = document.getElementById('roPerformanceChart').getContext('2d');
+  // var performanceCtx = document.getElementById('roPerformanceChart').getContext('2d');
 
 //  Label months in short form
   const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -982,144 +1009,113 @@ for (var i = 0; i < ROPerformanceData.length; i++) {
 
 
 
-  var performanceChart = new Chart(performanceCtx, {
-    type: 'bar',
-    data: {
-      labels: usernames,
-      // // loop through json data in ROPerformanceData and append to the chart
+  // var performanceChart = new Chart(performanceCtx, {
+  //   type: 'bar',
+  //   data: {
+  //     labels: usernames,
+  //     // // loop through json data in ROPerformanceData and append to the chart
       
 
-      datasets: [{
-        label: 'Performance',
-        data: performance,
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        borderColor: 'rgba(255, 99, 132, 1)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      legend: {
-                display: false
-            },
-      scales: {
-        // yAxes start from 0 to 1000
-        y: {
-          // stacked: false,
-          beginAtZero: true,
-          suggestedMin: 0,
-          suggestedMax: 100,
-          title: {
-            display: true,
-            text: 'Users Performance',
-            // color: 'black',
-            font: {
-              size: 14,
-              weight: 'bold',
-              color: 'black'
-            },
-            align: 'center',
-            padding: {
-              top: 10,
-              bottom: 10
-            }
-          },
+  //     datasets: [{
+  //       label: 'Performance',
+  //       data: performance,
+  //       backgroundColor: 'rgba(255, 99, 132, 0.2)',
+  //       borderColor: 'rgba(255, 99, 132, 1)',
+  //       borderWidth: 1
+  //     }]
+  //   },
+  //   options: {
+  //     responsive: true,
+  //     legend: {
+  //               display: false
+  //           },
+  //     scales: {
+  //       // yAxes start from 0 to 1000
+  //       y: {
+  //         // stacked: false,
+  //         beginAtZero: true,
+  //         suggestedMin: 0,
+  //         suggestedMax: 100,
+  //         title: {
+  //           display: true,
+  //           text: 'Users Performance',
+  //           // color: 'black',
+  //           font: {
+  //             size: 14,
+  //             weight: 'bold',
+  //             color: 'black'
+  //           },
+  //           align: 'center',
+  //           padding: {
+  //             top: 10,
+  //             bottom: 10
+  //           }
+  //         },
 
 
 
  
-          // gridLines: {
-          //   display: true,
-          //   color: 'rgba(0, 0, 0, 0.1)'
-          // }
-        },
-        x: {
-          title : {
-            display: true,
-            text: 'Users',
-            // color: 'black',
-            font: {
-              size: 14,
-              weight: 'bold',
-              color: 'black'
-            },
-            align: 'center',
-            padding: {
-              top: 10,
-              bottom: 10
-            }
-          },
-          // beginAtZero: true,
-        }
+  //         // gridLines: {
+  //         //   display: true,
+  //         //   color: 'rgba(0, 0, 0, 0.1)'
+  //         // }
+  //       },
+  //       x: {
+  //         title : {
+  //           display: true,
+  //           text: 'Users',
+  //           // color: 'black',
+  //           font: {
+  //             size: 14,
+  //             weight: 'bold',
+  //             color: 'black'
+  //           },
+  //           align: 'center',
+  //           padding: {
+  //             top: 10,
+  //             bottom: 10
+  //           }
+  //         },
+  //         // beginAtZero: true,
+  //       }
+  //     }
+  //   }
+  // });
+
+  // performanceChart.update();
+
+  
+  var roPerformanceData = <?php echo json_encode($roPerformanceByMonth); ?>;
+  var ctx = document.getElementById('ro-performance-chart').getContext('2d');
+  var chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+          labels: Object.keys(roPerformanceData[Object.keys(roPerformanceData)[0]]),
+          datasets: Object.keys(roPerformanceData).map(function(key) {
+              return {
+                  label: key,
+                  data: Object.values(roPerformanceData[key]),
+                  fill: false,
+                  borderColor: getRandomColor()
+              };
+          })
+      },
+      options: {
+          responsive: true,
+          legend: {
+              position: 'bottom'
+          }
       }
-    }
   });
 
-  // {"test":{"Oct":"21.30"},"test2":{"Oct":"20.83"}}", the ROPerformanceData is in the format of json
-  //it is grouped by username and then it has the month and the performance percentage
-  //the data is in the format of json
-
-  // for (var i = 0; i < ROPerformanceData.length; i++){
-  //   var username = ROPerformanceData[i].username;
-  //   var performancePerc = ROPerformanceData[i].performancePerc;
-  //   var month = ROPerformanceData[i].month;
-  //   performanceChart.data.push(
-  //     {
-  //       label: username,
-  //     }
-  //   );
-    
-
-  //   //update
-  //   //append
-  //   performanceChart.data.datasets.push(
-  //     {
-  //       // label: username,
-  //       data: performancePerc,
-  //       month: month,
-  //       backgroundColor: 'rgba(255, 99, 132, 0.2)',
-  //       borderColor: 'rgba(255, 99, 132, 1)',
-  //       borderWidth: 1
-  //     }
-  //   );
-    
-  // }
-
-  performanceChart.update();
-
-  
-  
-  //   //loop through ROPerformanceData json
-  //   for (var i = 0; i < ROPerformanceData.length; i++) {
-  //     //get performancePerc  and username from ROPerformanceData json
-  //     var performancePerc = ROPerformanceData[i].performancePerc;
-  //     var username = ROPerformanceData[i].ro_username;
-
-  //     //append performancePerc to the chart
-  //     performanceChart.data.datasets[0].data.push(performancePerc);
-  //     //append username to the chart
-  //     performanceChart.data.datasets[0].label.push(username);
-      
-  //   }
-  //   performanceChart.update();
-  // }
-  // performanceChart.data.datasets[0].data.push(ROPerformanceData[i].performancePerc);
-
-
-  // Loop through ROPerformanceData [users] and append to Performance Chart
-  // for (var i = 0; i < ROPerformanceData.length; i++) {
-  //   console.log(ROPerformanceData[i]);
-  //   performanceChart.data.datasets.push({
-  //     label: ROPerformanceData[i].ro_username,
-  //     // get performance data from the second key in the json and dont use the first key
-  //     data: ROPerformanceData[i].[1],
-  //     backgroundColor: 'rgba(54, 162, 235, 0.2)',
-  //     borderColor: 'rgba(54, 162, 235, 1)',
-  //     borderWidth: 1
-  //   });
-  // }
-
-  performanceChart.update();
+  function getRandomColor() {
+      var letters = '0123456789ABCDEF';
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+          color += letters[Math.floor(Math.random() * 16)];
+      }
+      return color;
+  }
 
 
 

@@ -213,10 +213,150 @@ class LoanController extends Controller
     {
         $loan = Loan::with('customer', 'loan_attachments')->where('loan_id', $id)->first();
         $loan_attachments = LoanAttachment::where('loan_id', $id)->get();
-      
-        $loan_payments = LoanPayment::where('loan_id', $id)->get();
+        $loan_generated_id = $loan->id;
+        $loan_payments = LoanPayment::where('loan_id', $loan_generated_id)->with('customer')->get();
+        
+        // dd($loan_payments);
         $loancollaterals = LoanPayment::where('loan_id', $id)->get();
-        return view('loan.show', compact('loan', 'loan_payments', 'loancollaterals', 'loan_attachments'));
+        $loan_schedules = [];
+        //get the loan duration
+        $loan_details = Loan::where('loan_id', $id)->first();
+        $loan_duration = $loan_details->duration;
+        //first check if the loan has a start date
+        if($loan_details->start_date  ==null){
+            $loan_schedules = [];
+        }
+        else{
+            if($loan_duration == 28){
+                $loan_schedules_data = [
+                    'week' => [
+                        'date' => $loan_details->start_date,
+                        'amount_to_pay' => $loan_details->total_payable,
+                        'penalty' => 0,
+                        'principal_amount' => 0,
+                        'interest' => 0,
+                        'balance' => $loan_details->remaining_balance,
+                        'status' => 'Disbursement Week',
+                    ],
+                    'week1' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(7),
+                        'amount_to_pay' => $loan_details->total_payable / 4,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 4) - ($loan_details->interest/4),
+                        'interest' => $loan_details->interest/4,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 4),
+                        'status' => $loan->status,
+                    ],
+                    'week2' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(14),
+                        'amount_to_pay' => $loan_details->total_payable / 4,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 4) - ($loan_details->interest/4),
+                        'interest' => $loan_details->interest/4,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 4)*2,
+                        'status' => $loan->status,
+                    ],
+                    'week3' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(21),
+                        'amount_to_pay' => $loan_details->total_payable / 4,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 4) - ($loan_details->interest/4),
+                        'interest' => $loan_details->interest/4,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 4)*3,
+                        'status' => $loan->status,
+                    ],
+                    'week4' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(28),
+                        'amount_to_pay' => $loan_details->total_payable / 4,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 4) - ($loan_details->interest/4),
+                        'interest' => $loan_details->interest/4,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 4)*4,
+                        'status' => $loan->status,
+                    ],
+                ];
+                //use the array_push function to push the data into the array
+                array_push($loan_schedules, $loan_schedules_data); 
+            }
+            elseif($loan_duration == 42){
+                $loan_schedules_data = [
+                    'week1' => [
+                        'date' => $loan_details->start_date,
+                        'amount_to_pay' => $loan_details->total_payable,
+                        'penalty' => 0,
+                        'principal_amount' => 0,
+                        'interest' => 0,
+                        'balance' => $loan_details->remaining_balance,
+                        'status' => 'Disbursement Week',
+                    ],
+                    'week2' => [
+                        // from start date add 7 days
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(7),
+                        'amount_to_pay' => $loan_details->total_payable / 6,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 6) - ($loan_details->interest/6),
+                        'interest' =>$loan_details->interest/6,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 6),
+                        'status' => $loan->status,
+                    ],
+                    'week3' => [
+                        // from start date add 14 days
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(14),
+                        'amount_to_pay' => $loan_details->total_payable / 6,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 6) - ($loan_details->interest/6),
+                        'interest' => $loan_details->interest/6,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 6)*2,
+                        'status' => $loan->status,
+                    ],
+                    'week4' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(21),
+                        'amount_to_pay' => $loan_details->total_payable / 6,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 6) - ($loan_details->interest/6),
+                        'interest' => $loan_details->interest/6,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 6)*3,
+                        'status' => $loan->status,
+                    ],
+                    'week5' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(28),
+                        'amount_to_pay' => $loan_details->total_payable / 6,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 6) - ($loan_details->interest/6),
+                        'interest' => $loan_details->interest/6,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 6)*4,
+                        'status' => $loan->status,
+                    ],
+                    'week6' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(35),
+                        'amount_to_pay' => $loan_details->total_payable / 6,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 6) - ($loan_details->interest/6),
+                        'interest' => $loan_details->interest/6,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 6)*5,
+                        'status' => $loan->status,
+                    ],
+                    'week7' => [
+                        'date' => Carbon::parse($loan_details->start_date)->addDays(42),
+                        'amount_to_pay' => $loan_details->total_payable / 6,
+                        'penalty' => 0,
+                        'principal_amount' => ($loan_details->total_payable / 6) - ($loan_details->interest/6),
+                        'interest' => $loan_details->interest/6,
+                        'balance' => $loan_details->remaining_balance - ($loan_details->total_payable / 6)*6,
+                        'status' => $loan->status,
+                    ],
+                ];
+                //use the array_push function to push the data into the array
+                array_push($loan_schedules, $loan_schedules_data);
+            }
+            else{
+                //set the loan schedule data to  empty array
+                $loan_schedules_data = [];
+            }
+        }
+        //dd($loan->status);
+        return view('loan.show', compact('loan', 'loan_payments', 'loancollaterals', 'loan_attachments', 'loan_schedules'));
+        //
     }
 
     /**
@@ -589,20 +729,19 @@ class LoanController extends Controller
     {
         //first check if the loan has first payment date not null
         $loan = Loan::where('status', 'active')->orWhere('status', 'disbursed')->get();
-        //get all loan created on 
+        $loans_first_payment = Loan::where('first_payment_date', Carbon::today())->get();
+        $today = Carbon::today();
         $loan_array = [];
         foreach ($loan as $loan) {
             if (!is_null($loan->first_payment_date)) {
-                $loans = Loan::where('first_payment_date', Carbon::today())->get();
+                $loans = Loan::where('first_payment_date', $today)->get();
                 //foreach loan check if there is a loan payment with the same date
-                foreach ($loans as $loan) {
                     //check if the firstpayment has been made
                     $loan_payment = LoanPayment::where('loan_id', $loan->loan_id)->first();
 
                     if (!is_null($loan_payment)) {
                         //check for each week if there is a payment according to loan installment_date
                         $loan_installments = LoanPayment::where('loan_id', $loan->loan_id)->get();
-                        $today = Carbon::today();
                         foreach ($loan_installments as $loan_installment) {
                             if ($loan_installment->installment_date == $today) {
                                 //do not show this loan in the due tomorrow loans page
@@ -612,28 +751,29 @@ class LoanController extends Controller
                                 $loan_array[] = $loan;
                             }
                         }
-                    }else{
-                    //show this loan in the due tomorrow loans page
-                    //store the loan in an array
-                    $loan_array[] = $loan;
                     }
-                }
-            }else{
-                //get the loans that have taken a week since they were started
+                    else{
+                        if( Loan::where('first_payment_date', $today)->where('loan_id', $loan->loan_id)->exists()){
+                            //do not show this loan in the due tomorrow loans page
+                            $loan_array[] = $loan;
+                        }
+                    }
+                
+            }
+
+            else{
                 $loan_start_date = Carbon::parse($loan->start_date);
                 $loan_created_date = $loan_start_date->addWeek();
                 $today = Carbon::today();
 
                 if ($loan_created_date == $today) {
-                    //show this loan in the due tomorrow loans page
-                    //store the loan in an array
                     $loan_array[] = $loan;
                 }
-                
-            }
-            dd($loan_array);
+            }         
         }
         $loans = collect($loan_array);
+
+        
 
         return view('loan.due_today', compact('loans'));
 
@@ -643,20 +783,18 @@ class LoanController extends Controller
     public function dueTomorrowLoansPage() {
         //first check if the loan has first payment date not null
         $loan = Loan::where('status', 'active')->orWhere('status', 'disbursed')->get();
-        // dd($loan);
+        $tomorrow = Carbon::tomorrow();
         $loan_array = [];
         foreach ($loan as $loan) {
             if (!is_null($loan->first_payment_date)) {
                 $loans = Loan::where('first_payment_date', Carbon::tomorrow())->get();
                 //foreach loan check if there is a loan payment with the same date
-                foreach ($loans as $loan) {
                     //check if the firstpayment has been made
                     $loan_payment = LoanPayment::where('loan_id', $loan->loan_id)->first();
 
                     if (!is_null($loan_payment)) {
                         //check for each week if there is a payment according to loan installment_date
                         $loan_installments = LoanPayment::where('loan_id', $loan->loan_id)->get();
-                        $tomorrow = Carbon::tomorrow();
                         foreach ($loan_installments as $loan_installment) {
                             if ($loan_installment->installment_date == $tomorrow) {
                                 //do not show this loan in the due tomorrow loans page
@@ -668,11 +806,11 @@ class LoanController extends Controller
                         }
                     }
                     else{
-                        //show this loan in the due tomorrow loans page
-                        //store the loan in an array
-                        $loan_array[] = $loan;
+                        if( Loan::where('first_payment_date', $tomorrow)->where('loan_id', $loan->loan_id)->exists()){
+                            //do not show this loan in the due tomorrow loans page
+                            $loan_array[] = $loan;
+                        }
                     }
-                }
             }
             else{
                 //get all 
@@ -837,6 +975,7 @@ class LoanController extends Controller
         if ($request->ajax()) {
             if(Auth::user()->role_id == 1 || Auth::user()->role_id == 3){
                 $data = Loan::with('customer', 'creator', 'approver')->where('status', 'active')->latest()->get();
+                info($data);
             }else if (Auth::user()->role_id == 2) {
                 $data = Loan::with('customer', 'creator', 'approver')->where('status', 'active')->where('created_by', Auth::user()->id)->latest()->get();
             }
@@ -844,7 +983,7 @@ class LoanController extends Controller
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
                         $btn = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
+                        //$btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
                         // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn;
                     })

@@ -56,7 +56,7 @@
 
                       @endif
                       </td>
-                      <td>{{ $loan->disbursed_date }}</td>
+                      <td>{{ $loan->start_date }}</td>
                       <!--get the user who created the loan using created_by column-->
 
                       <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>

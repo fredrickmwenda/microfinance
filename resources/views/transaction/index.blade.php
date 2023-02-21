@@ -22,6 +22,14 @@
                             <option value="national_id">{{ __('National ID') }}</option>
                         </select>
                       </div>
+
+
+
+
+
+
+
+                      
                     </div>
                     <div class="col-lg-6">
                       <div class="form-group row">
@@ -50,10 +58,9 @@
                         <th>#</th>
                         <th>{{ __('Transaction No') }}</th>
                         <th>{{ __('Customer Name') }}</th>
-                        <th>{{ __('Amount') }}</th>
-                        <th>{{ __('Loan Amount') }}</th>
-                        <th>{{ __('Customer ID') }}</th>
-                        <th>{{ __('Amount') }}</th>
+                        <th>{{ __('Amount Paid') }}</th>
+                        <th>{{ __('Total Payable') }}</th>
+                        <th>{{ __('Loan amount') }}</th>
                         <th>{{ __('Balance') }}</th>
                         <th>{{ __('Date') }}</th>
                         <th>{{ __('Status') }}</th>
@@ -72,8 +79,12 @@
                         {{ $row->transaction_amount }}
                       </td>
                       <td>
+                        {{ $row->loan->total_payable }}
+                      </td>
+                    <td>
                         {{ $row->loan->amount }}
                       </td>
+                      
                       <td>{{ $row->remaining_balance }}</td>
                       <!-- get date  from transaction_date field  which is a string in this format 2018-11-27 00:00:00.0 -->
                       <td>{{ date('d-m-Y', strtotime($row->transaction_date)) }}</td>
@@ -82,7 +93,7 @@
 
                       </td>
                       <td>  
-                        <a title="view" class="btn btn-info btn-sm" href="{{ route('admin.disburse.view', $row->id) }}">
+                        <a title="view" class="btn btn-info btn-sm" href="#">
                             <i class="fa fa-eye"></i>
                         </a>
                       </td>
@@ -90,7 +101,7 @@
                     @endforeach
                   </tbody>
                 </table>
-              {{ $transactions ->links('vendor.pagination.bootstrap-4') }}
+              
             </div>
         </div>
       </div>

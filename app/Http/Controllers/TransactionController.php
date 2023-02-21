@@ -11,8 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 use App\Helpers\Jenga;
+use App\Models\PaymentGateway;
 use App\Models\User;
 use App\Notifications\LoanPaymentNotification;
+use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
@@ -41,6 +43,7 @@ class TransactionController extends Controller
                 });
             }
         })->with('customer', 'user', 'loan')->orderBy('id', 'desc')->paginate(10);
+        // dd($transactions);
         return view('transaction.index', compact('transactions'));
     }
 
@@ -74,157 +77,276 @@ class TransactionController extends Controller
             'total_amount' => 'required',
             'payment_gateway_id' => 'required',
             'loan_id' => 'required',
-            'transaction_type' => 'required',
-            'transaction_status' => 'required',
             'transaction_reference' => 'required',
             'transaction_date' => 'required',
-            'transaction_code' => 'required',
+            // transaction_code is unique for each transaction
+            'transaction_code' => 'required|unique:transactions',
             'transaction_amount' => 'required',
         ]);
+                 //check if this is the first transaction for this loan
+                 $loan = Loan::where('loan_id', $request->loan_id)->first();
+                //  dd($loan);
+                 $transaction = Transaction::where('transaction_code', $request->transaction_code)->first();
+                 $customer_data = customer::find($request->customer_id);
+                 dd($customer_data);
+                 $payment_gateway = PaymentGateway::find($request->payment_gateway_id);
+                //  dd($payment_gateway, $request->payment_gateway_id);
+         
+                 if(!$transaction){
+                     //check if the transaction is the first transaction for this loan
+                     $first_transaction = Transaction::where('loan_id', $request->loan_id)->first();
+                     if(!$first_transaction){
+                         //if this is the first transaction for this loan, then update the loan status to active
+                        // $loan_fist_pay = $loan->first_payment_date;
+                        if (empty($loan->first_payment_date)) {
+                            //  dd($request->transaction_date);
+                            $loan->first_payment_date = $request->transaction_date;
+                            $loan->save();
+                        }
+                         //check if the transaction_amount is equal to the loan total_payable
+                         if($request->transaction_amount == $loan->remaining_balance){
+                             //if the transaction_amount is equal to the loan total_payable, then update the loan status to paid
+                             $loan->status = 'closed';
+                             $loan->payment_status = 'paid';
+                             $loan->remaining_balance = 0;
+                             $loan->save();
+                             $loan_payment_status = 'paid';
+         
+                         }
+                         else{
+                             //if the transaction_amount is not equal to the loan total_payable, then update the loan status to active
+                             $loan->status = 'active';
+                             $loan->payment_status = 'partially_paid';
+                             $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+                             $loan->save();
+                             $loan_payment_status = 'in_repayment';
+         
+         
+                         }
+                         LoanPayment::create([
+                             'paid_by' => $request->customer_id,
+                             'loan_id' => $loan->id,
+                             'amount' => $request->transaction_amount,
+                             'payment_date' => $request->transaction_date,
+                             'payment_method' => 'mpesa',
+                             'payment_reference' => $request->transaction_reference,
+                             'payment_status' => $loan_payment_status,
+                             'balance' => $loan->remaining_balance
+                         ]);
+         
+                         Transaction::create([
+                             'customer_id' => $request->customer_id,
+                             'customer_name' => $customer_data->first_name.' '.$customer_data->last_name,
+                             'customer_phone' => $customer_data->phone,
+                             'loan_id' => $loan->id,
+                             'transaction_type' => 'first_payment',
+                             'transaction_code' => $request->transaction_code,
+                             'transaction_status' => 'success',
+                             'remaining_balance' => $loan->remaining_balance,
+                             'transaction_reference' => $request->transaction_reference,
+                             'transaction_date' => $request->transaction_date,
+                             'transaction_amount' => $request->transaction_amount,
+                         ]);
+         
+                         return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
+         
+                     }else{
+                         $loan_remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+                        //check if loan remaining balance is less or equal to zero
+                         if($loan_remaining_balance == 0){
+                             //if the transaction_amount is equal to the loan total_payable, then update the loan status to paid
+                             $loan->status = 'closed';
+                             $loan->payment_status = 'paid';
+                             $loan->remaining_balance = 0;
+                             $loan->save();
+                             $loan_payment_status = 'paid';
+                         }
+                         else if($loan_remaining_balance < 0){
+                             return redirect()->back()->with('error', 'Transaction amount is greater than the remaining balance');
+                         }
+                         else{
+                             //if the transaction_amount is not equal to the loan total_payable, then update the loan status to active
+                             $loan->status = 'active';
+                             $loan->payment_status = 'partially_paid';
+                             $loan->remaining_balance = $loan_remaining_balance;
+                             $loan->save();
+                             $loan_payment_status = 'in_repayment';
+                         }
+                         
+         
+                         LoanPayment::create([
+                             'paid_by' => $request->customer_id,
+                             'loan_id' => $loan->id,
+                             'amount' => $request->transaction_amount,
+                             'payment_date' => $request->transaction_date,
+                             'payment_method' => 'mpesa',
+                             'payment_reference' => $request->transaction_reference,
+                             'payment_status' => $loan_payment_status,
+                             'balance' => $loan->remaining_balance
+                         ]);
+         
+                         Transaction::create([
+                             'customer_id' => $request->customer_id,
+                             'customer_name' => $customer_data->first_name.' '.$customer_data->last_name,
+                             'customer_phone' => $customer_data->phone,
+                             'loan_id' => $loan->id,
+                             'transaction_type' => 'repayment',
+                             'transaction_code' => $request->transaction_code,
+                             'transaction_status' => 'success',
+                             'remaining_balance' => $loan->remaining_balance,
+                             'transaction_reference' => $request->transaction_reference,
+                             'transaction_date' => $request->transaction_date,
+                             'transaction_amount' => $request->transaction_amount,
+                         ]);
+         
+                         return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
+         
+         
+                     }
+               
+                 }
 
          //check if this is the first transaction for this loan
-        $loan = Loan::find($request->loan_id);
-        $transaction = Transaction::where('loan_id', $request->loan_id)->first();
+        // $loan = Loan::find($request->loan_id);
+        // $transaction = Transaction::where('loan_id', $request->loan_id)->first();
 
-        if($transaction){
-            //if not first transaction, check if the transaction is a repayment
-            if($request->transaction_type == 'repayment'){
-                if($loan->status == 'active'){
-                    //if the loan is active, check if the loan is fully repaid
-                    if($loan->remaining_balance == 0){
-                        return redirect()->route('transaction.index')->with('error', 'Loan is fully repaid');
-                    }
-                    else{
-                        //if the loan is not fully repaid, update the loan status to active
-                        //check if the transaction amount is greater than the remaining balance
-                        if($request->transaction_amount > $loan->remaining_balance){
-
-                            return redirect()->route('transaction.index')->with('error', 'Transaction amount is greater than the remaining balance');
-                        }
-                        else if ($request->transaction_amount == $loan->remaining_balance){
-                            //if the transaction amount is equal to the remaining balance, update the loan status to fully repaid
-                            $loan->status = 'fully_repaid';
-                            $loan->payment_status = 'fully_repaid';
+        // if($transaction){
+        //     //if not first transaction, check if the transaction is a repayment
+        //     if($request->transaction_type == 'repayment'){
+        //         if($loan->status == 'active'){
+        //             //if the loan is active, check if the loan is fully repaid
+        //             if($loan->remaining_balance == 0){
+        //                 return redirect()->route('transaction.index')->with('error', 'Loan is fully repaid');
+        //             }
+        //             else{
+        //                 //if the loan is not fully repaid, update the loan status to active
+        //                 //check if the transaction amount is greater than the remaining balance
+        //                 if($request->transaction_amount > $loan->remaining_balance){
+        //                     return redirect()->route('transaction.index')->with('error', 'Transaction amount is greater than the remaining balance');
+        //                 }
+        //                 else if ($request->transaction_amount == $loan->remaining_balance){
+        //                     //if the transaction amount is equal to the remaining balance, update the loan status to fully repaid
+        //                     $loan->status = 'fully_repaid';
+        //                     $loan->payment_status = 'fully_repaid';
                             
-                            //update the remaining balance
-                            $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
-                            $loan->save();
-                            //save the transaction
-                            $transaction = Transaction::create([
-                                'customer_id' => $request->customer_id,
-                                'total_amount' => $request->total_amount,
-                                'payment_gateway_id' => $request->payment_gateway_id,
-                                'loan_id' => $request->loan_id,
-                                'transaction_type' => $request->transaction_type,
-                                'transaction_status' => $request->transaction_status,
-                                'transaction_reference' => $request->transaction_reference,
-                                'transaction_date' => $request->transaction_date,
-                                'transaction_code' => $request->transaction_code,
-                                'transaction_amount' => $request->transaction_amount,
-                                'user_id' => auth()->user()->id,
-                            ]);
+        //                     //update the remaining balance
+        //                     $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+        //                     $loan->save();
+        //                     //save the transaction
+        //                     $transaction = Transaction::create([
+        //                         'customer_id' => $request->customer_id,
+        //                         'total_amount' => $request->total_amount,
+        //                         'payment_gateway_id' => $request->payment_gateway_id,
+        //                         'loan_id' => $request->loan_id,
+        //                         'transaction_type' => $request->transaction_type,
+        //                         'transaction_status' => $request->transaction_status,
+        //                         'transaction_reference' => $request->transaction_reference,
+        //                         'transaction_date' => $request->transaction_date,
+        //                         'transaction_code' => $request->transaction_code,
+        //                         'transaction_amount' => $request->transaction_amount,
+        //                         'user_id' => auth()->user()->id,
+        //                     ]);
                             
-                            return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
-                        }
-                        else{
-                            //if the transaction amount is less than the remaining balance, update the loan status to active
-                            $loan->status = 'active';
-                            $loan->payment_status = 'in_repayment';
-                            $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
-                            $loan->save();
-                            //create the transaction
-                            $transaction = Transaction::create([
-                                'customer_id' => $request->customer_id,
-                                'total_amount' => $request->total_amount,
-                                'payment_gateway_id' => $request->payment_gateway_id,
-                                'loan_id' => $request->loan_id,
-                                'transaction_type' => $request->transaction_type,
-                                'transaction_status' => $request->transaction_status,
-                                'transaction_reference' => $request->transaction_reference,
-                                'transaction_date' => $request->transaction_date,
-                                'transaction_code' => $request->transaction_code,
-                                'transaction_amount' => $request->transaction_amount,
-                                'user_id' => auth()->user()->id,
-                            ]);
-                            return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
-                        }
+        //                     return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
+        //                 }
+        //                 else{
+        //                     //if the transaction amount is less than the remaining balance, update the loan status to active
+        //                     $loan->status = 'active';
+        //                     $loan->payment_status = 'in_repayment';
+        //                     $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+        //                     $loan->save();
+        //                     //create the transaction
+        //                     $transaction = Transaction::create([
+        //                         'customer_id' => $request->customer_id,
+        //                         'total_amount' => $request->total_amount,
+        //                         'payment_gateway_id' => $request->payment_gateway_id,
+        //                         'loan_id' => $request->loan_id,
+        //                         'transaction_type' => $request->transaction_type,
+        //                         'transaction_status' => $request->transaction_status,
+        //                         'transaction_reference' => $request->transaction_reference,
+        //                         'transaction_date' => $request->transaction_date,
+        //                         'transaction_code' => $request->transaction_code,
+        //                         'transaction_amount' => $request->transaction_amount,
+        //                         'user_id' => auth()->user()->id,
+        //                     ]);
+        //                     return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
+        //                 }
 
-                    }
+        //             }
 
 
-                }
-                //create the transaction
-                $transaction = Transaction::create([
-                    'customer_id' => $request->customer_id,
-                    'total_amount' => $request->total_amount,
-                    'payment_gateway_id' => $request->payment_gateway_id,
-                    'loan_id' => $request->loan_id,
-                    'transaction_type' => $request->transaction_type,
-                    'transaction_status' => $request->transaction_status,
-                    'transaction_reference' => $request->transaction_reference,
-                    'transaction_date' => $request->transaction_date,
-                    'transaction_code' => $request->transaction_code,
-                    'transaction_amount' => $request->transaction_amount,
-                    'user_id' => auth()->user()->id,
-                ]);
-            }
-        }else{
-            //if this is the first transaction for this loan, check if the loan is disbursed
-            $loan = Loan::find($request->loan_id);
-            if($loan->status == 'disbursed'){
-                $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+        //         }
+        //         //create the transaction
+        //         $transaction = Transaction::create([
+        //             'customer_id' => $request->customer_id,
+        //             'total_amount' => $request->total_amount,
+        //             'payment_gateway_id' => $request->payment_gateway_id,
+        //             'loan_id' => $request->loan_id,
+        //             'transaction_type' => $request->transaction_type,
+        //             'transaction_status' => $request->transaction_status,
+        //             'transaction_reference' => $request->transaction_reference,
+        //             'transaction_date' => $request->transaction_date,
+        //             'transaction_code' => $request->transaction_code,
+        //             'transaction_amount' => $request->transaction_amount,
+        //         ]);
+        //     }
+        // }else{
+        //     //if this is the first transaction for this loan, check if the loan is disbursed
+        //     $loan = Loan::find($request->loan_id);
+        //     if($loan->status == 'disbursed'){
+        //         $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
 
-                //if the loan is disbursed, check if the transaction amount is greater than the remaining balance
-                if($request->transaction_amount > $loan->remaining_balance){
-                    return redirect()->route('transaction.index')->with('error', 'Transaction amount is greater than the remaining balance');
-                }
-                else if ($request->transaction_amount == $loan->remaining_balance){
-                    //if the transaction amount is equal to the remaining balance, update the loan status to fully repaid
-                    $loan->status = 'closed';
-                    $loan->payment_status = 'fully_repaid';
-                    $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
-                    $loan->save();
-                    //save the transaction
-                    $transaction = Transaction::create([
-                        'customer_id' => $request->customer_id,
-                        'total_amount' => $request->total_amount,
-                        'payment_gateway_id' => $request->payment_gateway_id,
-                        'loan_id' => $request->loan_id,
-                        'transaction_type' => $request->transaction_type,
-                        'transaction_status' => $request->transaction_status,
-                        'transaction_reference' => $request->transaction_reference,
-                        'transaction_date' => $request->transaction_date,
-                        'transaction_code' => $request->transaction_code,
-                        'transaction_amount' => $request->transaction_amount,
-                        'user_id' => auth()->user()->id,
-                    ]);
+        //         //if the loan is disbursed, check if the transaction amount is greater than the remaining balance
+        //         if($request->transaction_amount > $loan->remaining_balance){
+        //             return redirect()->route('transaction.index')->with('error', 'Transaction amount is greater than the remaining balance');
+        //         }
+        //         else if ($request->transaction_amount == $loan->remaining_balance){
+        //             //if the transaction amount is equal to the remaining balance, update the loan status to fully repaid
+        //             $loan->status = 'closed';
+        //             $loan->payment_status = 'fully_repaid';
+        //             $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+        //             $loan->save();
+        //             //save the transaction
+        //             $transaction = Transaction::create([
+        //                 'customer_id' => $request->customer_id,
+        //                 'total_amount' => $request->total_amount,
+        //                 'payment_gateway_id' => $request->payment_gateway_id,
+        //                 'loan_id' => $request->loan_id,
+        //                 'transaction_type' => $request->transaction_type,
+        //                 'transaction_status' => $request->transaction_status,
+        //                 'transaction_reference' => $request->transaction_reference,
+        //                 'transaction_date' => $request->transaction_date,
+        //                 'transaction_code' => $request->transaction_code,
+        //                 'transaction_amount' => $request->transaction_amount,
+        //                 'user_id' => auth()->user()->id,
+        //             ]);
                     
-                    return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
-                }
-                else{
-                    //if the transaction amount is less than the remaining balance, update the loan status to active
-                    $loan->status = 'active';
-                    $loan->payment_status = 'in_repayment';
-                    $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
-                    $loan->save();
-                    //create the transaction
-                    $transaction = Transaction::create([
-                        'customer_id' => $request->customer_id,
-                        'total_amount' => $request->total_amount,
-                        'payment_gateway_id' => $request->payment_gateway_id,
-                        'loan_id' => $request->loan_id,
-                        'transaction_type' => $request->transaction_type,
-                        'transaction_status' => $request->transaction_status,
-                        'transaction_reference' => $request->transaction_reference,
-                        'transaction_date' => $request->transaction_date,
-                        'transaction_code' => $request->transaction_code,
-                        'transaction_amount' => $request->transaction_amount,
-                        'user_id' => auth()->user()->id,
-                       ]);
-                    return redirect()->route('transaction.index')->with('success', 'Transaction created successfully'); 
-                }
-            }
-        }
+        //             return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
+        //         }
+        //         else{
+        //             //if the transaction amount is less than the remaining balance, update the loan status to active
+        //             $loan->status = 'active';
+        //             $loan->payment_status = 'in_repayment';
+        //             $loan->remaining_balance = $loan->remaining_balance - $request->transaction_amount;
+        //             $loan->save();
+        //             //create the transaction
+        //             $transaction = Transaction::create([
+        //                 'customer_id' => $request->customer_id,
+        //                 'total_amount' => $request->total_amount,
+        //                 'payment_gateway_id' => $request->payment_gateway_id,
+        //                 'loan_id' => $request->loan_id,
+        //                 'transaction_type' => $request->transaction_type,
+        //                 'transaction_status' => $request->transaction_status,
+        //                 'transaction_reference' => $request->transaction_reference,
+        //                 'transaction_date' => $request->transaction_date,
+        //                 'transaction_code' => $request->transaction_code,
+        //                 'transaction_amount' => $request->transaction_amount,
+        //                 'user_id' => auth()->user()->id,
+        //                ]);
+        //             return redirect()->route('transaction.index')->with('success', 'Transaction created successfully'); 
+        //         }
+        //     }
+        // }
 
         // return redirect()->route('transaction.index')->with('success', 'Transaction created successfully');
 
@@ -282,35 +404,7 @@ class TransactionController extends Controller
 
 
 
-    // jenga Api webhook
-    //register the webhook that listens to mpesa events, entering equity account number 1450160649886, via 247247 mpesa paybill number
-    //Instant Payment Notifications (IPN)
-    // {
-    //     "callbackType": "IPN",
-    //     "customer": {
-    //        "name": "A N Other",
-    //        "mobileNumber": "",
-    //        "reference": null
-    //     },
-    //     "transaction": {
-    //        "date": "2018-11-27 00:00:00.0",
-    //        "reference": " S2596405",
-    //        "paymentMode": "TPG",
-    //        "amount": "10",
-    //        "billNumber": "A N Other",
-    //        "orderAmount": "",
-    //        "serviceCharge": "",
-    //        "servedBy": "EQ",
-    //        "additionalInfo": "MPS 254723000000 MKR35QEKV7 A N Other/537620",
-    //        "status": "SUCCESS",
-    //        "remarks": "?"
-    //     },
-    //     "bank": {
-    //        "reference": " S2596405",
-    //        "transactionType": "C",
-    //        "account": "0111234241028"
-    //     }
-    //  }
+
 
     //callback url
     public function callback(Request $request){
@@ -323,26 +417,14 @@ class TransactionController extends Controller
     //above is the sample webhook response from jenga api
     public function webhook(Request $request)
     {
-        //the data is protectected with username and password
-        //set the username and password in the .env file
-
-        // $username = env('EQUITY_ALERT_USERNAME');
-        // $password = env('EQUITY_ALERT_PASSWORD');
-
-        // //use the username and password to authenticate the webhook
-        // if($request->username != $username || $request->password != $password){
-        //     return response()->json(['message' => 'Invalid username or password'], 401);
-        // }
-
-
-
-        //check if the username and password are correct
-
-
         Log::info($request->all());
-
+        // dd($request->all());
+        //fields customer.name, customer.mobileNumber, customer.reference, transaction.date, transaction.reference, transaction.paymentMode, transaction.amount, transaction.billNumber, transaction.orderAmount, transaction.serviceCharge, transaction.servedBy, transaction.additionalInfo, transaction.status, transaction.remarks, bank.reference, bill.transactionType, bill.account
+        //get the transaction details from the webhook
         $transaction = $request->transaction;
-        $transaction_reference = $transaction['reference'];
+        $transaction_reference = explode(' ', $transaction['remarks'])[2];
+        Log::info($transaction_reference);
+        $transaction_code = $transaction['reference'];
         $transaction_amount = $transaction['amount'];
         $transaction_status = $transaction['status'];
         $transaction_date = $transaction['date'];
@@ -371,41 +453,89 @@ class TransactionController extends Controller
         $callback_type = $request->callbackType;
 
 
+
+
         if($transaction_status == 'SUCCESS'){
+            Log::info('Transaction is successful');
             //get customerphone number from the webhook, and check if the customer exists
             $customer = Customer::where('phone', $customer_phone)->first();
+            //or check in the remarks field which is a a string if 254 is present if its present, get the phone number
+            //a sample remarks field is MPS 254707450710 RAH1LQ1TQD 900460 KATERINA/100208
+            if(!$customer){
+                //if the customer does not exist, check if the remarks field has the phone number
+                //get the phone number from the remarks field and remove the 254 and replace it with 0
+                $customer_phone = substr($transaction_remarks, strpos($transaction_remarks, "254"), 12);
+                $customer_phone = str_replace('254', '0', $customer_phone);
+                $customer = Customer::where('phone', $customer_phone)->first();
+            }
+            Log::info($customer);
             if($customer){
+                Log::info($customer->id);
                 //if the customer exists, check if the loan exists
-                $loan = Loan::where('customer_id', $customer->id)->where('status', 'disbursed')->orWhere('status', 'active')->first();
+                $loan = Loan::where('customer_id', $customer->id)->where(function ($query) {
+                    $query->where('status', 'disbursed')
+                          ->orWhere('status', 'active');
+                })->first();
                 if($loan){
+                    Log::info('loan_details');
+                    Log::info($loan);
                     //if the loan exists, check if the transaction exists
-                    $transaction = Transaction::where('transaction_reference', $request->transaction->reference)->first();
+                    $transaction = Transaction::where('transaction_reference', $transaction_reference)->first();
                     if(!$transaction){
-                        $loan->remaining_balance = $loan->remaining_balance - $transaction_amount;
+                        $loan_remaining_balance = $loan->remaining_balance - $transaction_amount;
+                        
                         if ($loan->first_payment_date == null) {
-                            //if the first installment payment date is null, set the first installment payment date to the current date
+                            //traansaction date is of string type like this date: "2023-01-19 13:26:45", convert it to date type withou the time
+                            $transaction_date = Carbon::parse($transaction_date)->format('Y-m-d');
                             $loan->first_payment_date = $transaction_date;
                             $loan->save();
                             $loan_fist_payment_date = $loan->first_payment_date;
                         }
                         else{
                             //check if there is another loan payment in the loan payment table first the first one has installment date
-                            if (LoanPayment::where('loan_id', $loan->id)->exists()) {
-                                //if there is, get the last installment date
-                                $last_installment_date = LoanPayment::where('loan_id', $loan->id)->max('installment_date');
-                                //add a week to the last installment date
-                                $loan_fist_payment_date = $last_installment_date->addWeek();
+                            if (LoanPayment::where('loan_id', $loan->id)->count() > 0) {
+                                Log::info('There is another loan payment in the loan payment table');
+                                Log::info($loan->id);
+                                //check if there is installment date in the loan payment table
+                                if(LoanPayment::where('loan_id', $loan->id)->whereNotNull('installment_date')->count() > 0)
+                                {
+                                    Log::info('There is installment date in the loan payment table');
+                                    //if there is, get the last installment date
+                                    $last_installment_date = LoanPayment::where('loan_id', $loan->id)->max('installment_date');
+                                    //max returns the maximum value from the query result set, which is likely a date string, not a date object.
+                                    //convert the date string to a date object
+                                    $last_installment_date = Carbon::parse($last_installment_date);
+                                    Log::info($last_installment_date);
+                                    //Call to a member function addWeek()
+                                    $loan_fist_payment_date = $last_installment_date->addWeek();
+                                } else {
+                                    Log::info('There is no other loan payment in the loan payment table');
+                                    //if there is no other loan payment in the loan payment table, add a week to the first installment payment date
+                                    $loan_fist_payment_date = $loan->first_payment_date;
+                                }
                             } else {
+                                Log::info('There is no other loan payment in the loan payment table');
                                 //if there is no other loan payment in the loan payment table, add a week to the first installment payment date
                                 $loan_fist_payment_date = $loan->first_payment_date;
                             }
                         }
 
                         //if the remaining balance is 0 or has dropped below 0, set the loan status to closed
-                        if($loan->remaining_balance <= 0){
+                        if($loan_remaining_balance <= 0){
+                            Log::info('Loan is paid');
                             $loan->status = 'closed';
                             $loan->payment_status = 'paid';
                             $loan->remaining_balance = 0;
+                            //$loan last payment date is the transaction date since the loan is paid
+                            // if($loan->last_payment_date == null){
+                            //     //check on the week we are on, since the loan was disbursed
+                            //     $week = Carbon::parse($loan->)->diffInWeeks($transaction_date);
+                            //     //add the week to the last payment date
+                            //     $loan->last_payment_date = $loan_fist_payment_date->addWeeks($week);
+                                
+                            // }
+                        
+                            $loan->last_payment_date = $transaction_date;
                             $loan->save();
 
                             LoanPayment::create([
@@ -413,7 +543,9 @@ class TransactionController extends Controller
                                 'loan_id' => $loan->id,
                                 'amount' => $transaction_amount,
                                 'payment_date' => $transaction_date,
-                                // 'installment_date' => $loan_fist_payment_date,
+                                'balance' => $loan_remaining_balance,
+                                //since the loan is paid, set the installment date to the current date
+                                'installment_date' => $transaction_date,
                                 'payment_method' => 'mpesa',
                                 'payment_reference' => $transaction_reference,
                                 'payment_status' => 'paid',
@@ -422,16 +554,16 @@ class TransactionController extends Controller
                             //if the loan is paid, create a transaction
                             Transaction::create([
                                 'customer_id' => $customer->id,
-                                'customer_name' => $customer_name,
+                                'customer_name' => $customer->first_name . ' ' . $customer->last_name,
                                 'customer_phone' => $customer_phone,
                                 'customer_reference' => $customer_reference,
                                 'loan_id' => $loan->id,
-                                'transaction_code' =>  'TMEL'.time(),
                                 'transaction_type' => $transaction_type,
                                 'transaction_status' => $transaction_status,
-                                'remaining_balance' => $loan->remaining_balance,
+                                'remaining_balance' => $loan_remaining_balance,
                                 'transaction_details' => $transaction_details,
                                 'transaction_reference' => $transaction_reference,
+                                'transaction_code' => $transaction_code,
                                 'transaction_date' => $transaction_date,
                                 'transaction_amount' => $transaction_amount,
                                 'transaction_bill_number' => $transaction_bill_number,
@@ -447,8 +579,9 @@ class TransactionController extends Controller
                             ]);
                         }
                         else if ($loan->remaining_balance > 0){
+                            Log::info('Loan is partially paid');
                             $loan->status = 'active';
-                            $loan->payment_status = 'in_repayment';
+                            $loan->payment_status = 'partially_paid';
                             $loan->remaining_balance = $loan->remaining_balance;
                             $loan->save();
 
@@ -456,6 +589,7 @@ class TransactionController extends Controller
                                 'paid_by' => $customer->id,
                                 'loan_id' => $loan->id,
                                 'amount' => $transaction_amount,
+                                'balance' => $loan_remaining_balance,
                                 'payment_date' => $transaction_date,
                                 'payment_method' => 'mpesa',
                                 'installment_date' => $loan_fist_payment_date,
@@ -470,12 +604,12 @@ class TransactionController extends Controller
                                 'customer_phone' => $customer_phone,
                                 'customer_reference' => $customer_reference,
                                 'loan_id' => $loan->id,
-                                'transaction_code' =>  'TMEL'.time(),
                                 'transaction_type' => $transaction_type,
                                 'transaction_status' => $transaction_status,
-                                'remaining_balance' => $loan->remaining_balance,
+                                'remaining_balance' => $loan_remaining_balance,
                                 'transaction_details' => $transaction_details,
                                 'transaction_reference' => $transaction_reference,
+                                'transaction_code' => $transaction_reference,
                                 'transaction_date' => $transaction_date,
                                 'transaction_amount' => $transaction_amount,
                                 'transaction_bill_number' => $transaction_bill_number,
@@ -494,18 +628,20 @@ class TransactionController extends Controller
                             //send in-app notification to the admin that a loan has been paid, or is in repayment
                         }
                         else{
+                            Log::info('Loan is not paid');
                             return response()->json(['error' => 'Transaction failed']);
                         }
                         //send in-app notification to the admin that a loan has been paid, or is in repayment
 
                         $dataToSend = [
-                            'name' => $customer->name,
+                        // customer first_name and last_name 
+                            'name' => $customer->first_name . ' ' . $customer->last_name,
                             'loan_id' => $loan->id,
                             'amount' => $transaction_amount,
                             'transaction_reference' => $transaction_reference,
                             'transaction_date' => $transaction_date,
                             'transaction_code' => $transaction_reference,
-                            'balance' => $loan->remaining_balance,
+                            'balance' => $loan_remaining_balance,
                         ];
 
                         $admins = User::where('role_id', 1)->get();
@@ -521,7 +657,6 @@ class TransactionController extends Controller
             }
         }
     }
-
 
 
 }
