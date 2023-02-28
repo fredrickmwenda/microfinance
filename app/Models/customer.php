@@ -25,7 +25,7 @@ class customer extends Model
     //a customer has many loans
     public function loans()
     {
-        return $this->hasMany('App\Models\Loan', 'customer_id', 'id');
+        return $this->hasMany(Loan::class);
     }
 
     //a customer has many payments

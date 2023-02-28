@@ -196,7 +196,7 @@
           //get the customer details
           $.ajax({
             //pass the customer id to the route
-            url: "{{ route('admin.customer_details.get_customer_details') }}?customer_id=" + customer_id,
+            url: "{{ route('transaction.customer_data') }}?customer_id=" + customer_id,
             type: "GET",
             data: {
               customer_id: customer_id,

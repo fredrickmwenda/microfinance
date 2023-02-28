@@ -78,10 +78,10 @@ class DisburseController extends Controller
     public function create(Request $request)
     {
 
-        $customer = customer::with('loans')->whereHas('loans', function($query){
+        $customer = customer::whereHas('loans', function ($query) {
             $query->where('status', 'approved');
         })->get();
-        // dd($customer);
+        //dd($customer);
 
         return view('disburse.create', compact('customer'));
     }
@@ -232,7 +232,9 @@ class DisburseController extends Controller
        
         //this is an ajax request to get the customer details from the loan table and display them on the disburse page
         if ($request->ajax()) {
-            $customer = Loan::with('customer')->where('customer_id', $request->customer_id)->where('status', 'approved')->first();
+            Log::info($request->customer_id);
+            $customer = Loan::with('customer')->where('customer_id', $request->customer_id)->first();
+            Log::info($customer);
             return response()->json(['success' => true, 'data'=> $customer]);
         }
 

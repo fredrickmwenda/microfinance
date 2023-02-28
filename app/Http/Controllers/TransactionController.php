@@ -517,4 +517,18 @@ class TransactionController extends Controller
     }
 
 
+    public function getTransactionCustomerDetails(Request $request)
+    {       
+        //this is an ajax request to get the customer details from the loan table and display them on the disburse page
+        Log::info($request->all());
+        if ($request->ajax()) {
+            Log::info($request->customer_id);
+            $customer = Loan::with('customer')->where('customer_id', $request->customer_id)->whereIn('status', ['disbursed', 'active'])->first();
+            Log::info($customer);
+            return response()->json(['success' => true, 'data'=> $customer]);
+        }
+
+    }
+
+
 }

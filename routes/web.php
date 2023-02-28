@@ -101,7 +101,9 @@ Route::group(['middleware' => ['auth']], function () {
     });
 
     //transaction resource
+    Route::get('/transaction/customer-details', [App\Http\Controllers\TransactionController::class, 'getTransactionCustomerDetails'])->name('transaction.customer_data');
     Route::resource('transaction', 'App\Http\Controllers\TransactionController');
+   
 
     //loans pages
     Route::get('/loans/pending', [App\Http\Controllers\LoanController::class, 'pendingLoansPage'])->name('loans.pending');
