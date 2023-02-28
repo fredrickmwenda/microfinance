@@ -25,9 +25,7 @@ use Illuminate\Support\Facades\DB;
 Route::get('/', function () {
     //if the user is logged in, redirect to dashboard
     if (Auth::check()) {
-        //get role id
         $role = Auth::user()->role_id;
-        //if role is admin, redirect to admin dashboard
         if ($role == 1 || $role == 3 || $role == 4) {
             return redirect()->route('admin.dashboard');
         } elseif ($role == 2 ) {

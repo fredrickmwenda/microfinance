@@ -918,8 +918,6 @@ class LoanController extends Controller
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
                         $btn = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-                        // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
                         return $btn;
                     })
                     ->rawColumns(['action'])

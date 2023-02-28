@@ -646,12 +646,6 @@
       ]
     });
 
-
-
-
-    //overdue loans
-
-
   });
 
   $(function(){
@@ -686,13 +680,6 @@
 
       ]
     });
-
-
-
-
-    //overdue loans
-
-
   });
 
 
@@ -768,6 +755,39 @@
     ]
   });
 
+  });
+
+
+  $(function(){
+    var table = $('#completeLoanTable'). DataTable({
+      processing: true,
+      serverSide: true,
+      ajax: "{{ route('loans.closed.get') }}",
+      columns: [
+        {data: 'id', name: 'id'},
+        {data: 'loan_id', name: 'loan_id'},
+        {data: 'customer', name: 'customer', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        {data: 'amount', name: 'loan_amount'},
+        {data: 'total_payable', name: 'total_loan'},
+        {data: 'duration', name: 'loan_duration'},
+        {data: 'creator', name: 'creator', render: function(data, type, row){
+          return data.first_name + ' ' + data.last_name;
+        }},
+        //loan end date set it in carbon
+        // {data: 'start_date', name: 'loan_start_date'},
+        {data: 'end_date', name: 'loan_end_date'},
+        {data: 'status', name: 'loan_status'},
+        {
+          data: 'action', 
+          name: 'action', 
+          orderable: true, 
+          searchable: true
+        },
+
+      ]
+    });
   });
 
 

@@ -232,7 +232,7 @@ class DisburseController extends Controller
        
         //this is an ajax request to get the customer details from the loan table and display them on the disburse page
         if ($request->ajax()) {
-            $customer = Loan::with('customer')->where('customer_id', $request->customer_id)->first();
+            $customer = Loan::with('customer')->where('customer_id', $request->customer_id)->where('status', 'approved')->first();
             return response()->json(['success' => true, 'data'=> $customer]);
         }
 
