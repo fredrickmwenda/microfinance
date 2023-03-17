@@ -167,6 +167,7 @@
       width: '100%',
     });
   });
+  
   //show installment fields when installment is selected
   $('#loan_payment_type').on('change', function() {
     if (this.value == 'installment') {

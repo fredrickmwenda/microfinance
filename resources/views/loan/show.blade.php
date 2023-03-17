@@ -174,12 +174,13 @@
                   </table>
                </div>
                <div class="tab-pane fade mt-4" id="schedule">
+               <div class="table-responsive">
                   <table class="table table-bordered data-table">
                      <thead>
                         <tr>
                            <th>{{ __("Date") }}</th>
                            <th class="text-right">{{ __("Amount to Pay") }}</th>
-                           <th class="text-right">{{ __("Penalty") }}</th>
+                           <!-- <th class="text-right">{{ __("Penalty") }}</th> -->
                            <th class="text-right">{{ __("Principal Amount") }}</th>
                            <th class="text-right">{{ __("Interest") }}</th>
                            <th class="text-right">{{ __("Balance") }}</th>
@@ -190,10 +191,17 @@
                         @if ($loan->status === 'active' || $loan->status === 'closed' || $loan->status === 'disbursed')
                            @php
                               $duration = $loan->duration;
+                              
                               $weeks = floor($duration / 7);
+                              
                               $extra_days = $duration % 7;
-                              $amount_to_pay = $loan->total_payable / ($weeks + ($extra_days > 0 ? 1 : 0));
-                              $interest = $loan->interest / ($weeks + ($extra_days > 0 ? 1 : 0));
+                              if ($extra_days > 0) {
+                                 $weeks += 1;
+                              }                           
+                              $amount_to_pay = $loan->total_payable / $weeks;
+                              $amount_to_pay = number_format($amount_to_pay, 2);
+                              $interest = $loan->interest / $weeks;
+                              $interest = number_format($interest, 2);
                               $principal_amount = $amount_to_pay - $interest;
                               $balance = $loan->remaining_balance;
                               $start_date = \Carbon\Carbon::parse($loan->start_date);
@@ -203,7 +211,7 @@
                            <!-- date("Y-m-d", $start_date) -->
                               <td>{{ $start_date->format('Y-m-d') }}</td>
                               <td>{{ $loan->total_payable }}</td>
-                              <td>0</td>
+                              <!-- <td>0</td> -->
                               <td>0</td>
                               <td>0</td>
                               <td>{{ $balance }}</td>
@@ -214,35 +222,32 @@
                               @php
                                  $end_date->addDays(7);
                                  $balance -= $amount_to_pay;
+                                 if (is_float($balance)) {
+                                    $balance = round($balance, 2);
+                                    if (substr($balance, 0, 2) == "0.") {
+                                          $balance = 0;
+                                    }
+                                 }
                               @endphp
                               <tr>
                                  <td>{{ $end_date->format('Y-m-d') }}</td>
                                  <td>{{ $amount_to_pay }}</td>
-                                 <td>0</td>
+                                 <!-- <td>0</td> -->
                                  <td>{{ $principal_amount }}</td>
-                                 <td>{{ $loan->interest / ($weeks + ($extra_days > 0 ? 1 : 0)) }}</td>
-                                 <td>{{ $balance }}</td>
+                                 <td>{{ $interest }} </td>
+                                 <td>   
+ 
+                                       {{ $balance }}
+                            
+                                  </td>
                                  <td>{{$loan->status}}</td>
                               </tr>
                            @endfor
-                           @if ($extra_days > 0)
-                              @php
-                                 $end_date->addDays($extra_days);
-                                 $balance -= $amount_to_pay;
-                              @endphp
-                              <tr>
-                                 <td>{{ $end_date->format('Y-m-d') }}</td>
-                                 <td>{{ $amount_to_pay }}</td>
-                                 <td>0</td>
-                                 <td>{{ $principal_amount }}</td>
-                                 <td>{{ $loan->interest / ($weeks + ($extra_days > 0 ? 1 : 0)) }}</td>
-                                 <td>{{ $balance }}</td>
-                                 <td>{{$loan->status}}</td>
-                              </tr>
-                           @endif
+
                         @endif
                      </tbody>
                   </table>
+               </div >  g
                </div>
                <div class="tab-pane fade mt-4" id="loan_payments">
                   <table class="table table-bordered data-table">

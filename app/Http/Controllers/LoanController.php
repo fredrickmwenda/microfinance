@@ -109,6 +109,9 @@ class LoanController extends Controller
           
             $loan = $customer->loans->last();
             if ($loan->payment_status != 'paid') {
+                info('loan not yet paid');
+                info($loan);
+                info($loan->payment_status);
                 return redirect()->back()->with('error', 'Customer has a loan not yet paid');
             }
         }
@@ -933,13 +936,12 @@ class LoanController extends Controller
             }else if (Auth::user()->role_id == 2) {
                 $data = Loan::with('customer', 'creator', 'approver')->where('status', 'disbursed')->where('created_by', Auth::user()->id)->latest()->get();
             }
+            info($data);
             return Datatables::of($data)
                     ->addIndexColumn()
                     ->addColumn('action', function($row){
                         $btn_view = '<a href="'.route('loan.show', $row->loan_id).'" class="edit btn btn-primary btn-sm">View</a>';
-                        $btn = '<a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->loan_id.'" data-original-title="Edit" class="edit btn btn-primary btn-sm editLoan">Edit</a>';
-                        // $btn = $btn.' <a href="javascript:void(0)" data-toggle="tooltip"  data-id="'.$row->id.'" data-original-title="Delete" class="btn btn-danger btn-sm deleteLoan">Delete</a>';
-                        return $btn_view.' '.$btn;
+                        return $btn_view;
                     })
                     ->rawColumns(['action'])
                     ->make(true);
@@ -991,17 +993,6 @@ class LoanController extends Controller
   
     }
 
-
-    
-
-
-
-
-
-
-
-//the cron is mweguni.co.ke/App/Console/Commands/LoanExpiry.php
-    
 
     /**
      * Remove the specified resource from storage.
