@@ -202,7 +202,10 @@
                               $amount_to_pay = number_format($amount_to_pay, 2);
                               $interest = $loan->interest / $weeks;
                               $interest = number_format($interest, 2);
-                              $principal_amount = $amount_to_pay - $interest;
+                              
+                              $amount_pay = str_replace(',', '', $amount_to_pay);
+                              $interest_gain = str_replace(',', '', $interest);
+                              $principal_amount = $amount_pay - $interest_gain;
                               $balance = $loan->remaining_balance;
                               $start_date = \Carbon\Carbon::parse($loan->start_date);
                               $end_date = $start_date;
@@ -221,7 +224,7 @@
                            @for ($i = 0; $i < $weeks; $i++)
                               @php
                                  $end_date->addDays(7);
-                                 $balance -= $amount_to_pay;
+                                 $balance -= $amount_pay;
                                  if (is_float($balance)) {
                                     $balance = round($balance, 2);
                                     if (substr($balance, 0, 2) == "0.") {
@@ -247,7 +250,7 @@
                         @endif
                      </tbody>
                   </table>
-               </div >  g
+               </div > 
                </div>
                <div class="tab-pane fade mt-4" id="loan_payments">
                   <table class="table table-bordered data-table">
