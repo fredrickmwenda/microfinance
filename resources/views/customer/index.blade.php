@@ -57,11 +57,12 @@
                       </th> -->
                       <th> # </th>
                       <th>{{ __('Name') }}</th>
-                      <th>{{ __('Email') }}</th>
+                      <!-- <th>{{ __('Email') }}</th> -->
                       <th>{{ __('Phone') }}</th>
                       <th>{{ __('National Id') }}</th>
-                      <th>{{ __('Guarantor') }}</th>
-                      <th>{{ __('Status') }}</th>
+                     
+                      <th>{{ __('Status') }}</th> 
+                      <th>{{ __('View') }}</th>
                       <th>{{ __('Action') }}</th>
                     </tr>
                   </thead>
@@ -75,15 +76,23 @@
                         </div>
                       </td> -->
                       <td>{{ $key+1 }}</td>
-                      <td>{{ $customer->first_name }}{{ $customer->first_name }}</td>
                       <td>
-                        {{ $customer->email }}
+                      @if ($customer->passport)
+                      <img src="{{ asset('assets/images/customer/'.$customer->passport) }}" alt="" class="avatar-xs rounded-circle me-2" height="20px" width="20px">
+                      @else
+                      <img src="{{ asset('assets/backend/admin/assets/img/avatar/avatar-1.png') }}" alt="" class="avatar-xs rounded-circle me-2" height="20px" width="20px">
+                      @endif
+                        {{ $customer->first_name }}{{ $customer->last_name }}
                       </td>
+                      <!-- <td>
+                        {{ $customer->email }}
+                      </td> -->
                       <td>
-                        {{ $customer->phone }}
+                        <a href="tel:{{$customer->phone}}">{{$customer->phone}}</a>
+                       
                       </td>
                       <td>{{ $customer->national_id }}</td>
-                      <td>{{ $customer->guarantor_first_name }}{{ $customer->guarantor_last_name }}</td>
+                      <!-- <td>{{ $customer->guarantor_first_name }}{{ $customer->guarantor_last_name }}</td> -->
                       <td>
                         @if($customer->status == 'active')
                         <span class="badge badge-success">{{ $customer->status }}</span>
@@ -92,14 +101,14 @@
                         @endif
                       </td>
                       <td>
+                          <a class="btn btn-success has-icon" href="{{ route('customer.show', $customer->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
+                      </td>
+                      <td>
                         <div class="dropdown d-inline">
                           <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             {{ __('Action') }}
                           </button>
                           <div class="dropdown-menu">
-
-                            <a class="dropdown-item has-icon" href="{{ route('customer.show', $customer->id) }}"><i class="fa fa-eye"></i>{{ __('View') }}</a>
-                          
                             @can('customer.edit')
                             <a class="dropdown-item has-icon" href="{{ route('customer.edit', $customer->id) }}"><i class="fa fa-edit"></i>{{ __('Edit') }}</a>
                             @endcan
@@ -121,7 +130,7 @@
 
 
               </div>
-               {{ $customers->links('vendor.pagination.bootstrap-4') }}
+               
           </div>
       </div>
     </div>
@@ -133,7 +142,6 @@
     $(document).ready(function() {
         $('#customertable-2').DataTable({
             responsive: true,
-            "order": [[ 0, "desc" ]],
         });
     });
 </script>

@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\TransactionMail;
 use App\Helpers\LoanHelper;
 use App\Models\Loan;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 use Termwind\Components\Dd;
 
 class CustomerController extends Controller
@@ -38,7 +40,7 @@ class CustomerController extends Controller
                 return $query->where('national_id', 'like', '%' . $request->src . '%');
             } elseif ($request->type == 'email') {
                 return $query->where('email', 'like', '%' . $request->src . '%');
-            }})->paginate(20);
+            }})->orderBy('created_at', 'desc')->get();
         //branches that are active
         // $branches = branch::where('status', 'active')->get();
         
@@ -89,7 +91,7 @@ class CustomerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        // dd($request->all());
         $request->validate([
             'first_name'   => 'required',
             'last_name'    => 'required',
@@ -103,7 +105,7 @@ class CustomerController extends Controller
             'guarantor_last_name'        => 'required',
             'guarantor_phone'        => 'required',
             'guarantor_national_id'        => 'required|unique:customers',
-            'guarantor_email'        => 'email|unique:customers',
+            // 'guarantor_email'        => 'email|unique:customers',
             'guarantor_address'        => 'required',
             #referee
             'referee_first_name'        => 'required',
@@ -128,9 +130,35 @@ class CustomerController extends Controller
             'created_by' => auth()->user()->id,
             'status' => 'active',
         ]);
+        if ($request->has('passport_photo')) {
+            //the passport photo, get the extension
+            $photo = $request->file('passport_photo');
+           ;
+            $name = time() . '.' . $photo->getClientOriginalExtension();
+            //dd($name);
+            //store the photo in the storage/app/public/assets/images/customer folder
+            $photo->move(public_path('assets/images/customer'), $name);
+            // dd($name);
+           // $photo->storeAs('public/assets/images/customer', $name);
+            //merge the passport photo to the request
+            $request->merge([
+                'passport' => $name,
+            ]);
+            // $request->merge(Arr::except($request->all(), ['passport_photo']));
+            $data = $request->except('passport_photo');
+            //unset($request['passport_photo']);
+            //dd($data);
+            customer::create($data);
+
+        }
+        else{
+            dd('here');
+            customer::create($request->all());
+
+        }
 
 
-        $customer = customer::create($request->all());
+        //$customer = customer::create($request->all());
         return redirect()->route('customer.index')->with('success', 'Customer Created Successfully')->withInput();
     }
 
@@ -145,13 +173,14 @@ class CustomerController extends Controller
         
         
         $customer = customer::find($id);
-
         $loans = Loan::where('customer_id', $id)->get();
+        $active_loans = Loan::where('customer_id', $id)->where('status', 'active')->get();
+        $overdue_loans = Loan::where('customer_id', $id)->where('status', 'overdue')->get();
 
         // dd($user_transactions);
 
 
-        return view('customer.show', compact('customer', 'loans'));
+        return view('customer.show', compact('customer', 'loans', 'active_loans', 'overdue_loans'));
     }
 
     /**
@@ -162,11 +191,10 @@ class CustomerController extends Controller
      */
     public function edit($id)
     {
-         if (!Auth()->user()->can('user.edit')) {
-            return abort(401);
-         }
-         $customer = customer::findorfail($id);
-        return view('customer.edit', compact('customer'));
+
+        $customer = customer::findorfail($id);
+        $branches = branch::where('status', 'active')->get();
+        return view('customer.edit', compact('customer', 'branches'));
     }
 
     /**
@@ -178,42 +206,95 @@ class CustomerController extends Controller
      */
     public function update(Request $request, customer $customer)
     {
-        //
+        //dd($request->all());
         $request->validate([
             'first_name'   => 'required',
             'last_name'    => 'required',
-            // 'phone_nmuber'  => 'required',
-            'email_address' => 'email|unique:customers,email_address,'.$customer->id,
-            'status'        => 'required',
-            #national id
+            'phone'  => 'required',
+            'email' => 'nullable|email|unique:customers,email_address,'.$customer->id,
             'national_id'        => 'required',
             'branch_id'        => 'required',
-            #guarantor
             'guarantor_first_name'        => 'required',
             'guarantor_last_name'        => 'required',
-            'guarantor_phone_nmuber'        => 'required',
-            // 'guarantor_email_address'        => 'email|unique:customers,email_address,'.$customer->id,
+            'guarantor_phone'        => 'required',
             'guarantor_national_id'        => 'required',
             #referee
             'referee_first_name'        => 'required',
             'referee_last_name'        => 'required',
-            'referee_phone_nmuber'        => 'required',
-            #emai not required for referee but must be unique
-            'referee_email_address'        => 'email|unique:customers,email_address,'.$customer->id,
-            'referee_national_id'        => 'required',
+            'referee_phone'        => 'required',
+            'referee_relationship'        => 'required',
             #next of kin
             'next_of_kin_first_name'        => 'required',
             'next_of_kin_last_name'        => 'required',
-            'next_of_kin_phone_nmuber'        => 'required',
-            'next_of_kin_email_address'        => 'email|unique:customers,email_address,'.$customer->id,
-            'next_of_kin_national_id'        => 'required',
-            #next of kin relationship
+            'next_of_kin_phone'        => 'required',
             'next_of_kin_relationship'        => 'required',
         ]);
+        //add guarantor_address to the update
+        if ($request->has('passport_photo')) {
+            //the passport photo, get the extension
+            $photo = $request->file('passport_photo');
+            $extension = $photo->getClientOriginalExtension();
+
+            // Delete existing passport photo if present
+            $existingPhoto = $customer->passport;
+            if ($existingPhoto && file_exists(public_path('assets/images/customer/' . $existingPhoto))) {
+                Storage::delete('public/assets/images/customer/' . $existingPhoto);
+            }     
+            // Generate new file name and move the photo to the storage directory
+            $name = time() . '.' . $extension;
+            $photo->move(public_path('assets/images/customer'), $name);
+            $customer->update([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'national_id' => $request->national_id,
+                'branch_id' => $request->branch_id,
+                'passport' => $name,
+                'guarantor_first_name' => $request->guarantor_first_name,
+                'guarantor_last_name' => $request->guarantor_last_name,
+                'guarantor_phone' => $request->guarantor_phone,
+                'guarantor_national_id' => $request->guarantor_national_id,
+                'guarantor_address' => $request->guarantor_address,
+                'referee_first_name' => $request->referee_first_name,
+                'referee_last_name' => $request->referee_last_name,
+                'referee_phone' => $request->referee_phone,
+                'referee_relationship' => $request->referee_relationship,
+                'next_of_kin_first_name' => $request->next_of_kin_first_name,
+                'next_of_kin_last_name' => $request->next_of_kin_last_name,
+                'next_of_kin_phone' => $request->next_of_kin_phone,
+                'next_of_kin_relationship' => $request->next_of_kin_relationship,
+            ]);
+    
+
+        }
+        else{
+            $customer->update([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'phone' => $request->phone,
+                'email' => $request->email,
+                'national_id' => $request->national_id,
+                'branch_id' => $request->branch_id,
+                'guarantor_first_name' => $request->guarantor_first_name,
+                'guarantor_last_name' => $request->guarantor_last_name,
+                'guarantor_phone' => $request->guarantor_phone,
+                'guarantor_national_id' => $request->guarantor_national_id,
+                'guarantor_address' => $request->guarantor_address,
+                'referee_first_name' => $request->referee_first_name,
+                'referee_last_name' => $request->referee_last_name,
+                'referee_phone' => $request->referee_phone,
+                'referee_relationship' => $request->referee_relationship,
+                'next_of_kin_first_name' => $request->next_of_kin_first_name,
+                'next_of_kin_last_name' => $request->next_of_kin_last_name,
+                'next_of_kin_phone' => $request->next_of_kin_phone,
+                'next_of_kin_relationship' => $request->next_of_kin_relationship,
+            ]);
+
+        }
 
 
 
-        $customer->update($request->all());
         return redirect()->route('customer.index')->with('success', 'Customer Updated Successfully');
     }
     //search customers by national id, branch_name

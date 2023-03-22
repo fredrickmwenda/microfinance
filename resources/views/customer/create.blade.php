@@ -70,7 +70,7 @@
 							</div>
             </div>
 
-            <form method="POST" action="{{ route('customer.store') }}" class="basicform_with_reset">
+            <form method="POST" action="{{ route('customer.store') }}" class="basicform_with_reset" enctype="multipart/form-data">
               @csrf
               <div  class="data-wizard active" data-wizard-type="step-content" data-wizard-state="current">
                 <div class="card-body">
@@ -138,6 +138,14 @@
                     </div>
                   </div>
                   <!--end national id and branch-->
+                  <div class="form-row">
+                    <div class="col-lg-12 col-md-6 col-sm-12">
+                      <div class="form-group">          
+                        <label>{{ __('Customer Passport') }}</label>
+                        <input type="file" class="form-control" name="passport_photo" multiple>
+                      </div>
+                    </div>
+                  </div>
 
                 </div>
     

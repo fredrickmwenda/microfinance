@@ -1,0 +1,228 @@
+.symbol {
+    display: inline-block;
+    flex-shrink: 0;
+    position: relative;
+    border-radius: 0.475rem;
+}
+
+.symbol.symbol-lg-160px.symbol-fixed > img {
+    width: 160px;
+    height: 160px;
+    max-width: none;
+}
+
+.rounded-circle {
+    border-radius: 50% !important;
+}
+
+.border-body {
+    border-color: var(--bs-body-bg) !important;
+}
+
+
+.h-20px {
+    height: 20px !important;
+}
+
+.w-20px {
+    width: 20px !important;
+}
+
+.me-7 {
+    margin-right: 1.75rem !important;
+}
+
+.translate-middle {
+    transform: translate(-50%, -50%) !important;
+}
+
+.text-gray-900 {
+    color: var(--bs-text-gray-900) !important;
+    text-decoration: underline;
+}
+
+.text-hover-primary {
+    transition: color 0.2s ease;
+}
+
+@media (min-width: 1200px){
+.fs-2 {
+    font-size: 1.5rem !important;
+}
+}
+
+
+.me-1 {
+    margin-right: 0.25rem !important;
+}
+
+.text-gray-400 {
+    color: var(--bs-text-gray-400) !important;
+}
+
+.nav-line-tabs.nav-line-tabs-2x {
+    border-bottom-width: 2px;
+}
+
+.border-transparent {
+    border-color: transparent !important;
+}
+
+.nav-stretch {
+    align-items: stretch;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+
+.nav-line-tabs .nav-item .nav-link.active, .nav-line-tabs .nav-item.show .nav-link, .nav-line-tabs .nav-item .nav-link:hover:not(.disabled) {
+    background-color: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--bs-primary);
+    transition: color 0.2s ease;
+}
+
+.nav {
+    --bs-nav-link-padding-x: 1rem;
+    --bs-nav-link-padding-y: 0.5rem;
+    --bs-nav-link-font-weight: ;
+    --bs-nav-link-color: var(--bs-link-color);
+    --bs-nav-link-hover-color: var(--bs-link-hover-color);
+    --bs-nav-link-disabled-color: var(--bs-secondary-color);
+    display: flex;
+    flex-wrap: wrap;
+    padding-left: 0;
+    margin-bottom: 0;
+    list-style: none;
+}
+
+.nav-stretch .nav-link {
+    display: flex;
+    align-items: center;
+}
+
+.nav-line-tabs .nav-item .nav-link {
+    color: var(--bs-gray-500);
+    border: 0;
+    border-bottom: 1px solid transparent;
+    transition: color 0.2s ease;
+    padding: 0.5rem 0;
+    margin: 0 1rem;
+}
+
+.card .card-header .card-title, .card .card-header .card-title .card-label {
+    font-weight: 500;
+    font-size: 1.275rem;
+    color: var(--bs-text-dark);
+}
+
+.card .card-header .card-title {
+    display: flex;
+    align-items: center;
+    margin: 0.5rem;
+    margin-left: 0;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    flex-wrap: wrap;
+    min-height: 70px;
+    padding: 0 2.25rem;
+    color: var(--bs-card-cap-color);
+    background-color: var(--bs-card-cap-bg);
+    border-bottom: var(--bs-card-border-width) solid var(--bs-card-border-color);
+}
+
+
+.p-9 {
+    /* padding top set to 0 to avoid overlapping with card header, while others set to 2.25rem */
+    padding: 0 2.25rem 2.25rem 2.25rem !important;
+}
+
+.mb-7 {
+    margin-bottom: 1.75rem !important;
+}
+
+.card-footer{
+    background-color: rgb(233 218 218 / 3%)!important;
+}
+
+.image-input.image-input-outline .image-input-wrapper {
+    border: 3px solid var(--bs-body-bg);
+    box-shadow: var(--bs-box-shadow);
+}
+
+.image-input .image-input-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 0.475rem;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.h-125px {
+    height: 125px !important;
+}
+
+.w-125px {
+    width: 125px !important;
+}
+
+.image-input [data-kt-image-input-action=change] {
+    left: 100%;
+    top: 0;
+}
+
+.image-input [data-kt-image-input-action] {
+    cursor: pointer;
+    position: absolute;
+    transform: translate(-50%, -50%);
+}
+
+.btn.btn-icon.btn-circle {
+    border-radius: 50%;
+}
+
+.image-input [data-kt-image-input-action=change] input {
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden;
+    opacity: 0;
+}
+
+.image-input {
+    position: relative;
+    display: inline-block;
+    border-radius: 0.475rem;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.btn.btn-icon {
+    display: inline-flex!important;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+.shadow {
+    box-shadow: 0 0.5rem 1.5rem 0.5rem rgb(0 0 0 / 8%) !important;
+}
+.h-25px {
+    height: 25px !important;
+}
+.w-25px {
+    width: 25px !important;
+}
+
+input[type="text"] { 
+    font-size: 12px;
+}
+input[type="email"] { 
+    font-size: 12px;
+}
+
+.h3 {
+    text-decoration: underline;    
+}

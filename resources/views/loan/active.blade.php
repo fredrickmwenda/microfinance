@@ -88,8 +88,7 @@
 </div>
 @endsection
 
-@push('js')
-<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
+
 @push('js')
 <script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
 <script>
