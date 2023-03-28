@@ -1,4 +1,62 @@
 @extends('layouts.backend.app')
+<style type="text/css">
+    .avatar-xs {
+    height: 2rem;
+    width: 2rem; }
+  
+  .avatar-sm {
+    height: 3rem;
+    width: 3rem; }
+  
+  .avatar-md {
+    height: 4.5rem;
+    width: 4.5rem; }
+  
+  .avatar-lg {
+    height: 6rem;
+    width: 6rem; }
+  
+  .avatar-xl {
+    height: 7.5rem;
+    width: 7.5rem; }
+  
+  .avatar-title {
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    background-color: #556ee6;
+    color: #fff;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    font-weight: 500;
+    height: 100%;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+    width: 100%; }
+  
+  .avatar-group {
+    /* padding-right: 12px; */
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+        flex-wrap: wrap; }
+    .avatar-group .avatar-group-item {
+      margin-right: -12px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      -webkit-transition: all 0.2s;
+      transition: all 0.2s; }
+      .avatar-group .avatar-group-item:hover {
+        position: relative;
+        -webkit-transform: translateY(-2px);
+                transform: translateY(-2px); }
+
+                avatar-title{background:#fff}
+
+</style>
 
 @section('content')
 <div class="row">
@@ -15,7 +73,7 @@
                 @endif -->
                 <div class="row">
                     <div class="col-md-4">
-                        <div class="card">
+                        <div class="card" style="box-shadow: 0 4rem 6rem rgb(235 90 90);">
                             <div class="card-body">
                                 <div class="text-center">
                                     @if(!empty(Auth::user()->avatar))
@@ -42,7 +100,7 @@
                         </div>
                     </div>
                     <div class="col-md-8">
-                        <div class="card">   
+                        <div class="card" style="box-shadow: 0 4rem 6rem rgb(32 89 175);">   
                             <ul class="nav nav-tabs" id="myTab" role="tablist">
                             <li class="nav-item">
                                 <a class="nav-link active" id="home-tab" data-toggle="tab" href="#home" role="tab" aria-controls="home" aria-selected="true">Details</a>
@@ -78,7 +136,67 @@
                                             <th>National ID</th>
                                             <td>{{ Auth::user()->national_id }}</td>
                                             </tr>
+                                            
+
                                         </table>
+                                        @if(Auth::user()->role_id == 1)
+                                            <div class="media-body card overflow-hidden" style="box-shadow: 4px 4px 4px 8px rgba(0, 0, 0, 0.03)!important;">
+                                                <!-- <h5 class="text-truncate font-size-15">
+                                                    <a href="#" class="text-dark">K</a>
+                                                </h5> -->
+                                                <!-- <p class="text-muted mb-4">K</p> -->
+                                                <div class="card-title" style="padding-left: 25px; padding-top:10px;">
+                                                    <h5 class="text-truncate font-size-15">
+                                                        <span class="text-dark">ROS </span>
+                                                    </h5>
+                                                </div>
+
+                                                @php
+                                                $ros = \App\Models\User::where(function($query){$query->where('role_id', 2)->orWhere('role_id', 4);})->get();
+
+
+                                                @endphp
+ 
+                                                        <div class="row" style="padding: 0px 0px 25px 25px;">                                                   
+                                                            @foreach($ros as $ro)
+                                                            <div class="col-2">
+                                                                <div class="avatar-group">
+                                                                    <div class="avatar-group-item">
+                                                                                                                            
+                                                                        <a href="{{ route('ro.portfolio', $ro->id) }}" class="d-inline-block">
+                                                                            @if($ro->avatar)                                                         
+                                                                            <img src="{{ asset('assets/images/profile/'.$ro->avatar) }}" alt="" class="rounded-circle avatar-xs">
+                                                                            @else                                                  
+                                                                            <div class="avatar-xs">
+                                                                                <span class="avatar-title rounded-circle bg-danger text-white font-size-16">
+                                                                                    {{ substr($ro->first_name, 0, 1)}} {{ substr($ro->last_name, 0, 1)}}
+                                                                                </span>
+                                                                            </div> 
+                                                                            @endif
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            @endforeach
+                                                            <div class="col-2">
+                                                                <div class="avatar-group">
+                                                                    <div class="avatar-group-item">
+                                                                                                                            
+                                                                        <a href="{{ route('admin.users.create') }}" class="d-inline-block">                                                
+                                                                            <div class="avatar-xs">
+                                                                                <span class="avatar-title rounded-circle text-white font-size-16" style="background-color: #7587d5 !important;">
+                                                                                    +
+                                                                                </span>
+                                                                            </div> 
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            </div>                                              
+                                                        </div>
+                                                    <!-- </div>
+                                                </div> -->
+                                            </div>
+                                            @endif
                                     </div>
                                 </div>
                                 <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">

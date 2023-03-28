@@ -51,16 +51,8 @@
                     </div>
                     <div class="col-lg-6 col-md-6 col-sm-12">
                         <div class="form-group">
-                           <!--customer phone number-->
-                           <label for="payment_method">{{ __('Payment Method') }}</label>
-                          <select class="form-control" id="payment_method" name="payment_gateway_id" required>
-                              <option value="">{{ __('Select Payment Method') }}</option>
-                              <!--option is mpesa, visa, mastercard, paypal, etc-->
-                              <option value="mpesa">{{ __('Mpesa') }}</option>
-                              <option value="visa">{{ __('Visa') }}</option>
-                              <option value="mastercard">{{ __('Mastercard') }}</option>
-                              <option value="paypal">{{ __('Paypal') }}</option>
-                          </select>
+                           <label for="remaining_balance">{{ __('Balance') }}</label>
+                           <input type="text" class="form-control" name="remaining_balance" placeholder="Balance" required readonly>
                         </div>
                     </div>
                   </div>
@@ -208,6 +200,7 @@
               $('input[name="total_amount"]').val(data.data.total_payable);
               $('input[name="phone"]').val(data.data.customer.phone);
               $('input[name="loan_id"]').val(data.data.loan_id);
+              $('input[name="remaining_balance"]').val(data.data.remaining_balance);
             }
           });
         }

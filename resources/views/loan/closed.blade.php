@@ -48,7 +48,7 @@
                       <td>{{ $loan->interest }}</td>
                       <td>{{ $loan->duration }}</td>
                       <td>
-                        @if($loan->status == "active")
+                        @if($loan->status == "closed")
                         <span class="badge badge-uccess">{{ $loan->status }}</span>
                         @endif
                       </td>

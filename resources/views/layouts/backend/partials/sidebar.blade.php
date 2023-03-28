@@ -152,7 +152,7 @@
 
           
           <!--- Payment Gateway Modules --->
-          @can('payment.gateway.list')
+          <!-- @can('payment.gateway.list')
           <li class="menu-header">{{ __('Payment Methods & Settings') }}</li>
           <li class="nav-item dropdown {{ Request::is('admin/withdraw*') ? 'show active' : '' }}">
             <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-wallet"></i> <span>{{ __('Payment Gateway') }}</span></a>
@@ -165,7 +165,18 @@
               @endcan
             </ul>
           </li>
-          @endcan
+          @endcan -->
+
+          <!-- Portfolio -->
+          <li class="menu-header">{{ __(' RO Portfolio') }}</li>
+          <li class="nav-item dropdown {{ Request::is('admin/withdraw*') ? 'show active' : '' }}">
+            <a href="#" class="nav-link has-dropdown" data-toggle="dropdown"><i class="fas fa-wallet"></i> <span>{{ __('Porftolio') }}</span></a>
+            <ul class="dropdown-menu">
+            
+              <li><a class="nav-link" href="{{route('ro.portfolio')}}">{{ __('View Portfolio') }}</a></li>          
+
+            </ul>
+          </li>
 
 
           <!--reports-->

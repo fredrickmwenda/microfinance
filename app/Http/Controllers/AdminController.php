@@ -6,6 +6,8 @@ use App\Helpers\LoanHelper;
 use Illuminate\Http\Request;
 use App\Jobs\SendPasswordResetEmail;
 use App\Models\branch;
+use App\Models\customer;
+use App\Models\Loan;
 use App\Models\User as ModelsUser;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Auth;
@@ -161,8 +163,7 @@ class AdminController extends Controller
             'email' => 'sometimes|string|email|max:255|unique:users,email,'.Auth::user()->id,
             'phone' => 'unique:users,phone,'.Auth::user()->id,
             'national_id' => 'string|max:255|unique:users,national_id,'.Auth::user()->id,
-            'password' => 'sometimes|string|min:6|confirmed',
-            'bio' => 'sometimes|string|max:255',
+            'bio' => 'nullable|sometimes|string|max:255',
             // 'role_id' => 'required|integer|exists:roles,id',
             
 
@@ -175,9 +176,9 @@ class AdminController extends Controller
         $user->email = $request->email;
         $user->phone = $request->phone;
         $user->national_id = $request->national_id;
-        if($request->password) {
-            $user->password = Hash::make($request->password);
-        }
+        // if($request->password) {
+        //     $user->password = Hash::make($request->password);
+        // }
         $user->bio = $request->bio;
 
         if ($request->hasFile('profile_picture')) {
@@ -361,6 +362,98 @@ class AdminController extends Controller
             'DB_PASSWORD' => $request->db_password,
         ]);
         return redirect()->back()->with('success', 'Settings updated successfully.');
+    }
+
+    public function portfolio(Request $request, Int $id=null){
+        If(isset($id)){
+            // dd($id);
+            $user = User::where('id', $id)->first();
+            // dd($user);
+            
+            $customers= customer::where('created_by', $id)->get();
+            $overdue_loans = Loan::where('created_by', $id)->where('status', 'overdue')->get();
+            $active_loans = Loan::where('created_by', $id)->where('status', 'active')->get();
+            $loans = Loan::where('created_by', $id)->get();
+
+            $total_payable_amount = Loan::where('created_by', $id)->sum('total_payable');
+
+            $total_overdue_loans = Loan::where('created_by', $id)->where('status', 'overdue')->sum('total_payable');
+
+                
+            if ($total_overdue_loans == 0 ) {
+                $performancey = 0;
+            }else{
+                $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
+            }
+            $performance = number_format($performancey, 2);
+        }
+        else{
+            $user =  Auth::user();
+            $customers= customer::where('created_by', $user->id)->get();
+            $overdue_loans = Loan::where('created_by', $user->id)->where('status', 'overdue')->get();
+            $active_loans = Loan::where('created_by', $user->id)->where('status', 'active')->get();
+            $loans = Loan::where('created_by', $user->id)->get();
+            $total_payable_amount = Loan::where('created_by', $user->id)->sum('total_payable');
+
+            $total_overdue_loans = Loan::where('created_by', $user->id)->where('status', 'overdue')->sum('total_payable');
+
+                
+            if ($total_overdue_loans == 0 ) {
+                $performancey = 0;
+            }else{
+                $performancey= ($total_overdue_loans / $total_payable_amount) * 100;
+            }
+            $performance = number_format($performancey, 2);
+        }
+        return view('portfolio.view', compact('user', 'loans', 'active_loans', 'overdue_loans', 'customers', 'performance'));
+
+    }
+
+
+    public function portfolioData($start_date, $end_date, $id){
+        // if start date matches end date, then it is a single day
+        if (isset($id)) {
+
+            $user = User::find($id);
+            //ar_dump($user);
+            // if($user){
+                if($start_date == $end_date){
+                    $total_customers = Customer::where('created_by', $id)->whereDate('created_at', $start_date)->count();
+                    $total_loans = Loan::where('created_by', $id)->whereDate('created_at', $start_date)->count();
+                    // $total_amount_loans = Loan::whereDate('created_at', $start_date)->sum('amount');
+                    $total_active_loans = Loan::where('created_by', $id)->whereDate('updated_at', $start_date)->where('status', 'active')->count();
+                    $total_closed_loans = Loan::where('created_by', $id)->whereDate('updated_at', $start_date)->where('status', 'closed')->count();
+                    $total_overdue_loans = Loan::where('created_by', $id)->whereDate('updated_at', $start_date)->where('status', 'overdue')->count();
+                    
+
+                }
+                // The end date and start_date are  strings, check if the difference between them is 7 days
+
+                else{
+        
+                    $total_customers = Customer::where('created_by', $id)->whereBetween('created_at', [$start_date, $end_date])->count();
+                    $total_loans = Loan::where('created_by', $id)->whereBetween('updated_at', [$start_date, $end_date])->count();
+                    $total_closed_loans = Loan::where('created_by', $id)->where('status', 'closed')->whereBetween('updated_at', [$start_date, $end_date])->count();
+                    //$total_amount_loans = Loan::whereBetween('updated_at', [$start_date, $end_date])->sum('amount');
+                    $total_active_loans = Loan::where('created_by', $id)->where('status', 'active')->whereBetween('updated_at', [$start_date, $end_date])->count();
+                    $total_overdue_loans = Loan::where('created_by', $id)->where('status', 'overdue')->whereBetween('updated_at', [$start_date, $end_date])->count();
+                }
+                $data = [
+                    'total_customers' => $total_customers,
+                    'total_loans' => $total_loans,
+                    'total_active_loans' => $total_active_loans,
+                    'total_closed_loans' => $total_closed_loans,
+                    'total_overdue_loans' => $total_overdue_loans,
+                ];
+
+                return response()->json($data);
+            //}
+            //else{
+            //    return response()->json(['error' => 'Invalid input data','code' => 400], 400);
+            //}
+        }
+
+        // return $data;
     }
 
     //logout admin

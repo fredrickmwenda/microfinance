@@ -75,7 +75,8 @@ class TransactionController extends Controller
         $request->validate([
             'customer_id' => 'required',
             'total_amount' => 'required',
-            'payment_gateway_id' => 'required',
+            'remaining_balance' => 'required',
+            // 'payment_gateway_id' => 'required',
             'loan_id' => 'required',
             'transaction_reference' => 'required',
             'transaction_date' => 'required',
@@ -98,7 +99,6 @@ class TransactionController extends Controller
                 //if this is the first transaction for this loan, then update the loan status to active
                // $loan_fist_pay = $loan->first_payment_date;
                 if (empty($loan->first_payment_date)) {
-                    //  dd($request->transaction_date);
                     $loan->first_payment_date = $request->transaction_date;
                     $loan->save();
                 }

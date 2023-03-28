@@ -103,7 +103,9 @@ Route::group(['middleware' => ['auth']], function () {
     //transaction resource
     Route::get('/transaction/customer-details', [App\Http\Controllers\TransactionController::class, 'getTransactionCustomerDetails'])->name('transaction.customer_data');
     Route::resource('transaction', 'App\Http\Controllers\TransactionController');
-   
+
+    Route::get('/portfolio/{id?}',[App\Http\Controllers\AdminController::class, 'portfolio'] )->name('ro.portfolio');
+    Route::get('/dashboard-statistics/{start_date}/{end_date}/{id}', [App\Http\Controllers\AdminController::class, 'portfolioData'])->name('portfolio.data');  
 
     //loans pages
     Route::get('/loans/pending', [App\Http\Controllers\LoanController::class, 'pendingLoansPage'])->name('loans.pending');

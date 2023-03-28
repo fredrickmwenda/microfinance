@@ -14,7 +14,7 @@
                     </div>
                 </div> -->
                 
-                    <div class="card">
+                    <div class="card" style="box-shadow: 0 4rem 6rem rgb(32 89 175);">
                     @php
                         $guarantor_name = ucwords($customer->guarantor_first_name) . ' ' . ucwords($customer->guarantor_last_name);
                         $customer_name =  ucwords($customer->first_name) . ' ' . ucwords($customer->last_name);
@@ -22,7 +22,7 @@
                         $next_of_kin_name =  ucwords($customer->next_of_kin_first_name) . ' ' . ucwords($customer->next_of_kin_last_name);
                     @endphp
                         <div class="card-header">
-                            <h4> {{ $customer_name }} Details</h4>
+                            <h3> <b>{{ $customer_name }} Details </b></h3>
                         </div>
                         <div class="card-body">
                         <div class="d-flex flex-wrap flex-sm-nowrap ">
@@ -50,7 +50,7 @@
 
                                     <div class="d-flex flex-column">
                                         <div class="d-flex mb-2">
-                                            <h3 class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">Guarantor Details</h3>
+                                            <h3 class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">Guarantor</h3>
                                         </div>
 
                                         <div class="d-flex fw-semibold fs-6 mb-4 pe-2">
@@ -120,196 +120,196 @@
                     <div class="row">
                         <div class="col-12">
                         <div class="accordion" id="accordionExample">
-  <div class="card">
-    <div class="card-header" id="headingOne">
-      <h2 class="mb-0">
-        <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-            All Loans
-        </button>
-      </h2>
-    </div>
+                        <div class="card">
+                            <div class="card-header" id="headingOne">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    All Loans
+                                </button>
+                            </h2>
+                            </div>
 
-    <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
-      <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped" id="cust_all">
-                    <thead>
-                        <tr>
-                        <!-- <th>{{ __('Loan ID') }}</th> -->
-                        <th>{{ __('Name') }}</th>
-                        <th>{{ __('Amount') }} </th>
-                        <th>{{ __('Payable') }} </th>
-                        <th>{{ __('Interest') }}</th>
-                        <th>{{ __('Duration') }}</th>
-                        <th>{{ __('Status') }}</th>
-                        <th>{{ __('Creator')}} </th>
-                        <th> {{__('Start Date')}} </th>
-                        <th> {{ __('Actions')}} </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($loans as $loan)
-                        <tr>
-                        <!-- <td>{{ $loan->loan_id }}</td> -->
-                        <td>
-                            {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
-                        </td>
-                        <td>{{ $loan->amount }}</td>
-                        <td>{{ $loan->total_payable }}</td>
-                        <td>{{ $loan->interest }}</td>
-                        <td>{{ $loan->duration }}</td>
-                        <td>                                                    
-                            <span class="badge badge-uccess">{{ $loan->status }}</span>                                                   
-                        </td>
-                        <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
-                        <td>{{ $loan->start_date }}</td>
-                        <td>
-                            <div class="dropdown d-inline">
-                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                {{ __('Action') }}
-                            </button>
-                            <div class="dropdown-menu">
+                            <div id="collapseOne" class="collapse show" aria-labelledby="headingOne" data-parent="#accordionExample">
+                            <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped" id="cust_all">
+                                            <thead>
+                                                <tr>
+                                                <!-- <th>{{ __('Loan ID') }}</th> -->
+                                                <th>{{ __('Name') }}</th>
+                                                <th>{{ __('Amount') }} </th>
+                                                <th>{{ __('Payable') }} </th>
+                                                <th>{{ __('Interest') }}</th>
+                                                <th>{{ __('Duration') }}</th>
+                                                <th>{{ __('Status') }}</th>
+                                                <th>{{ __('Creator')}} </th>
+                                                <th> {{__('Start Date')}} </th>
+                                                <th> {{ __('Actions')}} </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($loans as $loan)
+                                                <tr>
+                                                <!-- <td>{{ $loan->loan_id }}</td> -->
+                                                <td>
+                                                    {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
+                                                </td>
+                                                <td>{{ $loan->amount }}</td>
+                                                <td>{{ $loan->total_payable }}</td>
+                                                <td>{{ $loan->interest }}</td>
+                                                <td>{{ $loan->duration }}</td>
+                                                <td>                                                    
+                                                    <span class="badge badge-uccess">{{ $loan->status }}</span>                                                   
+                                                </td>
+                                                <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
+                                                <td>{{ $loan->start_date }}</td>
+                                                <td>
+                                                    <div class="dropdown d-inline">
+                                                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                        {{ __('Action') }}
+                                                    </button>
+                                                    <div class="dropdown-menu">
 
-                                <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
+                                                        <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
+                                                    
+                                                    </div>
+                                                    </div>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                            </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="headingTwo">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                Active Loans
+                                </button>
+                            </h2>
+                            </div>
+                            <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
+                            <div class="card-body">
+                                @if(isset($active_loans))
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="cust_active">
+                                        <thead>
+                                            <tr>
+                                            <!-- <th>{{ __('Loan ID') }}</th> -->
+                                            <th>{{ __('Name') }}</th>
+                                            <th>{{ __('Amount') }} </th>
+                                            <th>{{ __('Payable') }} </th>
+                                            <th>{{ __('Interest') }}</th>
+                                            <th>{{ __('Duration') }}</th>
+                                            <th>{{ __('Status') }}</th>
+                                            <th>{{ __('Creator')}} </th>
+                                            <th> {{__('Start Date')}} </th>
+                                            <th> {{ __('Actions')}} </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($overdue_loans as $loan)
+                                            <tr>
+                                            <td>
+                                                {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
+                                            </td>
+                                            <td>{{ $loan->amount }}</td>
+                                            <td>{{ $loan->total_payable }}</td>
+                                            <td>{{ $loan->interest }}</td>
+                                            <td>{{ $loan->duration }}</td>
+                                            <td>                                                    
+                                                <span class="badge badge-uccess">{{ $loan->status }}</span>                                                   
+                                            </td>
+                                            <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
+                                            <td>{{ $loan->start_date }}</td>
+                                            <td>
+                                                <div class="dropdown d-inline">
+                                                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    {{ __('Action') }}
+                                                </button>
+                                                <div class="dropdown-menu">
+
+                                                    <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
+                                                
+                                                </div>
+                                                </div>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @endif
+                            </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header" id="headingThree">
+                            <h2 class="mb-0">
+                                <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                Overdue Loans
+                                </button>
+                            </h2>
+                            </div>
+                            <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
+                            <div class="card-body">
+                                @if(isset($overdue_loans))
+                                <div class="table-responsive">
+                                    <table class="table table-striped" id="cust_overdue">
+                                        <thead>
+                                            <tr>
+                                            <!-- <th>{{ __('Loan ID') }}</th> -->
+                                            <th>{{ __('Name') }}</th>
+                                            <th>{{ __('Amount') }} </th>
+                                            <th>{{ __('Payable') }} </th>
+                                            <th>{{ __('Interest') }}</th>
+                                            <th>{{ __('Duration') }}</th>
+                                            <th>{{ __('Status') }}</th>
+                                            <th>{{ __('Creator')}} </th>
+                                            <th> {{__('Start Date')}} </th>
+                                            <th> {{__('End Date')}} </th>
+                                            <th> {{ __('Actions')}} </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($overdue_loans as $loan)
+                                            <tr>
+                                            <td>
+                                                {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
+                                            </td>
+                                            <td>{{ $loan->amount }}</td>
+                                            <td>{{ $loan->total_payable }}</td>
+                                            <td>{{ $loan->interest }}</td>
+                                            <td>{{ $loan->duration }}</td>
+                                            <td>                                                    
+                                                <span class="badge badge-uccess">{{ $loan->status }}</span>                                                   
+                                            </td>
+                                            <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
+                                            <td>{{ $loan->start_date }}</td>
+                                            <td>{{ $loan->end_date }}</td>
+                                            <td>
+                                                <div class="dropdown d-inline">
+                                                <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    {{ __('Action') }}
+                                                </button>
+                                                <div class="dropdown-menu">
+
+                                                    <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
+                                                
+                                                </div>
+                                                </div>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                                @endif
                             
                             </div>
                             </div>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header" id="headingTwo">
-      <h2 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-          Active Loans
-        </button>
-      </h2>
-    </div>
-    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionExample">
-      <div class="card-body">
-        @if(isset($active_loans))
-        <div class="table-responsive">
-            <table class="table table-striped" id="cust_active">
-                <thead>
-                    <tr>
-                    <!-- <th>{{ __('Loan ID') }}</th> -->
-                    <th>{{ __('Name') }}</th>
-                    <th>{{ __('Amount') }} </th>
-                    <th>{{ __('Payable') }} </th>
-                    <th>{{ __('Interest') }}</th>
-                    <th>{{ __('Duration') }}</th>
-                    <th>{{ __('Status') }}</th>
-                    <th>{{ __('Creator')}} </th>
-                    <th> {{__('Start Date')}} </th>
-                    <th> {{ __('Actions')}} </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($overdue_loans as $loan)
-                    <tr>
-                    <td>
-                        {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
-                    </td>
-                    <td>{{ $loan->amount }}</td>
-                    <td>{{ $loan->total_payable }}</td>
-                    <td>{{ $loan->interest }}</td>
-                    <td>{{ $loan->duration }}</td>
-                    <td>                                                    
-                        <span class="badge badge-uccess">{{ $loan->status }}</span>                                                   
-                    </td>
-                    <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
-                    <td>{{ $loan->start_date }}</td>
-                    <td>
-                        <div class="dropdown d-inline">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            {{ __('Action') }}
-                        </button>
-                        <div class="dropdown-menu">
-
-                            <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
-                        
                         </div>
                         </div>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        @endif
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header" id="headingThree">
-      <h2 class="mb-0">
-        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-          Overdue Loans
-        </button>
-      </h2>
-    </div>
-    <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordionExample">
-      <div class="card-body">
-        @if(isset($overdue_loans))
-        <div class="table-responsive">
-            <table class="table table-striped" id="cust_overdue">
-                <thead>
-                    <tr>
-                    <!-- <th>{{ __('Loan ID') }}</th> -->
-                    <th>{{ __('Name') }}</th>
-                    <th>{{ __('Amount') }} </th>
-                    <th>{{ __('Payable') }} </th>
-                    <th>{{ __('Interest') }}</th>
-                    <th>{{ __('Duration') }}</th>
-                    <th>{{ __('Status') }}</th>
-                    <th>{{ __('Creator')}} </th>
-                    <th> {{__('Start Date')}} </th>
-                    <th> {{__('End Date')}} </th>
-                    <th> {{ __('Actions')}} </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($overdue_loans as $loan)
-                    <tr>
-                    <td>
-                        {{ $loan->customer->first_name }} {{ $loan->customer->last_name }}
-                    </td>
-                    <td>{{ $loan->amount }}</td>
-                    <td>{{ $loan->total_payable }}</td>
-                    <td>{{ $loan->interest }}</td>
-                    <td>{{ $loan->duration }}</td>
-                    <td>                                                    
-                        <span class="badge badge-uccess">{{ $loan->status }}</span>                                                   
-                    </td>
-                    <td>{{ $loan->creator->first_name }} {{ $loan->creator->last_name }}</td>
-                    <td>{{ $loan->start_date }}</td>
-                    <td>{{ $loan->end_date }}</td>
-                    <td>
-                        <div class="dropdown d-inline">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton2" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            {{ __('Action') }}
-                        </button>
-                        <div class="dropdown-menu">
-
-                            <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
-                        
-                        </div>
-                        </div>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-        @endif
-       
-      </div>
-    </div>
-  </div>
-</div>
                         </div>
                     </div>
 
