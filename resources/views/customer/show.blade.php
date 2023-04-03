@@ -170,7 +170,7 @@
                                                     </button>
                                                     <div class="dropdown-menu">
 
-                                                        <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
+                                                    <a class="dropdown-item has-icon" href="{{route('transactions.receipt', $loan->loan_id) }}" target="blank"><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
                                                     
                                                     </div>
                                                     </div>
@@ -231,7 +231,7 @@
                                                 </button>
                                                 <div class="dropdown-menu">
 
-                                                    <a class="dropdown-item has-icon" href=""><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
+                                                    <a class="dropdown-item has-icon" href="{{route('transactions.receipt', $loan->loan_id) }}" target="blank"><i class="fa fa-receipt"></i>{{ __('Download Receipt') }}</a>
                                                 
                                                 </div>
                                                 </div>

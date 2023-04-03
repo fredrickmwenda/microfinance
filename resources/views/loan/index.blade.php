@@ -120,11 +120,10 @@
 </div>
 @endsection
 
-//chat openeners for texting
+
 
 @push('js')
-<script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
-@push('js')
+
 <script src="{{ asset('backend/admin/assets/js/sweetalert2.all.min.js') }}"></script>
 <script>
     $(document).ready(function() {
@@ -134,5 +133,4 @@
         });
     });
 </script>
-@endpush
 @endpush

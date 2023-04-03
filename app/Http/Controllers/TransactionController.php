@@ -15,6 +15,7 @@ use App\Models\PaymentGateway;
 use App\Models\User;
 use App\Notifications\LoanPaymentNotification;
 use Carbon\Carbon;
+use Dompdf\Dompdf;
 
 class TransactionController extends Controller
 {
@@ -527,6 +528,91 @@ class TransactionController extends Controller
             Log::info($customer);
             return response()->json(['success' => true, 'data'=> $customer]);
         }
+
+    }
+
+    public function getLoanTransactions(Request $request, $id){
+        $loan = Loan::where('loan_id', $id)->first();
+        // dd($loan);
+        if ($loan->status === 'active' || $loan->status === 'closed') {
+    
+            // Get all the transactions for the loan
+            $transactions = $loan->transactions;
+            // dd($transactions);
+            // Generate the receipt HTML
+            $customer = $loan->customer;
+            // $html = '<h1>Loan Transaction Receipt</h1>';
+            // $html .= '<p>Customer: '.$customer->first_name.' '.$customer->last_name.'</p>';
+            // $html .= '<p>Loan ID: '.$loan->id.'</p>';
+            // $html .= '<table>';
+            // $html .= '<thead><tr><th>Transaction Code</th><th>Date</th><th>Amount</th></tr></thead>';
+            // $html .= '<tbody>';
+            // foreach ($transactions as $transaction) {
+            //     $date_string = $transaction->transaction_date;
+            //     if (strlen($date_string) == 19) {
+            //         $datetime = Carbon::createFromFormat('Y-m-d H:i:s', $date_string);
+            //     } elseif (strlen($date_string) == 16) {
+            //         $datetime = Carbon::createFromFormat('Y-m-d\TH:i', $date_string);
+            //     } elseif (strlen($date_string) == 10) {
+            //         $datetime = Carbon::createFromFormat('Y-m-d', $date_string);
+            //     } else {
+            //         return "Error: Unknown date format: ".$date_string;
+            //     }
+                
+            //     $html .= '<tr>';
+            //     $html .= '<td>'.$transaction->transaction_code.'</td>';
+            //     $html .= '<td>'.$datetime->format('Y-m-d H:i').'</td>';
+            //     $html .= '<td>'.number_format($transaction->transaction_amount, 2).'</td>';
+            //     $html .= '</tr>';
+            // }
+            // $html .= '</tbody>';
+            // $html .= '</table>';
+
+            
+            // use html to calculate the total  transaction_amount of  all the transactions
+        // $total_transaction_amount = $transactions->sum('transaction_amount');
+        // $html .= '<p>Total transaction amount: '.number_format($total_transaction_amount, 2).'</p>';
+
+        // Show the loan total payable
+        // $html .= '<p>Loan total payable: '.number_format($loan->total_payable, 2).'</p>';
+
+            // Check if there is a balance for the loan
+            // if ($loan->remaining_balance > 0) {
+            //     $html .= '<p>Balance: '.number_format($loan->remaining_balance, 2).'</p>';
+            // }
+            
+            // Instantiate the PDF generator
+            // $pdf = new Dompdf();
+            $html = view('transaction.receipt', compact('loan', 'customer', 'transactions'))->render();
+    
+            // Instantiate the PDF generator
+            $pdf = new Dompdf();
+        
+            // Load the receipt HTML into the PDF generator
+            $pdf->loadHtml($html);
+        
+            // Set paper size and orientation
+            $pdf->setPaper('A4', 'portrait');
+        
+            // Render the PDF and output to the browser
+            $pdf->render();
+            $pdf->stream('Loan_Transaction_Receipt_' . $customer->first_name . '.pdf');
+
+            
+            // Set the HTML content
+            //$pdf->loadHtml($html);
+            
+            // Render the PDF
+            // $pdf->render();
+            
+            // Output the generated PDF for download
+            // $pdf->stream('loan_transaction_receipt.pdf');
+            
+        } else {
+            // Handle the case where the loan is not active or closed
+            return back()->with('error', 'Loan isnt Active or Closed');
+        }
+        
 
     }
 

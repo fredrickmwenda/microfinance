@@ -57,6 +57,10 @@ class Loan extends Model
     {
         return $query->where('created_by', $user_id);
     }
+
+    public function transactions(){
+        return $this->hasMany(Transaction::class);
+    }
     
 
 }

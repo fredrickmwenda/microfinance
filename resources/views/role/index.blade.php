@@ -140,5 +140,4 @@
 	});
 
 </script>
-<!-- <script src="{{ asset('admin/js/form.js') }}"></script> -->
 @endpush 
